@@ -28,7 +28,7 @@ Please go to [Jack <> Bluetooth Design Specification](doc/Jack<>Bluetooth-Design
 
 ## 3. Repo organization
 
-`./Components` -> list of all the components with libs (not public yet because of kicad lib licences)
+`./Components` -> components list with libs (not public yet because of kicad lib licences)
 
 `./doc` -> documentations, specifications and images
 
@@ -36,12 +36,12 @@ Please go to [Jack <> Bluetooth Design Specification](doc/Jack<>Bluetooth-Design
 
 `./kicad` (not public yet because of kicad lib licences)
 
-`./software` -> ESP32 C code (working in progress)
+`./software` -> ESP32 C code (work in progress)
 
 ## 4. Next steps
 
 - PCB review & manufacturing
-- finish ox design & 3D printing
+- finish box design & 3D printing
 - Software
 
 ## 5. Revisions history

@@ -1,8 +1,8 @@
-# Jack To Bluetooth Design Specifications/Details
+# Jack To Bluetooth Design Specification/Details
 
 ## Purpose
 
-The goal of this document is to keep a trace of the design choices and details of this projet.
+The purpose of the *Jack <> Bluetooth Design Specification* is to document the design choices and provide details on this project.
 
 ## Table of Content
 
@@ -40,29 +40,32 @@ The goal of this document is to keep a trace of the design choices and details o
 
 # 1. Jack2Bluetooth features
 
-The goal of this project is to design a device with the following features:
+This project aims to design a device with the following features:
 
-- Audio coming from Audio Jack 2.5mm can be sampled and transmitted through Bluetooth to a headphone.
-- Digital Audio from a Smartphone can be transmitted through Bluetooth to the device and converted into analog audio on the Audio Jack 3.5mm connector.
-- Device can be powered through USB-C when connected or via a battery for 3h when disconnected.
-- When USB-C is plugged, battery is charged.
-- Screen and buttons enable to choose between the "Jack To Bluetooth" mode or the "Bluetooth to Jack" mode.
-- Screen and buttons enable to select bluetooth peripheral when using the device as bluetooth central. 
-- Screen is disabled when not used after 1min to save energy.
+- Audio input from a 2.5mm audio jack can be sampled and transmitted via Bluetooth to a headphone.
+- Digital audio from a smartphone can be received via Bluetooth and converted into analog audio through a 3.5mm audio jack.
+- The device can be powered via USB-C or run on battery for up to 3 hours.
+- The battery charges when the device is connected to USB-C.
+- A screen and buttons allow switching between "Jack to Bluetooth" and "Bluetooth to Jack" modes.
+- The screen and buttons enable Bluetooth peripheral selection when the device functions as a Bluetooth central.
+- The screen turns off after 1 minute of inactivity to save power.
 
 # 2. Architecture
 
 ## 2.1 Jack to Bluetooth
-For sampling the input audio:
+
+For audio sampling:
 ![jack_to_bluetooth_architecture.png](images/jack_to_bluetooth_architecture.png)
-It requires the audio codec to be able to deal with line level audio input signals. So the ADC is included in the audio codec with an amplificator.
+The audio codec must support line-level audio input signals. The ADC is integrated into the audio codec with an amplifier.
 
 ## 2.2 Bluetooth to Jack
+
 ![bluetooth_to_jack_architecture.png](images/bluetooth_to_jack_architecture.png)
-It requires the audio codec to include a DAC with an amplificator.
+The audio codec must include a DAC with an amplifier.
 
 ## 2.3 Overall architecture
-When merging the two previous architecture, the architecture becomes:
+
+When merging the two previous architecture, it becomes:
 ![jack2bluetooth_reduced_architecture.png](images/jack2bluetooth_reduced_architecture.png)
 
 And when adding power components and the user interface components, the overall architecture is :
@@ -89,33 +92,29 @@ Based on the architecture, the user interface is then:
 
 ## 3.1 MCU : Microcontroller Unit
 
-Choice was made to use an ESP32 since they are widely used and easy to boot.
-The antenna should be included to avoid having to deal to much with RF leading to choose an ESP32 module.
+The ESP32 was chosen due to its widespread availability and ease of use. To simplify RF design, an ESP32 module with an integrated antenna was selected.
 
-Requirements were:
+Requirements:
 - Bluetooth support
-- integrated antenna
-- usb port
-- I2S port
-- I2C port
-- SPI port
-- core frequency (not the max supported but integrated clock frequency)
-- memory size
+- Integrated antenna
+- USB, I2S, I2C, SPI inerfaces
+- Core frequency (not the max supported but the integrated clock frequency)
+- Memory size
 
-Choice was made to use **ESP32-C-WROOM-N8**.
+Final choice: **ESP32-C-WROOM-N8**.
 
 ## 3.2 Audio Codec
 
-The audio codec should include a DAC, an ADC, support line level audio not differential for both inputs and outputs.
+The audio codec must include a DAC and an ADC, support line-level audio, and have single-ended inputs and outputs.
 
-Choice was made to use TLV320AIC3101 from Texas Instrument.
+Final choice : **TLV320AIC3101** (Texas Instrument).
 
 ## 3.3 Battery
 
-The battery should power the device for around 3h.
+The battery should provide at least 3 hours of operation.
+The most power-intensive components are the MCU, audio codec, and the screen.
 
-The components that are going to define the power limitations are the MCU, the audio codec and the screen. All the others should be negligeable compared to previous ones.
-The screen is going to be on only when a user push a button (and stays on for ~30s). Therefore, it should be off in idle mode, in transmitting mode or receiving mode. Therefore, it current cunsumption should be negligeable.
+The screen is going to be on only when a user push a button (and stays on for ~30s). Therefore, it should be off in idle mode, in transmitting mode or receiving mode. Since the screen is mostly off, its consumption is negligible.
 
 ### 3.3.1 ESP32-C6 Current consumption
 
@@ -131,14 +130,14 @@ So it is negligeable compared to the ESP32-C6 Bluetooth LE transmission currents
 
 ### 3.3.3 Current consumption conclusions
 
-The critical use case for current consumption is therefore sampling audio input and transmitting through bluetooth. The hypothesis is that the transmission is done at 9dBm max, the required battery to power the device 3hours is around 600mA.
+The critical use case for current consumption is during audio sampling and Bluetooth transmission. Assuming the transmission is done at 9dBm, the required battery to power the device 3 hours is around 600mA.
 
 ## 3.4 PMIC : Power Management Integrated Circuit
 
 The PMIC should support power path between the USB-C and the battery, battery charging when USB-C is plugged, battery discharging when unplugged.
 Since a power on/off system is needed, if this IC could have sleep or deep sleep mode with very low current consumption, it could be nice.
 
-The choice is to use the BQ25619RTWR from Texas Instrument.
+Final choice : **BQ25619RTWR** (Texas Instrument).
 
 All the elements are providing in the first page of product specification:
 ![BQ25619RTWR_spec.png](images/BQ25619RTWR_spec.png)
@@ -148,11 +147,11 @@ All the elements are providing in the first page of product specification:
 
 It was decided to use an LDO for the analog to have a clean alimentation. LDO should not be fixed to be able to reuse it in other designs.
 
-Choice was made to use TLV758P from Texas Instrument.
+Choice was made to use **TLV758P** from Texas Instrument.
 
 ## 3.6 Switching Voltage Regulator switch
 
-Choice was made to use the TPS62A01PDDCR from Texas Instrument.
+Choice was made to use the **TPS62A01PDDCR** from Texas Instrument.
 
 # 4. Electronic schematic
 

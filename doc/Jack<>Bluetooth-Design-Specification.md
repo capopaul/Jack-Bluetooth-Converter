@@ -1,4 +1,4 @@
-# Jack To Bluetooth Design Specification/Details
+# Jack <> Bluetooth Design Specification/Details
 
 ## Purpose
 
@@ -341,7 +341,7 @@ The goals were to have:
 
 The user interface is the back of the PCB:
 
-![jack2bluetooth_bottom.png](images/jack2bluetooth_bottom.png)
+![jack<>bluetooth_rev3.0_bottom.png](images/jack<>bluetooth_rev3.0_bottom.png)
 
 The spi screen is going to be put in the big white rectangle. The three buttons : previous, enter and next for controlling the screen are put under the screen. A slide switch was added to select the mode between Jack -> Bluetooth or Bluetooth -> Jack. It also controls the two LEDs indicating the direction.
 
@@ -349,7 +349,7 @@ Two more leds are available on the top right corner to indicate if the device is
 
 On the other side, the main one, there are all the main components and all the main signals : 
 
-![jack2bluetooth_top.png](images/jack2bluetooth_top.png)
+![jack<>bluetooth_rev3.0_top.png](images/jack<>bluetooth_rev3.0_top.png)
 
 All the inputs/outputs connectors are located on the same slide of the board. The antenna is outside of the board to have the maximum omni-directional radiation pattern. The analog part is as far as possible from the RF.
 

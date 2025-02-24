@@ -1,8 +1,7 @@
 # Jack <> Bluetooth Converter
+Revision : 3.0
 
-![jack2bluetooth_top.png](doc/images/jack2bluetooth_top.png)
-
-![jack2bluetooth_bottom.png](doc/images/jack2bluetooth_bottom.png)
+![jack<>bluetooth_rev3.0_top.png](doc/images/jack<>bluetooth_rev3.0_top.png)
 
 ## Table of Content
 
@@ -23,9 +22,9 @@ This project aims to design a device with the following features:
 - The screen and buttons enable Bluetooth peripheral selection when the device functions as a Bluetooth central.
 - The screen turns off after 1 minute of inactivity to save power.
 
-## 2. Design Specification
+## 2. Design specification and documentation
 
-The purpose of the [Jack <> Bluetooth Design Specification](doc/Jack2Bluetooth-Design-Specification.md) is to document the design choices and provide details on this project.
+Please go to [Jack <> Bluetooth Design Specification](doc/Jack<>Bluetooth-Design-Specification.md) which documents the design choices and provide details on the project.
 
 ## 3. Repo organization
 
@@ -41,7 +40,10 @@ The purpose of the [Jack <> Bluetooth Design Specification](doc/Jack2Bluetooth-D
 
 ## 4. Next steps
 
-- PCB review
-- PCB manufacturing
-- Box mechanic, 3D printing
+- PCB review & manufacturing
+- finish ox design & 3D printing
 - Software
+
+## 5. Revisions history
+
+Please go to [Jack<>Bluetooth-Revision-History](doc/Jack<>Bluetooth-Revision-History.md)

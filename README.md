@@ -4,7 +4,7 @@
 
 ![jack2bluetooth_bottom.png](doc/images/jack2bluetooth_bottom.png)
 
-## Table of Content
+## Table of Content
 
 1. [Features](#1-features)
 2. [Design Specificatin](#2-design-specification)

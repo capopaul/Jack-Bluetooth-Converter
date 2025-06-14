@@ -1,3 +1,9 @@
+# Author : Paul Capgras
+# Date   : Jun 14, 2025
+
 Components/**
 kicad/**
 software/**
+
+build/**
+sdkconfig

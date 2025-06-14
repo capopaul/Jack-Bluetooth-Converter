@@ -47,3 +47,13 @@ Please go to [Jack <> Bluetooth Design Specification](doc/Jack<>Bluetooth-Design
 ## 5. Revisions history
 
 Please go to [Jack<>Bluetooth-Revision-History](doc/Jack<>Bluetooth-Revision-History.md)
+
+## 6. SW Readme
+
+<!-- Author : Paul Capgras -->
+<!-- Date   : Jun 14, 2025 -->
+Command order:
+
+- `get_idf`
+- `idf.py set-target esp32c6`
+- `idf.py build`

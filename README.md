@@ -57,3 +57,60 @@ Command order:
 - `get_idf`
 - `idf.py set-target esp32c6`
 - `idf.py build`
+- `idf.py flash monitor`
+
+Then refer to bringup:
+
+## Bringup
+
+### Boot ESP32-C6
+
+- Connect 3.3V UART to 3.3V Pin (temporary)
+- Connect GND
+- Connect RX to **RX**
+- Connect TX to **TX**
+
+- Put 1 of OFF
+- Put 2 to ON
+- Send the program through UART
+    - thanks to the esp idf platform
+    - run `get_idf`
+    - esp32-c6 should have been also selected
+    - `idf.py build` to build
+    - `idf.py flash monitor`
+    - Start with Hell_world application
+    - to quit monitor terminal run CTRL-] on querty or CTRL+ALT GR+$ on azerty
+- Put 2 to OFF
+- Push reset button
+
+### Good practice learnt:
+
+- put a pin for all power lines
+- put an arrow for directive lines in the silkscreen
+- don't forget direction for the silkscreen for diodes (and leds !)
+
+### Detect I2C peripherals
+
+- use the i2c_tools from `/home/paul/esp/esp-idf/examples/peripherals/i2c`
+- go to the clone directory and run the idf commands.
+- i2c detect does not detect anything so far
+- connect oled i2c screen for a debug purpose. I might need a breadboard to connect grounds. 
+
+### Embedded development
+
+- VS code with esp-idf extension (from Espressif Systems) and C/C++ (from Microsoft).
+- Some `#include`might me red, you need to add the esp path to the extension.
+- This video explains it at 7min15 : https://www.youtube.com/watch?v=5IuZ-E8Tmhg&t=5s
+ 
+
+
+### Questions:
+
+- Que vaut STAT ?
+- Que vaut REIGN ?
+- Que vaut PMID ?
+- Est-ce que je peux souder le pin header 2x1 pour le boutton
+- CC entre tous les points de l'I2C ?
+
+i2cconfig --port=0 --freq=100000 --sda=6 --scl=7
+

@@ -146,3 +146,14 @@ La solution c'est de mettre les valeurs en hexa 0x...
 So go to normal bringup
 [Refer to bringup](#bringup)
 
+## Sept 18th
+
+- Copied esp32/a2dp_sink.
+- Run it with internal DAC.
+- Access with my phone to the device ESP_speaker
+- Signal was visible on the oscilloscope!
+- Commit is called feat: setup classic bt audio_sink on the esp32 using internal DAC.
+
+Next step use the audio codec. For that, I need to
+- configure the audio codec using the esp32-c6.
+- send the signal using the other esp.

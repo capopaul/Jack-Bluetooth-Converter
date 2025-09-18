@@ -7,3 +7,8 @@ software/**
 
 build/**
 sdkconfig
+
+
+esp32/build/**
+esp32_c6/build/**
+esp32_c6/sdkconfig

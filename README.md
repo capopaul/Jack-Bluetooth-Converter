@@ -114,3 +114,34 @@ Then refer to bringup:
 
 i2cconfig --port=0 --freq=100000 --sda=6 --scl=7
 
+## Jun 27
+
+- Je tente de remettre 5V sur Vcc et j'observe Vsystem
+- Vcc est connecté à mon PMIC donc c'est normal que rien ne se passe sur Vsystem vu que le PMIC est dead.
+
+- Je mets 3.323V sur Vsystem et j'observe:
+    - 3.3VA : mesure : 3.321V
+    - 1.8VDD: mesure : 1.823V
+    - 3.3VDD: mesure : 3.317V
+
+Là ma carte est correctement alimentée. Je peux mener l'enquête
+
+---
+
+
+![](image.png)
+
+![alt text](image-1.png)
+
+La solution c'est de mettre les valeurs en hexa 0x...
+
+![](image-2.png)
+
+
+---
+
+## Sept 17
+
+### Bringup
+- Connect USB-C cable
+

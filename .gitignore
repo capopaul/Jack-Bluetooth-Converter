@@ -10,7 +10,5 @@ sdkconfig
 
 
 esp32_i2c/build/**
-esp32/build/**
-esp32_c6/build/**
-
-esp32_c6/sdkconfig
+esp32_bluetooth_sink/build/**
+esp32_b2j/build/**

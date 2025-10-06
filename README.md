@@ -65,7 +65,6 @@ Then refer to bringup:
 
 ### Boot ESP32-C6 - From UART
 
-- Connect 3.3V UART to 3.3V Pin (temporary)
 - Connect GND
 - Connect RX to **RX**
 - Connect TX to **TX**
@@ -86,8 +85,8 @@ Then refer to bringup:
 - `i2cdetect`
 > Ouput should be:
   - 00 -> (ESP Master)
-  - 18 -> PMIC
-  - 6a -> Audio Codec
+  - 18 -> Audio Codec
+  - 6a -> PMIC
 
 ### Good practice learnt:
 
@@ -124,15 +123,9 @@ Là ma carte est correctement alimentée. Je peux mener l'enquête
 
 ---
 
+![](doc/i2cdetect.png.png)
 
-![](image.png)
-
-![alt text](image-1.png)
-
-La solution c'est de mettre les valeurs en hexa 0x...
-
-![](image-2.png)
-
+![alt text](doc/i2cdump_audio_codec.png)
 
 ---
 
@@ -157,3 +150,30 @@ So go to normal bringup
 Next step use the audio codec. For that, I need to
 - configure the audio codec using the esp32-c6.
 - send the signal using the other esp.
+
+## Oct 1
+
+- Issue 1 : Short between SW et Bat-. It is probably around the PMIC...
+  - I want to do an Xray to know if it is the chip, or the soldering
+    - No xray equipment at the U
+- I have added a wire on system.
+- Issue 2 : I can download the pogram on the esp32c6 but I can't leave the download mode.
+  - IO9 stays low. Pull up is not working.
+    - I removed the esp32c6 as they were no issue on the pcb.
+      - Now my voltage does not reach 3.3V anymore on VDD and AVDD. Nor 1.8V on AVDD
+
+## Oct 2
+- I have deeply cleaned the board with flux remover and the voltage issue was solved.
+
+## Oct 3
+- I have connected 6pins for the i2s and 2 pins for i2c to control these bus with the external esp32 dev kit.
+
+## Oct 6
+- I detect PMIC with i2c through external esp.
+- I don't detect audio codec.
+  - The reset pin goes from 0V to 1.4V. It is supposed to go up to 3.3V in idle.
+  - I am trying to remove external alimentation and to power everything with external esp
+  - powering everything with esp works - I have all the good voltages. The reset pin of the audio codec does go to 0V and then go back to 3.3V
+  - I still do not see my audio codec in 6a...
+  - That is because it is supposed to be in 0x18. My README was bad. So no issue I see my audio codec successfully!!!
+

@@ -1,5 +1,4 @@
 {
-    "cmake.sourceDirectory": "/home/paul/Documents/Mes-Projets/2025/ESP32_C6/monitor_mic",
     "files.associations": {
         "cmd_i2ctools.h": "c",
         "esp_console.h": "c",

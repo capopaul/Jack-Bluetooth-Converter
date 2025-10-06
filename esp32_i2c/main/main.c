@@ -32,13 +32,13 @@
 // Include i2c tools example
 #include "cmd_i2ctools.h"
 
-#define AUDIO_CODEC_RESETN_GPIO 18
+#define AUDIO_CODEC_RESETN_GPIO 32
 #define AUDIO_CODEC_RESETN_MASK (1ULL << AUDIO_CODEC_RESETN_GPIO)
 
 static const char *TAG = "i2c-tools";
 
-static gpio_num_t i2c_gpio_sda = 6;
-static gpio_num_t i2c_gpio_scl = 7;
+static gpio_num_t i2c_gpio_sda = 16;
+static gpio_num_t i2c_gpio_scl = 17;
 
 static i2c_port_t i2c_port = I2C_NUM_0;
 

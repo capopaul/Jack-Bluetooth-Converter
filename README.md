@@ -177,3 +177,16 @@ Next step use the audio codec. For that, I need to
   - I still do not see my audio codec in 6a...
   - That is because it is supposed to be in 0x18. My README was bad. So no issue I see my audio codec successfully!!!
 
+The board setup now looks like that:
+![Board Setup](doc/board_setup.jpg)
+
+| Pin name | ESP32c6 pin number | External ESP32 devkit pin number |
+|-|-|-|
+| IO6  | i2c_sda        | IO16 |
+| IO7  | i2c_clk        | IO17 |
+| IO18 | codec_reset_l  | IO32 |
+| IO19 | codec_i2s_mclk | IO33 |
+| IO20 | codec_i2s_bclk | IO25 |
+| IO21 | codec_i2s_wclk | IO26 |
+| IO22 | codec_i2s_din  | IO27 |
+| IO23 | codec_i2s_dout | IO14 |

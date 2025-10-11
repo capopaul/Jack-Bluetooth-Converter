@@ -82,7 +82,7 @@ static void esp_i2s_driver_install(void)
 
     // | pin name       | esp32_c6 | esp32 |
     // | codec_reset_l  | IO18     | IO32  |
-    // | codec_i2s_mclk | IO19     | IO33  |
+    // | codec_i2s_mclk | IO19     | IO1   | (SPECIAL PIN)
     // | codec_i2s_bclk | IO20     | IO25  |
     // | codec_i2s_wclk | IO21     | IO26  |
     // | codec_i2s_din  | IO22     | IO27  |
@@ -103,11 +103,11 @@ static void esp_i2s_driver_install(void)
         .slot_cfg = I2S_STD_MSB_SLOT_DEFAULT_CONFIG(I2S_DATA_BIT_WIDTH_16BIT,
                                                     I2S_SLOT_MODE_STEREO),
         .gpio_cfg = {
-            .mclk = 33,
-            .bclk = 25,
-            .ws = 26,
-            .dout = 14,
-            .din = 27,
+            .mclk = GPIO_NUM_1,
+            .bclk = GPIO_NUM_25,
+            .ws = GPIO_NUM_26,
+            .dout = GPIO_NUM_14,
+            .din = GPIO_NUM_27,
             .invert_flags = {
                 .mclk_inv = false,
                 .bclk_inv = false,

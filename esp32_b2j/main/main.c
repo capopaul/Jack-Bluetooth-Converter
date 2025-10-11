@@ -100,7 +100,10 @@ void app_main(void)
 
     bt_app_init();
 
-    // bt_app_task_start_up();
+    bt_app_task_start_up();
 
-    // bt_app_work_dispatch(bt_app_register_callback_function, BT_APP_EVT_REGISTER_CB_FUNCTION, NULL, 0, NULL);
+    bt_app_work_dispatch(bt_app_register_callback_function, BT_APP_EVT_REGISTER_CB_FUNCTION, NULL, 0, NULL);
+
+    // Wait 1 millisecond
+    vTaskDelay(pdMS_TO_TICKS(1000));
 }

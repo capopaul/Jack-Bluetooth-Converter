@@ -53,31 +53,25 @@ static TaskHandle_t s_bt_app_task_handle = NULL; /* handle of application task  
 
 static void init_bluetooth_controller()
 {
-    esp_err_t err;
-
     // We only uses the functions of Classical Bluetooth.
     // So release the controller memory for Bluetooth Low Energy.
     ESP_ERROR_CHECK(esp_bt_controller_mem_release(ESP_BT_MODE_BLE));
 
     /* initialize Bluetooth Controller with default configuration */
     esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
-    if ((err = esp_bt_controller_init(&bt_cfg)) != ESP_OK)
+    esp_err_t err = esp_bt_controller_init(&bt_cfg);
+    if (err != ESP_OK)
     {
         ESP_LOGE(BT_APP_CORE_TAG, "%s initialize controller failed: %s", __func__, esp_err_to_name(err));
         return;
-    }
-    else
-    {
-        ESP_LOGI(BT_APP_CORE_TAG, "%s initialize successfully.", __func__);
     }
 };
 
 static void enable_bluetooth_controller()
 {
-    esp_err_t err;
-
     /* enable Bluetooth Controller in Classic Bluetooth mode */
-    if ((err = esp_bt_controller_enable(ESP_BT_MODE_CLASSIC_BT)) != ESP_OK)
+    esp_err_t err = esp_bt_controller_enable(ESP_BT_MODE_CLASSIC_BT);
+    if (err != ESP_OK)
     {
         ESP_LOGE(BT_APP_CORE_TAG, "%s enable controller failed: %s", __func__, esp_err_to_name(err));
         return;
@@ -86,12 +80,11 @@ static void enable_bluetooth_controller()
 
 static void init_bluedroid_host()
 {
-    esp_err_t err;
-
     /* initialize Bluedroid Host */
     esp_bluedroid_config_t bluedroid_cfg = BT_BLUEDROID_INIT_CONFIG_DEFAULT();
     bluedroid_cfg.ssp_en = false;
-    if ((err = esp_bluedroid_init_with_cfg(&bluedroid_cfg)) != ESP_OK)
+    esp_err_t err = esp_bluedroid_init_with_cfg(&bluedroid_cfg);
+    if (err != ESP_OK)
     {
         ESP_LOGE(BT_APP_CORE_TAG, "%s initialize bluedroid failed: %s", __func__, esp_err_to_name(err));
         return;
@@ -101,7 +94,8 @@ static void init_bluedroid_host()
 static void enable_bluedroid_host()
 {
     /* enable Bluedroid Host */
-    if (esp_bluedroid_enable() != ESP_OK)
+    esp_err_t err = esp_bluedroid_enable();
+    if (err != ESP_OK)
     {
         ESP_LOGE(BT_APP_CORE_TAG, "%s enable bluedroid failed", __func__);
         return;
@@ -283,13 +277,6 @@ static void bt_app_gap_cb(esp_bt_gap_cb_event_t event, esp_bt_gap_cb_param_t *pa
 void bt_app_init(void)
 {
     init_bluetooth_controller();
-
-    // Check controller status
-    esp_bt_controller_status_t status = esp_bt_controller_get_status();
-    ESP_LOGI(BT_APP_CORE_TAG, "%s: Bluetooth controller status: %d", __func__, status);
-
-    vTaskDelay(pdMS_TO_TICKS(100)); // Delay to ensure proper initialization
-
     enable_bluetooth_controller();
 
     init_bluedroid_host();

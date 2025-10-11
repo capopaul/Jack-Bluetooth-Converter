@@ -1,22 +1,13 @@
-/*
- * SPDX-FileCopyrightText: 2022-2024 Espressif Systems (Shanghai) CO LTD
- *
- * SPDX-License-Identifier: Unlicense OR CC0-1.0
- */
-/* cmd_i2ctools.c
+// Author : Paul Capgras
+// Date   : Oct 10, 2025
 
-   This example code is in the Public Domain (or CC0 licensed, at your option.)
-
-   Unless required by applicable law or agreed to in writing, this
-   software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-   CONDITIONS OF ANY KIND, either express or implied.
-*/
 #include <stdio.h>
 #include <string.h>
 #include "argtable3/argtable3.h"
 #include "driver/i2c_master.h"
 #include "esp_console.h"
 #include "esp_log.h"
+#include "cmd_i2ctools.h"
 
 static const char *TAG = "cmd_i2ctools";
 
@@ -35,44 +26,35 @@ static esp_err_t i2c_get_port(int port, i2c_port_t *i2c_port)
     return ESP_OK;
 }
 
-static struct
+int i2c_config(int argc, char **argv)
 {
-    struct arg_int *port;
-    struct arg_int *freq;
-    struct arg_int *sda;
-    struct arg_int *scl;
-    struct arg_end *end;
-} i2cconfig_args;
-
-static int do_i2cconfig_cmd(int argc, char **argv)
-{
-    int nerrors = arg_parse(argc, argv, (void **)&i2cconfig_args);
+    int nerrors = arg_parse(argc, argv, (void **)&i2c_config_args);
     i2c_port_t i2c_port = I2C_NUM_0;
     int i2c_gpio_sda = 0;
     int i2c_gpio_scl = 0;
     if (nerrors != 0)
     {
-        arg_print_errors(stderr, i2cconfig_args.end, argv[0]);
+        arg_print_errors(stderr, i2c_config_args.end, argv[0]);
         return 0;
     }
 
     /* Check "--port" option */
-    if (i2cconfig_args.port->count)
+    if (i2c_config_args.port->count)
     {
-        if (i2c_get_port(i2cconfig_args.port->ival[0], &i2c_port) != ESP_OK)
+        if (i2c_get_port(i2c_config_args.port->ival[0], &i2c_port) != ESP_OK)
         {
             return 1;
         }
     }
     /* Check "--freq" option */
-    if (i2cconfig_args.freq->count)
+    if (i2c_config_args.freq->count)
     {
-        i2c_frequency = i2cconfig_args.freq->ival[0];
+        i2c_frequency = i2c_config_args.freq->ival[0];
     }
     /* Check "--sda" option */
-    i2c_gpio_sda = i2cconfig_args.sda->ival[0];
+    i2c_gpio_sda = i2c_config_args.sda->ival[0];
     /* Check "--scl" option */
-    i2c_gpio_scl = i2cconfig_args.scl->ival[0];
+    i2c_gpio_scl = i2c_config_args.scl->ival[0];
 
     // re-init the bus
     if (i2c_del_master_bus(tool_bus_handle) != ESP_OK)
@@ -97,23 +79,7 @@ static int do_i2cconfig_cmd(int argc, char **argv)
     return 0;
 }
 
-static void register_i2cconfig(void)
-{
-    i2cconfig_args.port = arg_int0(NULL, "port", "<0|1>", "Set the I2C bus port number");
-    i2cconfig_args.freq = arg_int0(NULL, "freq", "<Hz>", "Set the frequency(Hz) of I2C bus");
-    i2cconfig_args.sda = arg_int1(NULL, "sda", "<gpio>", "Set the gpio for I2C SDA");
-    i2cconfig_args.scl = arg_int1(NULL, "scl", "<gpio>", "Set the gpio for I2C SCL");
-    i2cconfig_args.end = arg_end(2);
-    const esp_console_cmd_t i2cconfig_cmd = {
-        .command = "i2cconfig",
-        .help = "Config I2C bus",
-        .hint = NULL,
-        .func = &do_i2cconfig_cmd,
-        .argtable = &i2cconfig_args};
-    ESP_ERROR_CHECK(esp_console_cmd_register(&i2cconfig_cmd));
-}
-
-static int do_i2cdetect_cmd(int argc, char **argv)
+int i2c_detect()
 {
     uint8_t address;
     printf("     0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f\r\n");
@@ -144,138 +110,52 @@ static int do_i2cdetect_cmd(int argc, char **argv)
     return 0;
 }
 
-static void register_i2cdetect(void)
+uint8_t i2c_get(int chip_address, int register_address)
 {
-    const esp_console_cmd_t i2cdetect_cmd = {
-        .command = "i2cdetect",
-        .help = "Scan I2C bus for devices",
-        .hint = NULL,
-        .func = &do_i2cdetect_cmd,
-        .argtable = NULL};
-    ESP_ERROR_CHECK(esp_console_cmd_register(&i2cdetect_cmd));
-}
-
-static struct
-{
-    struct arg_int *chip_address;
-    struct arg_int *register_address;
-    struct arg_int *data_length;
-    struct arg_end *end;
-} i2cget_args;
-
-static int do_i2cget_cmd(int argc, char **argv)
-{
-    int nerrors = arg_parse(argc, argv, (void **)&i2cget_args);
-    if (nerrors != 0)
-    {
-        arg_print_errors(stderr, i2cget_args.end, argv[0]);
-        return 0;
-    }
-
-    /* Check chip address: "-c" option */
-    int chip_addr = i2cget_args.chip_address->ival[0];
-    /* Check register address: "-r" option */
-    int data_addr = -1;
-    if (i2cget_args.register_address->count)
-    {
-        data_addr = i2cget_args.register_address->ival[0];
-    }
-    /* Check data length: "-l" option */
-    int len = 1;
-    if (i2cget_args.data_length->count)
-    {
-        len = i2cget_args.data_length->ival[0];
-    }
-    uint8_t *data = malloc(len);
+    uint8_t data = 0; // store the single byte
 
     i2c_device_config_t i2c_dev_conf = {
         .scl_speed_hz = i2c_frequency,
-        .device_address = chip_addr,
+        .device_address = chip_address,
     };
     i2c_master_dev_handle_t dev_handle;
+
     if (i2c_master_bus_add_device(tool_bus_handle, &i2c_dev_conf, &dev_handle) != ESP_OK)
     {
-        return 1;
+        ESP_LOGE(TAG, "Failed to add I2C device");
+        return -1; // indicate error
     }
 
-    esp_err_t ret = i2c_master_transmit_receive(dev_handle, (uint8_t *)&data_addr, 1, data, len, I2C_TOOL_TIMEOUT_VALUE_MS);
-    if (ret == ESP_OK)
+    esp_err_t ret = i2c_master_transmit_receive(
+        dev_handle,
+        (uint8_t *)&register_address, 1,
+        &data, 1,
+        I2C_TOOL_TIMEOUT_VALUE_MS);
+
+    if (ret != ESP_OK)
     {
-        for (int i = 0; i < len; i++)
-        {
-            printf("0x%02x ", data[i]);
-            if ((i + 1) % 16 == 0)
-            {
-                printf("\r\n");
-            }
-        }
-        if (len % 16)
-        {
-            printf("\r\n");
-        }
+        ESP_LOGW(TAG, "I2C read failed: %s", esp_err_to_name(ret));
+        i2c_master_bus_rm_device(dev_handle);
+        return -1;
     }
-    else if (ret == ESP_ERR_TIMEOUT)
-    {
-        ESP_LOGW(TAG, "Bus is busy");
-    }
-    else
-    {
-        ESP_LOGW(TAG, "Read failed");
-    }
-    free(data);
+
+    printf("I2C_GET - Reg %d -> 0x%02x\n", register_address, data);
+
     if (i2c_master_bus_rm_device(dev_handle) != ESP_OK)
     {
-        return 1;
+        ESP_LOGE(TAG, "Failed to remove I2C device");
+        return -1;
     }
-    return 0;
+
+    return data; // return the byte read
 }
 
-static void register_i2cget(void)
+int i2c_set(int chip_address, int register_address, uint8_t data)
 {
-    i2cget_args.chip_address = arg_int1("c", "chip", "<chip_addr>", "Specify the address of the chip on that bus");
-    i2cget_args.register_address = arg_int0("r", "register", "<register_addr>", "Specify the address on that chip to read from");
-    i2cget_args.data_length = arg_int0("l", "length", "<length>", "Specify the length to read from that data address");
-    i2cget_args.end = arg_end(1);
-    const esp_console_cmd_t i2cget_cmd = {
-        .command = "i2cget",
-        .help = "Read registers visible through the I2C bus",
-        .hint = NULL,
-        .func = &do_i2cget_cmd,
-        .argtable = &i2cget_args};
-    ESP_ERROR_CHECK(esp_console_cmd_register(&i2cget_cmd));
-}
-
-static struct
-{
-    struct arg_int *chip_address;
-    struct arg_int *register_address;
-    struct arg_int *data;
-    struct arg_end *end;
-} i2cset_args;
-
-static int do_i2cset_cmd(int argc, char **argv)
-{
-    int nerrors = arg_parse(argc, argv, (void **)&i2cset_args);
-    if (nerrors != 0)
-    {
-        arg_print_errors(stderr, i2cset_args.end, argv[0]);
-        return 0;
-    }
-
-    /* Check chip address: "-c" option */
-    int chip_addr = i2cset_args.chip_address->ival[0];
-    /* Check register address: "-r" option */
-    int data_addr = 0;
-    if (i2cset_args.register_address->count)
-    {
-        data_addr = i2cset_args.register_address->ival[0];
-    }
-    /* Check data: "-d" option */
-    int len = i2cset_args.data->count;
-
+    int data_len = 1;
     i2c_device_config_t i2c_dev_conf = {
         .scl_speed_hz = i2c_frequency,
-        .device_address = chip_addr,
+        .device_address = chip_address,
     };
     i2c_master_dev_handle_t dev_handle;
     if (i2c_master_bus_add_device(tool_bus_handle, &i2c_dev_conf, &dev_handle) != ESP_OK)
@@ -283,13 +163,11 @@ static int do_i2cset_cmd(int argc, char **argv)
         return 1;
     }
 
-    uint8_t *data = malloc(len + 1);
-    data[0] = data_addr;
-    for (int i = 0; i < len; i++)
-    {
-        data[i + 1] = i2cset_args.data->ival[i];
-    }
-    esp_err_t ret = i2c_master_transmit(dev_handle, data, len + 1, I2C_TOOL_TIMEOUT_VALUE_MS);
+    uint8_t *i2c_data = malloc(data_len + 1);
+    i2c_data[0] = register_address;
+    i2c_data[1] = data;
+
+    esp_err_t ret = i2c_master_transmit(dev_handle, i2c_data, data_len + 1, I2C_TOOL_TIMEOUT_VALUE_MS);
     if (ret == ESP_OK)
     {
         ESP_LOGI(TAG, "Write OK");
@@ -303,7 +181,7 @@ static int do_i2cset_cmd(int argc, char **argv)
         ESP_LOGW(TAG, "Write Failed");
     }
 
-    free(data);
+    free(i2c_data);
     if (i2c_master_bus_rm_device(dev_handle) != ESP_OK)
     {
         return 1;
@@ -311,29 +189,7 @@ static int do_i2cset_cmd(int argc, char **argv)
     return 0;
 }
 
-static void register_i2cset(void)
-{
-    i2cset_args.chip_address = arg_int1("c", "chip", "<chip_addr>", "Specify the address of the chip on that bus");
-    i2cset_args.register_address = arg_int0("r", "register", "<register_addr>", "Specify the address on that chip to read from");
-    i2cset_args.data = arg_intn(NULL, NULL, "<data>", 0, 256, "Specify the data to write to that data address");
-    i2cset_args.end = arg_end(2);
-    const esp_console_cmd_t i2cset_cmd = {
-        .command = "i2cset",
-        .help = "Set registers visible through the I2C bus",
-        .hint = NULL,
-        .func = &do_i2cset_cmd,
-        .argtable = &i2cset_args};
-    ESP_ERROR_CHECK(esp_console_cmd_register(&i2cset_cmd));
-}
-
-static struct
-{
-    struct arg_int *chip_address;
-    struct arg_int *size;
-    struct arg_end *end;
-} i2cdump_args;
-
-int do_i2cdump_cmd(int chip_addr, int size)
+int i2c_dump(int chip_addr, int size)
 {
 
     // check read size is correct
@@ -410,12 +266,4 @@ int do_i2cdump_cmd(int chip_addr, int size)
         return 1;
     }
     return 0;
-}
-
-void register_i2ctools(void)
-{
-    register_i2cconfig();
-    register_i2cdetect();
-    register_i2cget();
-    register_i2cset();
 }

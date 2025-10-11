@@ -28,7 +28,7 @@ void reset_audio_codec(void)
     printf("Audio codec reset pin LOW\n");
 
     // Wait 1 millisecond
-    vTaskDelay(pdMS_TO_TICKS(1));
+    vTaskDelay(pdMS_TO_TICKS(1000));
 
     // Pull reset pin HIGH
     gpio_set_level(AUDIO_CODEC_RESETN_GPIO, 1);

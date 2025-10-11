@@ -10,6 +10,6 @@
 /********************************
  * EXTERNAL FUNCTION DECLARATIONS
  *******************************/
-
+void esp_i2s_driver_install(void);
 void bt_app_a2dp_cb(esp_a2d_cb_event_t event, esp_a2d_cb_param_t *param);
 void bt_app_a2dp_data_cb(const uint8_t *data, uint32_t len);

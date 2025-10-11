@@ -204,3 +204,32 @@ Two parts:
 - I have understood the esp example
 - I have reorganized and better name functions
 - I have removed the I2S link for now
+
+- I am now configuring the codec.
+- I based mon analysis on Figure 26 of the codec spec.
+- So I will be using HPL/ROUT
+
+## Oct 11
+
+- I am programming the AudioCodec
+
+### Clocks
+I want my clock to be 256 of fs and it is coming from the master clock
+![figure17](doc/figure17.png)
+
+- So I choose to use the path on the left.
+- CLKDIV_CLKIN need to be enabled and select MCLK - Register 102.
+- Q should be be equal to 2 - Register 3.
+- CODEC_CLKIN should select CLKDIV_OUT -> Register 101.
+
+### DAC
+
+I want my audio output on HPR/Lout:
+![DAC_path](doc/dac_path.png)
+![figure24](doc/figure24.png)
+
+- so according to this : I should put my audio on DAC_L2 and DAC_R2 - Register 41.
+- Both DAC should be powered up - Register 37.
+- Both DAC should be using fs = 44.1KHz and streaming L/R data - Register 7.
+- HPLout should be powered up and unmuted - Register 51
+- HPRout should be powered up and unmuted - Register 65

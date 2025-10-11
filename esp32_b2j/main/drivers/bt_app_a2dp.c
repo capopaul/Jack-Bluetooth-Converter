@@ -45,7 +45,7 @@ enum
  * STATIC FUNCTION DECLARATIONS
  ******************************/
 
-static void esp_i2s_driver_install(void);
+// static void esp_i2s_driver_install(void);
 static void esp_i2s_driver_uninstall(void);
 static void handle_a2dp_event(uint16_t event, void *p_param);
 static void i2s_task_start_up(void);
@@ -75,7 +75,7 @@ i2s_chan_handle_t tx_chan = NULL;
  * STATIC FUNCTION DEFINITIONS
  *******************************/
 
-static void esp_i2s_driver_install(void)
+void esp_i2s_driver_install(void)
 {
     i2s_chan_config_t chan_cfg = I2S_CHANNEL_DEFAULT_CONFIG(I2S_NUM_0, I2S_ROLE_MASTER);
     chan_cfg.auto_clear = true;

@@ -190,3 +190,17 @@ The board setup now looks like that:
 | IO21 | codec_i2s_wclk | IO26 |
 | IO22 | codec_i2s_din  | IO27 |
 | IO23 | codec_i2s_dout | IO14 |
+
+I was working on the folder esp32_b2j.
+
+I have removed what is linked with A2VRCP and try to keep only A2DP.
+Now I was trying to make the link with the external I2S codec.
+Two parts:
+- understand what has been programmed and how is the A2DP send to I2S: What are the I2S parameters
+- configure the audio codec according to these parameters
+
+## Oct 10
+
+- I have understood the esp example
+- I have reorganized and better name functions
+- I have removed the I2S link for now

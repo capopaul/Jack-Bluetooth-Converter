@@ -96,14 +96,12 @@ void esp_i2s_driver_install(void)
     //     .bclk_div = 8,
     // }
 
-    // So esp_i2s_mclk should be at a frequency of rate*256.
-
     i2s_std_config_t std_cfg = {
         .clk_cfg = I2S_STD_CLK_DEFAULT_CONFIG(44100),
         .slot_cfg = I2S_STD_MSB_SLOT_DEFAULT_CONFIG(I2S_DATA_BIT_WIDTH_16BIT,
                                                     I2S_SLOT_MODE_STEREO),
         .gpio_cfg = {
-            .mclk = GPIO_NUM_1,
+            .mclk = I2S_GPIO_UNUSED,
             .bclk = GPIO_NUM_25,
             .ws = GPIO_NUM_26,
             .dout = GPIO_NUM_14,
@@ -307,7 +305,7 @@ static void i2s_task_start_up(void)
         ESP_LOGE(BT_APP_A2DP_TAG, "%s, ringbuffer create failed", __func__);
         return;
     }
-    xTaskCreate(task__i2s_handler, "BtI2STask", 2048, NULL, configMAX_PRIORITIES - 3, &s_bt_i2s_task_handle);
+    xTaskCreate(task__i2s_handler, "BtI2STask", 8192, NULL, configMAX_PRIORITIES - 3, &s_bt_i2s_task_handle);
 }
 
 static void i2s_task_shut_down(void)
@@ -356,7 +354,7 @@ static void task__i2s_handler(void *arg)
                     ringbuffer_mode = RINGBUFFER_MODE_PREFETCHING;
                     break;
                 }
-                // i2s_channel_write(tx_chan, data, item_size, &bytes_written, portMAX_DELAY);
+                i2s_channel_write(tx_chan, data, item_size, &bytes_written, portMAX_DELAY);
                 vRingbufferReturnItem(s_ringbuf_i2s, (void *)data);
             }
         }

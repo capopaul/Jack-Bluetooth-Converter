@@ -221,6 +221,29 @@ I want my clock to be 256 of fs and it is coming from the master clock
 - CLKDIV_CLKIN need to be enabled and select MCLK - Register 102.
 - Q should be be equal to 2 - Register 3.
 - CODEC_CLKIN should select CLKDIV_OUT -> Register 101.
+- CLK_DIV uses MCLK -> Register 102
+
+```c
+// Register 3 - PLL Programming Register A
+// D7   - 0    -
+// D6-3 - 0010 - Q = 2
+// D2-0 - 000  -
+is_expected(3, i2c_get(CODEC_ADDR, 3), 0b00010000);
+
+// Register 102 - Clock Generation Control Register
+// D7-6 - 00 - CLKDIV_IN selects MCLK
+// D5-4 - 0
+// D3-0 - 0010
+// No need to write
+is_expected(102, i2c_get(CODEC_ADDR, 102), 0b00000010);
+
+// Register 101 - Clock register
+i2c_get(CODEC_ADDR, 101);
+// D7-1 - 0
+// D0   - 1 - CODEC_CLKIN uses CLKDIV_OUT
+i2c_set(CODEC_ADDR, 101, 0b00000001);
+is_expected(101, i2c_get(CODEC_ADDR, 101), 0b00000001);
+```
 
 ### DAC
 
@@ -233,3 +256,80 @@ I want my audio output on HPR/Lout:
 - Both DAC should be using fs = 44.1KHz and streaming L/R data - Register 7.
 - HPLout should be powered up and unmuted - Register 51
 - HPRout should be powered up and unmuted - Register 65
+
+Crash when I send the audio. Honnestly without UART working (as it is used to trasnmit MCLK), it is really a mess to debug.
+
+## Oct 12
+
+I am choosing not to use MCLK from the ESP and to generate the clock internally in my audio codec with the internal PLL using the BCLK as a source.
+
+Let's configure the PLL.
+![figure17](doc/figure17.png)
+
+- CODEC_CLK (BCLK) = KxRxBCLK/(8xP) = 256 fs = KxRxfs/(8x8xP). Which implies that KxR/P = 64x256. So JxDxR/P = 64x256. Let's take P=1, R=2, J=32, D=256
+- Enable PLL and set P in register 3
+- Set J in register 4
+- Set D in register 5 and 6
+- Set R in register 11
+- CODEC_CLKIN should select PLLDIV_OUT -> Register 101.
+- PLLDIV_IN uses BCLK -> Register 102
+
+```c
+/*
+  * Clock
+  */
+
+// Register 3 - PLL Programming Register A
+// D7   - 1    - PLL is enabled
+// D6-3 - 0000 -
+// D2-0 - 001  - P= 1
+i2c_set(CODEC_ADDR, 3, 0b10000001);
+is_expected(3, i2c_get(CODEC_ADDR, 3), 0b10000001);
+
+// Register 4 - PLL Programming Register B
+// D7-2 - 100000 // Set J to 32
+// D1-0 - 00
+i2c_set(CODEC_ADDR, 4, 0b10000000);
+is_expected(4, i2c_get(CODEC_ADDR, 4), 0b10000000);
+
+// Register 5 and 6
+// Set D to 100000000 (256)
+// MSB D7-0 (reg 5) 00000100
+// LSB D7-2 (reg 6) 000000
+// D1-0             00
+i2c_get(CODEC_ADDR, 5);
+i2c_set(CODEC_ADDR, 5, 0b00000100);
+is_expected(5, i2c_get(CODEC_ADDR, 5), 0b00000100);
+is_expected(6, i2c_get(CODEC_ADDR, 6), 0b00000000);
+
+// Register 11 - Audio Codec Overflow Flag Register
+// D7-4 0
+// D3-0 0010 Set R to 0010
+i2c_set(CODEC_ADDR, 11, 0b00000010);
+is_expected(11, i2c_get(CODEC_ADDR, 11), 0b00000010);
+
+// Register 102 - Clock Generation Control Register
+// D7-6 - 0  -
+// D5-4 - 10 - PLLCLK_IN uses BCLK
+// D3-0 - 0010
+// No need to write
+i2c_set(CODEC_ADDR, 102, 0b00100010);
+is_expected(102, i2c_get(CODEC_ADDR, 102), 0b00100010);
+
+// Register 101 - Clock register
+// D7-1 - 0
+// D0   - 0 - CODEC_CLKIN uses PLLDIV_OUT
+is_expected(101, i2c_get(CODEC_ADDR, 101), 0b00000000);
+
+```
+
+Let's check if the audio is sent successfully through the i2s interface:
+
+I do have my BCLK visible in the oscilloscope. Not the best clean clock I have seen... The frequency is fs(=44.1) * 256 / 8 = 1.41MHz so that is good. It is a free running clock.
+![BLCK](/doc/bclk_oscilloscope.png)
+
+Ws is also free running.
+![WS](/doc/ws_oscilloscope.png)
+
+The Dout is also good when sending an audio:
+![Dout](/doc/dout_oscilloscope.png)

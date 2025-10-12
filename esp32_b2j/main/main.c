@@ -114,25 +114,55 @@ void app_main(void)
     // Register 1 - SW reset
     i2c_set(CODEC_ADDR, 1, 0x80);
 
+    /*
+     * Clock
+     */
+
     // Register 3 - PLL Programming Register A
-    // D7   - 0    -
-    // D6-3 - 0010 - Q = 2
-    // D2-0 - 000  -
-    is_expected(3, i2c_get(CODEC_ADDR, 3), 0b00010000);
+    // D7   - 1    - PLL is enabled
+    // D6-3 - 0000 -
+    // D2-0 - 001  - P= 1
+    i2c_set(CODEC_ADDR, 3, 0b10000001);
+    is_expected(3, i2c_get(CODEC_ADDR, 3), 0b10000001);
+
+    // Register 4 - PLL Programming Register B
+    // D7-2 - 100000 // Set J to 32
+    // D1-0 - 00
+    i2c_set(CODEC_ADDR, 4, 0b10000000);
+    is_expected(4, i2c_get(CODEC_ADDR, 4), 0b10000000);
+
+    // Register 5 and 6
+    // Set D to 100000000 (256)
+    // MSB D7-0 (reg 5) 00000100
+    // LSB D7-2 (reg 6) 000000
+    // D1-0             00
+    i2c_set(CODEC_ADDR, 5, 0b00000100);
+    i2c_set(CODEC_ADDR, 6, 0b00000000);
+    is_expected(5, i2c_get(CODEC_ADDR, 5), 0b00000100);
+    is_expected(6, i2c_get(CODEC_ADDR, 6), 0b00000000);
+
+    // Register 11 - Audio Codec Overflow Flag Register
+    // D7-4 0
+    // D3-0 0010 Set R to 0010
+    i2c_set(CODEC_ADDR, 11, 0b00000010);
+    is_expected(11, i2c_get(CODEC_ADDR, 11), 0b00000010);
 
     // Register 102 - Clock Generation Control Register
-    // D7-6 - 00 - CLKDIV_IN selects MCLK
-    // D5-4 - 0
+    // D7-6 - 0  -
+    // D5-4 - 10 - PLLCLK_IN uses BCLK
     // D3-0 - 0010
     // No need to write
-    is_expected(102, i2c_get(CODEC_ADDR, 102), 0b00000010);
+    i2c_set(CODEC_ADDR, 102, 0b00100010);
+    is_expected(102, i2c_get(CODEC_ADDR, 102), 0b00100010);
 
     // Register 101 - Clock register
-    i2c_get(CODEC_ADDR, 101);
     // D7-1 - 0
-    // D0   - 1 - CODEC_CLKIN uses CLKDIV_OUT
-    i2c_set(CODEC_ADDR, 101, 0b00000001);
-    is_expected(101, i2c_get(CODEC_ADDR, 101), 0b00000001);
+    // D0   - 0 - CODEC_CLKIN uses PLLDIV_OUT
+    is_expected(101, i2c_get(CODEC_ADDR, 101), 0b00000000);
+
+    /*
+     * Audio codec
+     */
 
     // Register 7 - Codec Data-Path Setup Register
     i2c_get(CODEC_ADDR, 7);

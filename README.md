@@ -263,6 +263,7 @@ Crash when I send the audio. Honnestly without UART working (as it is used to tr
 
 I am choosing not to use MCLK from the ESP and to generate the clock internally in my audio codec with the internal PLL using the BCLK as a source.
 
+### Clock
 Let's configure the PLL.
 ![figure17](doc/figure17.png)
 
@@ -297,8 +298,8 @@ is_expected(4, i2c_get(CODEC_ADDR, 4), 0b10000000);
 // MSB D7-0 (reg 5) 00000100
 // LSB D7-2 (reg 6) 000000
 // D1-0             00
-i2c_get(CODEC_ADDR, 5);
 i2c_set(CODEC_ADDR, 5, 0b00000100);
+i2c_set(CODEC_ADDR, 6, 0b00000000);
 is_expected(5, i2c_get(CODEC_ADDR, 5), 0b00000100);
 is_expected(6, i2c_get(CODEC_ADDR, 6), 0b00000000);
 
@@ -319,6 +320,7 @@ is_expected(102, i2c_get(CODEC_ADDR, 102), 0b00100010);
 // Register 101 - Clock register
 // D7-1 - 0
 // D0   - 0 - CODEC_CLKIN uses PLLDIV_OUT
+i2c_set(CODEC_ADDR, 101, 0b00000000);
 is_expected(101, i2c_get(CODEC_ADDR, 101), 0b00000000);
 
 ```
@@ -333,3 +335,102 @@ Ws is also free running.
 
 The Dout is also good when sending an audio:
 ![Dout](/doc/dout_oscilloscope.png)
+
+-> Not working. Three possibilities the overshoot are problematic. And/Or the PLL is bad. And/Or the DAC is badly configured.
+
+1. Let's have a faster BCLK with the ESP to enter spec recommendation in the example:
+
+fs = 44.1kHz
+Let's have MCLK = 1024x44.1kHz = 45.1584MHz.
+So BCLK = MCLK/8 = 5.6448
+
+PLLCLK_IN = 5.6448MHz so we have 2MHz < PLLCLK_IN < 20MHz (that is the condition that was not respected before).
+
+fS(ref) = (PLLCLK_IN × K × R)/(2048 × P)
+
+fS(ref) = (1024xfS(ref)/8 × K × R)/(2048 × P), 
+
+1 = (1024 × K × R)/(8x2048 × P), 
+
+**P = 1**
+
+KxR = 8x2048/1024 = 8x2 = 16
+
+K = J.D => **D=0**, **J = 16**
+
+Other constraint:
+80 MHz ≤ (PLLCLK _IN × K × R/P ) ≤ 110 MHz
+
+**R=1**
+
+80MHz < 90MHz < 110MHz - GOOD
+
+
+Final contraint:
+
+4 ≤ J=16 ≤ 55 - GOOD
+
+``` c
+// Register 3 - PLL Programming Register A
+// D7   - 1    - PLL is enabled
+// D6-3 - 0000 -
+// D2-0 - 001  - P= 1
+i2c_set(CODEC_ADDR, 3, 0b10000001);
+is_expected(3, i2c_get(CODEC_ADDR, 3), 0b10000001);
+
+// Register 4 - PLL Programming Register B
+// D7-2 - 10000 // Set J to 32
+// D1-0 - 00
+i2c_set(CODEC_ADDR, 4, 0b01000000);
+is_expected(4, i2c_get(CODEC_ADDR, 4), 0b01000000);
+
+// Register 5 and 6
+// Set D to 0
+// MSB D7-0 (reg 5) 0
+// LSB D7-2 (reg 6) 0
+// D1-0             0
+// always write both, and in the order reg5 then reg6.
+is_expected(5, i2c_get(CODEC_ADDR, 5), 0b00000000);
+is_expected(6, i2c_get(CODEC_ADDR, 6), 0b00000000);
+
+// Register 11 - Audio Codec Overflow Flag Register
+// D7-4 0
+// D3-0 0010 Set R to 0001
+i2c_set(CODEC_ADDR, 11, 0b00000010);
+is_expected(11, i2c_get(CODEC_ADDR, 11), 0b00000010);
+
+// Register 102 - Clock Generation Control Register
+// D7-6 - 0  -
+// D5-4 - 10 - PLLCLK_IN uses BCLK
+// D3-0 - 0010
+// No need to write
+i2c_set(CODEC_ADDR, 102, 0b00100010);
+is_expected(102, i2c_get(CODEC_ADDR, 102), 0b00100010);
+
+// Register 101 - Clock register
+// D7-1 - 0
+// D0   - 0 - CODEC_CLKIN uses PLLDIV_OUT
+i2c_set(CODEC_ADDR, 101, 0b00000000);
+is_expected(101, i2c_get(CODEC_ADDR, 101), 0b00000000);
+```
+
+2. Let's filter this signals to have cleaner signals.
+
+
+### DAC
+
+I want my audio output on HPR/Lout:
+![DAC_path](doc/dac_path.png)
+![figure24](doc/figure24.png)
+
+- so according to this : I should put my audio on DAC_L2 and DAC_R2 - Register 41.
+- Both DAC should be powered up - Register 37.
+- Both DAC should be using fs = 44.1KHz and streaming L/R data - Register 7.
+- HPLout should be powered up and unmuted - Register 51
+- HPRout should be powered up and unmuted - Register 65
+
+Missing configuration:
+
+- Unmute L-DAC - Register 43
+- Unmute R-DAC - Register 44
+

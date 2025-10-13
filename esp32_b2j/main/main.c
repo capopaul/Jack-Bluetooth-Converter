@@ -126,24 +126,23 @@ void app_main(void)
     is_expected(3, i2c_get(CODEC_ADDR, 3), 0b10000001);
 
     // Register 4 - PLL Programming Register B
-    // D7-2 - 100000 // Set J to 32
+    // D7-2 - 10000 // Set J to 16
     // D1-0 - 00
-    i2c_set(CODEC_ADDR, 4, 0b10000000);
-    is_expected(4, i2c_get(CODEC_ADDR, 4), 0b10000000);
+    i2c_set(CODEC_ADDR, 4, 0b01000000);
+    is_expected(4, i2c_get(CODEC_ADDR, 4), 0b01000000);
 
     // Register 5 and 6
-    // Set D to 100000000 (256)
-    // MSB D7-0 (reg 5) 00000100
-    // LSB D7-2 (reg 6) 000000
-    // D1-0             00
-    i2c_set(CODEC_ADDR, 5, 0b00000100);
-    i2c_set(CODEC_ADDR, 6, 0b00000000);
-    is_expected(5, i2c_get(CODEC_ADDR, 5), 0b00000100);
+    // Set D to 0
+    // MSB D7-0 (reg 5) 0
+    // LSB D7-2 (reg 6) 0
+    // D1-0             0
+    // always write both, and in the order reg5 then reg6.
+    is_expected(5, i2c_get(CODEC_ADDR, 5), 0b00000000);
     is_expected(6, i2c_get(CODEC_ADDR, 6), 0b00000000);
 
     // Register 11 - Audio Codec Overflow Flag Register
     // D7-4 0
-    // D3-0 0010 Set R to 0010
+    // D3-0 0010 Set R to 0001
     i2c_set(CODEC_ADDR, 11, 0b00000010);
     is_expected(11, i2c_get(CODEC_ADDR, 11), 0b00000010);
 
@@ -158,6 +157,7 @@ void app_main(void)
     // Register 101 - Clock register
     // D7-1 - 0
     // D0   - 0 - CODEC_CLKIN uses PLLDIV_OUT
+    i2c_set(CODEC_ADDR, 101, 0b00000000);
     is_expected(101, i2c_get(CODEC_ADDR, 101), 0b00000000);
 
     /*
@@ -165,7 +165,6 @@ void app_main(void)
      */
 
     // Register 7 - Codec Data-Path Setup Register
-    i2c_get(CODEC_ADDR, 7);
     // D7   - 1  - Set fs=44.1kHz
     // D6-5 - 00
     // D4-3 - 01 - Left DAC plays left input data
@@ -177,7 +176,6 @@ void app_main(void)
     is_expected(7, i2c_get(CODEC_ADDR, 7), 0b10001010);
 
     // Register 37 - DAC Power and Output Driver Control Register
-    i2c_get(CODEC_ADDR, 37);
     // D7   - 1 - Left DAC is powered up
     // D6   - 1 - Right DAC is powered up
     // D5-0 - 0
@@ -186,7 +184,6 @@ void app_main(void)
     is_expected(37, i2c_get(CODEC_ADDR, 37), 0b11000000);
 
     // Register 41 - DAC Output Switching Control Register
-    i2c_get(CODEC_ADDR, 41);
     // D7-6 - 10 - Left DAC output selects DAC-L2 path to left high power output drivers
     // D5-4 - 10 - Right DAC output selects DAC-R2 path to right high power output drivers
     // D3-0 - 0000
@@ -194,7 +191,6 @@ void app_main(void)
     is_expected(41, i2c_get(CODEC_ADDR, 41), 0b10100000);
 
     // Register 51 - HPLout output level control register
-    i2c_get(CODEC_ADDR, 51);
     // D7-4 - 0000
     // D3   - 1 - Unmute
     // D2   - 1
@@ -205,7 +201,6 @@ void app_main(void)
     is_expected(51, i2c_get(CODEC_ADDR, 51), 0b00001111);
 
     // Register 65 - HPRout output level control register
-    i2c_get(CODEC_ADDR, 65);
     // D7-4 - 0000
     // D3   - 1 - Unmute
     // D2   - 1
@@ -214,6 +209,20 @@ void app_main(void)
     // write 0000 1111
     i2c_set(CODEC_ADDR, 65, 0b00001111);
     is_expected(65, i2c_get(CODEC_ADDR, 65), 0b00001111);
+
+    // Register 43 - Left-DAC Digital Volume Control Register
+    // D7   - 0 - Unmute left-DAC channel
+    // D6-0 - 0
+    i2c_set(CODEC_ADDR, 43, 0b00000000);
+    is_expected(43, i2c_get(CODEC_ADDR, 43), 0b00000000);
+
+    // Register 44 - Right-DAC Digital Volume Control Register
+    // D7   - 0 - Unmute right-DAC channel
+    // D6-0 - 0
+    i2c_set(CODEC_ADDR, 44, 0b00000000);
+    is_expected(44, i2c_get(CODEC_ADDR, 44), 0b00000000);
+
+    // Status
 
     // Register 94 - Module power status register
     is_expected(94, i2c_get(CODEC_ADDR, 94), 0b11000110);

@@ -2,14 +2,17 @@
 
 Revision : 3.0
 
+![image pcb](doc/images_assembly/2025-07-02-PC-20250702_213134.jpg)
+
 ![jack<>bluetooth_rev3.0_top.png](doc/images/jack<>bluetooth_rev3.0_top.png)
 
 ## Table of Content
 
 1. [Features](#1-features)
-2. [Design Specificatin](#2-design-specification)
+2. [Design Specificatin and documentation](#2-design-specification-and-documentation)
 3. [Repo organization](#3-repo-organization)
 4. [Next steps](#4-next-steps)
+5. [Revision history](#5-revisions-history)
 
 ## 1. Features
 
@@ -26,6 +29,8 @@ This project aims to design a device with the following features:
 ## 2. Design specification and documentation
 
 Please go to [Jack <> Bluetooth Design Specification](doc/Jack<>Bluetooth-Design-Specification.md) which documents the design choices and provide details on the project.
+
+[Software Readme](software/README.md) contains note taking from the software development (work in progress).
 
 ## 3. Repo organization
 

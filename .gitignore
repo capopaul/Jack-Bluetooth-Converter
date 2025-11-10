@@ -3,13 +3,10 @@
 
 Components/**
 kicad/**
-software/**
-
 build/**
 sdkconfig
 
-
-esp32_i2c/build/**
-esp32_bluetooth_sink/build/**
-esp32_b2j/build/**
-a2dp_sink/
+software/esp32_i2c/build/**
+software/esp32_bluetooth_sink/build/**
+software/esp32_b2j/build/**
+software/a2dp_sink/

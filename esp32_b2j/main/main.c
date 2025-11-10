@@ -126,10 +126,10 @@ void app_main(void)
     is_expected(3, i2c_get(CODEC_ADDR, 3), 0b10000001);
 
     // Register 4 - PLL Programming Register B
-    // D7-2 - 10000 // Set J to 16
+    // D7-2 - 100000 // Set J to 32
     // D1-0 - 00
-    i2c_set(CODEC_ADDR, 4, 0b01000000);
-    is_expected(4, i2c_get(CODEC_ADDR, 4), 0b01000000);
+    i2c_set(CODEC_ADDR, 4, 0b10000000);
+    is_expected(4, i2c_get(CODEC_ADDR, 4), 0b10000000);
 
     // Register 5 and 6
     // Set D to 0

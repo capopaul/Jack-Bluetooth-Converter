@@ -31,8 +31,8 @@
 
 /* Application layer causes delay value */
 #define APP_DELAY_VALUE 50 // 5ms
-#define RINGBUF_HIGHEST_WATER_LEVEL (32 * 1024)
-#define RINGBUF_PREFETCH_WATER_LEVEL (20 * 1024)
+#define RINGBUF_HIGHEST_WATER_LEVEL (64 * 1024)
+#define RINGBUF_PREFETCH_WATER_LEVEL (48 * 1024)
 
 enum
 {
@@ -71,6 +71,45 @@ static uint16_t ringbuffer_mode = RINGBUFFER_MODE_PROCESSING;
 
 i2s_chan_handle_t tx_chan = NULL;
 
+i2s_std_clk_config_t clk_cfg = {
+    .sample_rate_hz = 44100,
+    .clk_src = I2S_CLK_SRC_DEFAULT,
+    .mclk_multiple = I2S_MCLK_MULTIPLE_256,
+    .bclk_div = 8};
+
+// So now, MCLK = 11.2896 MHz
+// BCLK = 2.822 MHz
+
+i2s_std_slot_config_t slot_cfg = {
+    .data_bit_width = I2S_DATA_BIT_WIDTH_16BIT,
+    .slot_bit_width = I2S_SLOT_BIT_WIDTH_32BIT,
+    .slot_mode = I2S_SLOT_MODE_STEREO,
+    .slot_mask = I2S_STD_SLOT_BOTH,
+    .ws_width = 32,
+    .ws_pol = false,
+    .bit_shift = true,
+    .msb_right = false};
+
+// | pin name       | esp32_c6 | esp32 |
+// | codec_reset_l  | IO18     | IO32  |
+// | codec_i2s_mclk | IO19     | IO1   | (SPECIAL PIN)
+// | codec_i2s_bclk | IO20     | IO25  |
+// | codec_i2s_wclk | IO21     | IO26  |
+// | codec_i2s_din  | IO22     | IO27  |
+// | codec_i2s_dout | IO23     | IO14  |
+
+i2s_std_gpio_config_t gpio_cfg = {
+    .mclk = I2S_GPIO_UNUSED,
+    .bclk = GPIO_NUM_25,
+    .ws = GPIO_NUM_26,
+    .dout = GPIO_NUM_14,
+    .din = GPIO_NUM_27,
+    .invert_flags = {
+        .mclk_inv = false,
+        .bclk_inv = false,
+        .ws_inv = false,
+    }};
+
 /********************************
  * STATIC FUNCTION DEFINITIONS
  *******************************/
@@ -80,39 +119,10 @@ void esp_i2s_driver_install(void)
     i2s_chan_config_t chan_cfg = I2S_CHANNEL_DEFAULT_CONFIG(I2S_NUM_0, I2S_ROLE_MASTER);
     chan_cfg.auto_clear = true;
 
-    // | pin name       | esp32_c6 | esp32 |
-    // | codec_reset_l  | IO18     | IO32  |
-    // | codec_i2s_mclk | IO19     | IO1   | (SPECIAL PIN)
-    // | codec_i2s_bclk | IO20     | IO25  |
-    // | codec_i2s_wclk | IO21     | IO26  |
-    // | codec_i2s_din  | IO22     | IO27  |
-    // | codec_i2s_dout | IO23     | IO14  |
-
-    // #define I2S_STD_CLK_DEFAULT_CONFIG(rate) {
-    //     .sample_rate_hz = rate,
-    //     .clk_src = I2S_CLK_SRC_DEFAULT,
-    //     .ext_clk_freq_hz = 0,
-    //     .mclk_multiple = I2S_MCLK_MULTIPLE_256,
-    //     .bclk_div = 8,
-    // }
-
     i2s_std_config_t std_cfg = {
-        .clk_cfg = I2S_STD_CLK_DEFAULT_CONFIG(44100),
-        .slot_cfg = I2S_STD_MSB_SLOT_DEFAULT_CONFIG(I2S_DATA_BIT_WIDTH_16BIT,
-                                                    I2S_SLOT_MODE_STEREO),
-        .gpio_cfg = {
-            .mclk = I2S_GPIO_UNUSED,
-            .bclk = GPIO_NUM_25,
-            .ws = GPIO_NUM_26,
-            .dout = GPIO_NUM_14,
-            .din = GPIO_NUM_27,
-            .invert_flags = {
-                .mclk_inv = false,
-                .bclk_inv = false,
-                .ws_inv = false,
-            },
-        },
-    };
+        .clk_cfg = clk_cfg,
+        .slot_cfg = slot_cfg,
+        .gpio_cfg = gpio_cfg};
 
     /* enable I2S */
     ESP_ERROR_CHECK(i2s_new_channel(&chan_cfg, &tx_chan, NULL));
@@ -200,8 +210,6 @@ static void handle_a2dp_event(uint16_t event, void *p_param)
             }
 
             i2s_channel_disable(tx_chan);
-            i2s_std_clk_config_t clk_cfg = I2S_STD_CLK_DEFAULT_CONFIG(sample_rate);
-            i2s_std_slot_config_t slot_cfg = I2S_STD_MSB_SLOT_DEFAULT_CONFIG(I2S_DATA_BIT_WIDTH_16BIT, ch_count);
             i2s_channel_reconfig_std_clock(tx_chan, &clk_cfg);
             i2s_channel_reconfig_std_slot(tx_chan, &slot_cfg);
             i2s_channel_enable(tx_chan);

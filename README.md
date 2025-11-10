@@ -340,23 +340,23 @@ The Dout is also good when sending an audio:
 
 1. Let's have a faster BCLK with the ESP to enter spec recommendation in the example:
 
+I add a slot of 32 bits instead of 16. This double my BCLK clock.
 fs = 44.1kHz
-Let's have MCLK = 1024x44.1kHz = 45.1584MHz.
-So BCLK = MCLK/8 = 5.6448
+So BCLK = fs*256/4 = 2.822MHz
 
-PLLCLK_IN = 5.6448MHz so we have 2MHz < PLLCLK_IN < 20MHz (that is the condition that was not respected before).
+PLLCLK_IN = 2.822MHz so we have 2MHz < PLLCLK_IN < 20MHz (that is the condition that was not respected before).
 
 fS(ref) = (PLLCLK_IN × K × R)/(2048 × P)
 
-fS(ref) = (1024xfS(ref)/8 × K × R)/(2048 × P), 
+fS(ref) = (256xfS(ref)/4 × K × R)/(2048 × P), 
 
-1 = (1024 × K × R)/(8x2048 × P), 
+1 = (256 × K × R)/(4x2048 × P), 
 
 **P = 1**
 
-KxR = 8x2048/1024 = 8x2 = 16
+KxR = 4x2048/256 = 32
 
-K = J.D => **D=0**, **J = 16**
+K = J.D => **D=0**, **J = 32**
 
 Other constraint:
 80 MHz ≤ (PLLCLK _IN × K × R/P ) ≤ 110 MHz
@@ -433,4 +433,19 @@ Missing configuration:
 
 - Unmute L-DAC - Register 43
 - Unmute R-DAC - Register 44
+
+---
+
+I have not been able to make it work yet.
+
+My rise timing is bad with the current resistor (220 ohm) around 70ns.
+Spec required 4ns. I don't see how I could reach it though...
+
+Going to 100Ohm is better around 20-30ns
+
+50 Ohms overshoot...
+
+--- 
+
+Also I did not configured my audio codec after these edits regarding the slot offset.
 

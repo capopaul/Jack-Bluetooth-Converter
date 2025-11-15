@@ -2,6 +2,7 @@
 # Date   : Jun 14, 2025
 
 Components/**
+Order/**
 kicad/**
 build/**
 sdkconfig

@@ -1,0 +1,9 @@
+EESchema-DOCLIB  Version 2.0
+#
+$CMP SJ1-2503A
+D 2.5 mm, Stereo, Right Angle, Through Hole, 3 Conductors, 0 Internal Switches, Audio Jack Connector
+K
+F https://www.sameskydevices.com/product/resource/supplyframepdf/sj1-2503a.pdf
+$ENDCMP
+#
+#End Doc Library

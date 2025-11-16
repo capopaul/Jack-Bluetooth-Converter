@@ -1,0 +1,25 @@
+EESchema-LIBRARY Version 2.3
+#encoding utf-8
+#SamacSys ECAD Model SJ1-2503A
+#/550672/1460655/2.50/4/2/Connector
+DEF SJ1-2503A J 0 30 Y Y 1 F N
+F0 "J" 1050 700 50 H V L CNN
+F1 "SJ1-2503A" 1050 600 50 H V L CNN
+F2 "SJ12503A" 1050 500 50 H I L CNN
+F3 "https://www.sameskydevices.com/product/resource/supplyframepdf/sj1-2503a.pdf" 1050 400 50 H I L CNN
+F4 "2.5 mm, Stereo, Right Angle, Through Hole, 3 Conductors, 0 Internal Switches, Audio Jack Connector" 1050 300 50 H I L CNN "Description"
+F5 "5" 1050 200 50 H I L CNN "Height"
+F6 "490-SJ1-2503A" 1050 100 50 H I L CNN "Mouser Part Number"
+F7 "https://www.mouser.co.uk/ProductDetail/Same-Sky/SJ1-2503A?qs=WyjlAZoYn52728cbIH3aBA%3D%3D" 1050 0 50 H I L CNN "Mouser Price/Stock"
+F8 "Same Sky" 1050 -100 50 H I L CNN "Manufacturer_Name"
+F9 "SJ1-2503A" 1050 -200 50 H I L CNN "Manufacturer_Part_Number"
+DRAW
+X SLEEVE 1 0 0 200 R 50 50 0 0 P
+X TIP_1 2 600 -700 200 U 50 50 0 0 P
+X TIP_2 3 600 700 200 D 50 50 0 0 P
+X RING 4 1200 0 200 L 50 50 0 0 P
+P 5 0 1 6 200 500 1000 500 1000 -500 200 -500 200 500 N
+ENDDRAW
+ENDDEF
+#
+#End Library

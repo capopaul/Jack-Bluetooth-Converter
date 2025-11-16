@@ -1,0 +1,9 @@
+EESchema-DOCLIB  Version 2.0
+#
+$CMP PMEG6020AELRX
+D Nexperia 60V 2.83A, Diode, 2-Pin SOD-123W PMEG6020AELRX
+K
+F https://assets.nexperia.com/documents/data-sheet/PMEG6020AELR.pdf
+$ENDCMP
+#
+#End Doc Library

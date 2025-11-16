@@ -3,9 +3,10 @@
 
 Components/**
 Order/**
-kicad/**
 build/**
 sdkconfig
+
+kicad/jack2bluetooth/jack2bluetooth-backups
 
 software/esp32_i2c/build/**
 software/esp32_bluetooth_sink/build/**

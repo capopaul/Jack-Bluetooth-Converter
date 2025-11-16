@@ -6,7 +6,7 @@ The purpose of the *Jack <> Bluetooth Design Specification* is to document the d
 
 ## Table of Content
 
-1. [Jack2Bluetooth features](#jack2bluetooth-features)
+1. [Jack2Bluetooth features](#1-jack2bluetooth-features)
 2. [Architecture](#2-architecture)
     1. [Jack to bluetooth](#21-jack-to-bluetooth)
     2. [Bluetooth to jack](#22-bluetooth-to-jack)
@@ -26,7 +26,7 @@ The purpose of the *Jack <> Bluetooth Design Specification* is to document the d
     1. [Jack 3.5mm](#41-jack-35mm)
     2. [Jack 2.5mm](#42-jack-25mm)
     3. [Audio Codec](#43-audio-codec-tlv320aic3101)
-    4. [MCU](#44-mcu)
+    4. [MCU](#44-mcu-esp32-c6-wroom-1)
 5. [GPIOs pin assignments](#5-gpios-pin-assignments)
 6. [Layout](#6-layout)
     1. [Main ideas](#61-layout-main-ideas)
@@ -38,7 +38,7 @@ The purpose of the *Jack <> Bluetooth Design Specification* is to document the d
         3. [Layer 3](#643-layer-3)
         4. [Layer 4](#644-layer-4)
 
-# 1. Jack2Bluetooth features
+## 1. Jack2Bluetooth features
 
 This project aims to design a device with the following features:
 
@@ -50,20 +50,20 @@ This project aims to design a device with the following features:
 - The screen and buttons enable Bluetooth peripheral selection when the device functions as a Bluetooth central.
 - The screen turns off after 1 minute of inactivity to save power.
 
-# 2. Architecture
+## 2. Architecture
 
-## 2.1 Jack to Bluetooth
+### 2.1 Jack to Bluetooth
 
 For audio sampling:
 ![jack_to_bluetooth_architecture.png](images/jack_to_bluetooth_architecture.png)
 The audio codec must support line-level audio input signals. The ADC is integrated into the audio codec with an amplifier.
 
-## 2.2 Bluetooth to Jack
+### 2.2 Bluetooth to Jack
 
 ![bluetooth_to_jack_architecture.png](images/bluetooth_to_jack_architecture.png)
 The audio codec must include a DAC with an amplifier.
 
-## 2.3 Overall architecture
+### 2.3 Overall architecture
 
 When merging the two previous architecture, it becomes:
 ![jack2bluetooth_reduced_architecture.png](images/jack2bluetooth_reduced_architecture.png)
@@ -72,7 +72,7 @@ And when adding power components and the user interface components, the overall 
 
 ![jack2bluetooth_architecture.png](images/jack2bluetooth_architecture.png)
 
-## 2.4 User Interface:
+### 2.4 User Interface
 
 Based on the architecture, the user interface is then:
 
@@ -88,13 +88,14 @@ Based on the architecture, the user interface is then:
 | Screen           | Output         |
 | Audio Jack 3.5mm | Output         |
 
-# 3. Component choices
+## 3. Component choices
 
-## 3.1 MCU : Microcontroller Unit
+### 3.1 MCU : Microcontroller Unit
 
 The ESP32 was chosen due to its widespread availability and ease of use. To simplify RF design, an ESP32 module with an integrated antenna was selected.
 
 Requirements:
+
 - Bluetooth support
 - Integrated antenna
 - USB, I2S, I2C, SPI inerfaces
@@ -103,36 +104,36 @@ Requirements:
 
 Final choice: **ESP32-C-WROOM-N8**.
 
-## 3.2 Audio Codec
+### 3.2 Audio Codec
 
 The audio codec must include a DAC and an ADC, support line-level audio, and have single-ended inputs and outputs.
 
 Final choice : **TLV320AIC3101** (Texas Instrument).
 
-## 3.3 Battery
+### 3.3 Battery
 
 The battery should provide at least 3 hours of operation.
 The most power-intensive components are the MCU, audio codec, and the screen.
 
 The screen is going to be on only when a user push a button (and stays on for ~30s). Therefore, it should be off in idle mode, in transmitting mode or receiving mode. Since the screen is mostly off, its consumption is negligible.
 
-### 3.3.1 ESP32-C6 Current consumption
+#### 3.3.1 ESP32-C6 Current consumption
 
 According to the esp32-c6 datasheet, the Bluetooth LE current consumption are:
 ![ESP32-C6_current_consumption.png](images/ESP32-C6_current_consumption.png)
 
-### 3.3.2 TLV320AIC3101 Current consumption
+#### 3.3.2 TLV320AIC3101 Current consumption
 
 According to its datasheet, it current consumptions are :
 ![TLV320AIC3101_current_consumption.png](images/TLV320AIC3101_current_consumption.png)
 
 So it is negligeable compared to the ESP32-C6 Bluetooth LE transmission currents.
 
-### 3.3.3 Current consumption conclusions
+#### 3.3.3 Current consumption conclusions
 
 The critical use case for current consumption is during audio sampling and Bluetooth transmission. Assuming the transmission is done at 9dBm, the required battery to power the device 3 hours is around 600mA.
 
-## 3.4 PMIC : Power Management Integrated Circuit
+### 3.4 PMIC : Power Management Integrated Circuit
 
 The PMIC should support power path between the USB-C and the battery, battery charging when USB-C is plugged, battery discharging when unplugged.
 Since a power on/off system is needed, if this IC could have sleep or deep sleep mode with very low current consumption, it could be nice.
@@ -142,20 +143,19 @@ Final choice : **BQ25619RTWR** (Texas Instrument).
 All the elements are providing in the first page of product specification:
 ![BQ25619RTWR_spec.png](images/BQ25619RTWR_spec.png)
 
-
-## 3.5 LDO : Low-dropout voltage regulator
+### 3.5 LDO : Low-dropout voltage regulator
 
 It was decided to use an LDO for the analog to have a clean alimentation. LDO should not be fixed to be able to reuse it in other designs.
 
 Choice was made to use **TLV758P** from Texas Instrument.
 
-## 3.6 Switching Voltage Regulator switch
+### 3.6 Switching Voltage Regulator switch
 
 Choice was made to use the **TPS62A01PDDCR** from Texas Instrument.
 
-# 4. Electronic schematic
+## 4. Electronic schematic
 
-## 4.1 Jack 3.5mm
+### 4.1 Jack 3.5mm
 
 ![jack_connector.png](images/jack_connector.png)
 
@@ -171,12 +171,12 @@ So the schematic on kicad is:
 
 ![jack35_schematic.png](images/jack35_schematic.png)
 
-## 4.2 Jack 2.5mm
+### 4.2 Jack 2.5mm
 
 The schematic is
 ![jack25_schematic.png](images/jack25_schematic.png)
 
-## 4.3 Audio Codec (TLV320AIC3101)
+### 4.3 Audio Codec (TLV320AIC3101)
 
 The typical application from the spec is:
 
@@ -186,11 +186,9 @@ It is also worth looking at the development board:
 
 ![TLV320AIC3101_dev_board.png](images/TLV320AIC3101_dev_board.png)
 
-
 The schematic done is then:
 
 ![TLV320AIC3101_schematic.png](images/TLV320AIC3101_schematic.png)
-
 
 4 capacitors are to be determined, C8, C9, C20, C21.
 
@@ -207,7 +205,7 @@ The audio bandwidth is 20-20kHz. A capacitor of 1uF gives fc = 8Hz for R=20kΩ a
 
 Under the hyptohesis that the load resistance on the jack 3.5mm is 10kΩ (same hypothesis as in the TLV320AIC3101 datasheet), C20 and Rload are doing an high pass filter. A 10uF capacitor ensures that for Rload > 800Ω, the audio bandwidth is respected. So C20=C21=10uF.
 
-## 4.4 MCU (ESP32-C6-WROOM-1)
+### 4.4 MCU (ESP32-C6-WROOM-1)
 
 The datasheet of the ESP32-C6-WROOM-1 recommend the following schematic:
 
@@ -224,13 +222,13 @@ Based on this two schematics, the schematic done is:
 To boot the option are based on table 7 from the ESP32-C6-WROOM-1 datasheet:
 ![ESP32-C6_boot.png](images/ESP32-C6_boot.png)
 
-## 4.5 PMIC (BQ25619RTWR)
+### 4.5 PMIC (BQ25619RTWR)
 
 The typical application from the BQ25619RTWR datasheet is:
 
 ![BQ25619RTWR_typical_app.png](images/BQ25619RTWR_typical_app.png)
 
-The [BQ25619 evaluation module (EVM)](https://www.ti.com/tool/BQ25619EVM) is also a good reference: 
+The [BQ25619 evaluation module (EVM)](https://www.ti.com/tool/BQ25619EVM) is also a good reference:
 
 ![BQ25619_evm](images/BQ25619_evm.png)
 
@@ -247,27 +245,27 @@ QON does not need to be pulled high and can stay floating when button not pushed
 
 Two resistors R28 and R29 need to be determined following section `7.3.6.4.1 JEITA Guideline Compliance During Charging Mode` of the datasheet. Since the default battery used for this project does not have temperature sensor, these resistors are equals to 10k as described in the pin configuration section of the datasheet.
 
-## 4.6 LDO (TLV758P)
+### 4.6 LDO (TLV758P)
 
 The typical application is:
 ![TLV758P_typical_app](images/TLV758P_typical_app.png)
 
 The target analog voltage is 3.3V.
- 
+
 R1/R2 = Vout/Vfb - 1 = 5
 
-R1 + R2 <= Vout/(1e-6) = 3.3MΩ 
+R1 + R2 <= Vout/(1e-6) = 3.3MΩ
 
 Decision was to have R1 = 750kΩ and R2 = 150kΩ.
 Therefore, the schematic is:
 ![TLV758P_schematic](images/TLV758P_schematic.png)
 
-## 4.7 Switch Regulators (TPS62A01PDDCR)
+### 4.7 Switch Regulators (TPS62A01PDDCR)
 
 The typical application is :
 ![TPS62A01PDDCR_typical_application](images/TPS62A01PDDCR_typical_application.png)
 
-Two regulators are required to create 1.8V and 3.3V. A voltage divider is built with R1 and R2 to fix the output voltage. 
+Two regulators are required to create 1.8V and 3.3V. A voltage divider is built with R1 and R2 to fix the output voltage.
 
 The first one can follow the same design as the typical application since it was already designed for Vout = 1.8V.
 
@@ -277,23 +275,23 @@ Choice is made to take R1 = 100kΩ, and R2 made with two resistors R2 = 300k + 1
 
 ![TPS62A01PDDCR_schematic.png](images/TPS62A01PDDCR_schematic.png)
 
-## 4.8 Screen
+### 4.8 Screen
 
 The screen is going to be connected through an SPI interface. It will be powered thanks to the 3.3 voltage. However to be able to power off the screen, an electronic circuit is required.
 
 ![Screen_schematic](images/Screen_schematic.png)
 
-## 4.9 USB-C & UART Connectors 
+### 4.9 USB-C & UART Connectors
 
 The schematic done is based on the devkit of the ESP32.
 
 ![usbc_connector_schematic.png](images/usbc_connector_schematic.png)
 
-## 4.10 Control Buttons
+### 4.10 Control Buttons
 
 ![control_buttons_schematic](images/control_buttons_schematic.png)
 
-# 5. GPIOs Pin Assignments
+## 5. GPIOs Pin Assignments
 
 This table contains all the pin assignments. It was done updated during layout to make rooting easier.
 
@@ -323,14 +321,15 @@ This table contains all the pin assignments. It was done updated during layout t
 | IO22 | codec_i2s_din  |              |
 | IO23 | codec_i2s_dout |              |
 
-# 6. Layout
+## 6. Layout
 
-## 6.1 Layout main ideas
+### 6.1 Layout main ideas
 
 The goals were to have:
+
 - all the high speed signals on the first layer
-    - I2S
-    - USB data
+  - I2S
+  - USB data
 - all the analog signals on the first layer level and in a define region.
 - respect the mecanical constraints for the buttons position. To be able to have a functional box over it.
 - have the antena on a side that could be directed toward the user
@@ -347,20 +346,19 @@ The spi screen is going to be put in the big white rectangle. The three buttons 
 
 Two more leds are available on the top right corner to indicate if the device is on and the last one to indicate if the device is plugged.
 
-On the other side, the main one, there are all the main components and all the main signals : 
+On the other side, the main one, there are all the main components and all the main signals :
 
 ![jack<>bluetooth_rev3.0_top.png](images/jack<>bluetooth_rev3.0_top.png)
 
 All the inputs/outputs connectors are located on the same slide of the board. The antenna is outside of the board to have the maximum omni-directional radiation pattern. The analog part is as far as possible from the RF.
 
-## 6.2 Impedance matching:
+### 6.2 Impedance matching
 
 The USB differential pair should be 90ohms.
 
 ![impedance_matching_computations](images/impedance_matching_computations.png)
 
-
-## 6.3 Trace Length
+### 6.3 Trace Length
 
 - usb are the same length (+-0.1mm)
 - left and right of jack 3.5mm are the same length (+-0.1mm)
@@ -370,25 +368,25 @@ The USB differential pair should be 90ohms.
   - Longest line : 31.42mm
   - delta is 5.67mm. Assuming a delay of 6.2ps/mm, it creates a delay of 35ps which respects the timing requirements of the audio-codec.
 
-## 6.4 Layers
+### 6.4 Layers
 
 L1 : Signals
 L2 : GND
 L3 : Power
 L4 : Low signals
 
-### 6.4.1 Layer 1
+#### 6.4.1 Layer 1
 
 ![layout_l1.png](images/layout_l1.png)
 
-### 6.4.2 Layer 2
+#### 6.4.2 Layer 2
 
 ![layout_l2.png](images/layout_l2.png)
 
-### 6.4.3 Layer 3
+#### 6.4.3 Layer 3
 
 ![layout_l3.png](images/layout_l3.png)
 
-### 6.4.4 Layer 4
+#### 6.4.4 Layer 4
 
 ![layout_l4.png](images/layout_l4.png)

@@ -34,13 +34,13 @@ Please go to [Jack <> Bluetooth Design Specification](doc/Jack<>Bluetooth-Design
 
 ## 3. Repo organization
 
-`./Components` -> components list with libs (not public yet because of kicad lib licences)
+`./Components` -> components list with libs (not public)
 
 `./doc` -> documentations, specifications and images
 
 `./gerber` -> pcb design files for manufacturing
 
-`./kicad` (not public yet because of kicad lib licences)
+`./kicad` -> Kicad files
 
 `./software` -> ESP32 C code (work in progress)
 

@@ -96,13 +96,29 @@ The ESP32 was chosen due to its widespread availability and ease of use. To simp
 
 Requirements:
 
-- Bluetooth support
+- Bluetooth Classic support with protocol A2DP
 - Integrated antenna
 - USB, I2S, I2C, SPI inerfaces
 - Core frequency (not the max supported but the integrated clock frequency)
 - Memory size
 
-Final choice: **ESP32-C-WROOM-N8**.
+First choice made in Rev3.0 was ESP32-C6-WROOM-N8.
+This was a bad choice because ESP32-C6 only supports Bluetooth Classic Low Energy and not Bluetooth classic.
+
+New choice should be default ESP32. It should be a module to have clock and antenna integrated.
+
+List of modules considered:
+
+- ESP32-WROVER-E
+- ESP32-WROOM-32E
+
+Both have the same soc. However, ESP32-WROVER-E has an additional memory PSRAM memory because its module is bigger than ESP32-WROOM-32E.
+
+The version with the bigger flash (16MB) and PSRAM (8MB) is selected.
+
+Decision is made to use **ESP32-WROVER-E-N16R8**.
+
+Usefull link: [ESP HW Design guidelines](https://docs.espressif.com/projects/esp-hardware-design-guidelines/en/latest/esp32/index.html).
 
 ### 3.2 Audio Codec
 

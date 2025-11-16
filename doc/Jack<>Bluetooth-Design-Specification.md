@@ -122,7 +122,10 @@ Usefull link: [ESP HW Design guidelines](https://docs.espressif.com/projects/esp
 
 ### 3.2 Audio Codec
 
-The audio codec must include a DAC and an ADC, support line-level audio, and have single-ended inputs and outputs.
+Requirements:
+
+- DAC 24kHz, 48kHz, 96kHz - Input is I2S - Output is single-ended headphone amplifier (16-32 Ohms load).
+- ADC 24kHz, 48kHz, 96kHz - Input is single-ended, line-level audio - Output is I2S.
 
 Final choice : **TLV320AIC3101** (Texas Instrument).
 

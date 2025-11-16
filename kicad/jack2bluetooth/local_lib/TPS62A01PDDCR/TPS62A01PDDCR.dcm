@@ -1,0 +1,9 @@
+EESchema-DOCLIB  Version 2.0
+#
+$CMP TPS62A01PDDCR
+D 2.5V to 5.5V input voltage range  0.6V to VIN adjustable output voltage range  180m/120m low RDSON switches (1A DRL)  100m/67m low RDSON switches (1A DDC, 2A)  < 23A quiescent current  1% feedback accuracy (0C to 125C)  100% mode operation  2.4MHz switching frequency  Power save mode or PWM option available  Power-good output pin (optional)  Short-circuit protection (HICCUP)  Internal soft start-up  Active output discharge  Thermal shutdown protection  Pin-to-pin compatibl
+K
+F https://www.ti.com/lit/ds/symlink/tps62a01.pdf?ts=1732267436919&ref_url=https%253A%252F%252Fwww.mouser.in%252F
+$ENDCMP
+#
+#End Doc Library

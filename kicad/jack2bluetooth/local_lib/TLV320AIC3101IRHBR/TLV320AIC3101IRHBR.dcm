@@ -1,0 +1,9 @@
+EESchema-DOCLIB  Version 2.0
+#
+$CMP TLV320AIC3101IRHBR
+D Low-Power Stereo Codec with 6 Inputs, 6 Outputs, Speaker/HP Amp and Enhanced Digital Effects
+K
+F http://www.ti.com/lit/gpn/TLV320AIC3101
+$ENDCMP
+#
+#End Doc Library

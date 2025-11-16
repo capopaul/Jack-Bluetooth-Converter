@@ -1,0 +1,9 @@
+EESchema-DOCLIB  Version 2.0
+#
+$CMP SJ3-35063A
+D 3.5 mm Stereo Jack, Through Hole, 3 Conductors, 0 Internal Switches
+K
+F https://www.sameskydevices.com/product/resource/supplyframepdf/sj3-3506x.pdf
+$ENDCMP
+#
+#End Doc Library

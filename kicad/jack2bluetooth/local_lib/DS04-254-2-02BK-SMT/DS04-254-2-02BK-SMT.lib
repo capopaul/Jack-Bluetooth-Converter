@@ -1,0 +1,25 @@
+EESchema-LIBRARY Version 2.3
+#encoding utf-8
+#SamacSys ECAD Model DS04-254-2-02BK-SMT
+#/12780320/1460655/2.50/4/2/Integrated Circuit
+DEF DS04-254-2-02BK-SMT IC 0 30 Y Y 1 F N
+F0 "IC" 1050 300 50 H V L CNN
+F1 "DS04-254-2-02BK-SMT" 1050 200 50 H V L CNN
+F2 "DS04254202BKSMT" 1050 100 50 H I L CNN
+F3 "https://www.sameskydevices.com/product/resource/supplyframepdf/ds04-254-smt.pdf" 1050 0 50 H I L CNN
+F4 "2 Position, Surface Mount, 2.54 mm Pitch, Flat Slide Actuator, Flat Bottom, SMT Pin, DIP Switch" 1050 -100 50 H I L CNN "Description"
+F5 "4.85" 1050 -200 50 H I L CNN "Height"
+F6 "490-DS04254202BK-SMT" 1050 -300 50 H I L CNN "Mouser Part Number"
+F7 "https://www.mouser.co.uk/ProductDetail/Same-Sky/DS04-254-2-02BK-SMT?qs=wnTfsH77Xs4sTcTiPxa5bg%3D%3D" 1050 -400 50 H I L CNN "Mouser Price/Stock"
+F8 "Same Sky" 1050 -500 50 H I L CNN "Manufacturer_Name"
+F9 "DS04-254-2-02BK-SMT" 1050 -600 50 H I L CNN "Manufacturer_Part_Number"
+DRAW
+X COM_1 1 0 -100 200 R 50 50 0 0 P
+X COM_2 2 1200 -100 200 L 50 50 0 0 P
+X NO_2 3 1200 0 200 L 50 50 0 0 P
+X NO_1 4 0 0 200 R 50 50 0 0 P
+P 5 0 1 6 200 100 1000 100 1000 -200 200 -200 200 100 N
+ENDDRAW
+ENDDEF
+#
+#End Library

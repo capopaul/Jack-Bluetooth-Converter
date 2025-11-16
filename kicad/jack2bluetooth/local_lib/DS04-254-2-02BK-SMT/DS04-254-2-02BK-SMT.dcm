@@ -1,0 +1,9 @@
+EESchema-DOCLIB  Version 2.0
+#
+$CMP DS04-254-2-02BK-SMT
+D 2 Position, Surface Mount, 2.54 mm Pitch, Flat Slide Actuator, Flat Bottom, SMT Pin, DIP Switch
+K
+F https://www.sameskydevices.com/product/resource/supplyframepdf/ds04-254-smt.pdf
+$ENDCMP
+#
+#End Doc Library

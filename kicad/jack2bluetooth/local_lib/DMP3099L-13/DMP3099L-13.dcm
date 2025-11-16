@@ -1,0 +1,9 @@
+EESchema-DOCLIB  Version 2.0
+#
+$CMP DMP3099L-13
+D MOSFET P-Ch ENH FET -30V 65mOhm -10V -3.8A
+K
+F https://www.diodes.com//assets/Datasheets/DMP3099L.pdf
+$ENDCMP
+#
+#End Doc Library

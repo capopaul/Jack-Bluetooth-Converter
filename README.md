@@ -46,9 +46,7 @@ Please go to [Jack <> Bluetooth Design Specification](doc/Jack<>Bluetooth-Design
 
 ## 4. Next steps
 
-- PCB review & manufacturing
-- finish box design & 3D printing
-- Software
+- Working on a new revision : Rev3.1 to fix the current hardware limitations
 
 ## 5. Revisions history
 

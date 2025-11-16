@@ -34,7 +34,9 @@ After a PCB review, this revision was abandoned in favor of a single device with
 
 ## Rev 3.0
 
-The current revision, still in progress. Waiting PCB review.
+First revision to have made it up to assembly.
+
+![image pcb](images_assembly/2025-07-02-PC-20250702_213134.jpg)
 
 ### Changes Compared to Rev 2.0
 
@@ -55,3 +57,12 @@ Also available in pdf: [jack<>bluetooth_schematic_rev3.0.pdf](jack<>bluetooth_sc
 ![jack<>bluetooth_rev3.0_top.png](images/jack<>bluetooth_rev3.0_top.png)
 
 ![jack<>bluetooth_rev3.0_bottom.png](images/jack<>bluetooth_rev3.0_bottom.png)
+
+### Limitations
+
+- The choice of using an esp32-c6 reveals during SW programming that this board only supports bluetooth low energy. However, the protocol used for audio bluetooth communication is called A2DP and it is part of the Classical Bluetooth.
+- QFN packages for the PMIC BQ and the audio codec TLV were very difficult to solder.
+
+## Rev 3.1
+
+Work in progress

@@ -1,0 +1,9 @@
+EESchema-DOCLIB  Version 2.0
+#
+$CMP BQ25619RTWR
+D I2C controlled 1.5-A single cell buck battery charger with 20-mA termination and 1.2-A boost
+K
+F http://www.ti.com/lit/gpn/BQ25619
+$ENDCMP
+#
+#End Doc Library

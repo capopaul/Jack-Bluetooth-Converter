@@ -1,0 +1,9 @@
+EESchema-DOCLIB  Version 2.0
+#
+$CMP MCP23008T-E_SO
+D Interface - I/O Expanders In/Out I2C int
+K
+F 
+$ENDCMP
+#
+#End Doc Library

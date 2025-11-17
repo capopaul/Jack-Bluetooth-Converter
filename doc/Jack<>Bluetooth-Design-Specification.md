@@ -28,15 +28,16 @@ The purpose of the *Jack <> Bluetooth Design Specification* is to document the d
     3. [Audio Codec](#43-audio-codec-tlv320aic3101)
     4. [MCU](#44-mcu-esp32-c6-wroom-1)
 5. [GPIOs pin assignments](#5-gpios-pin-assignments)
-6. [Layout](#6-layout)
-    1. [Main ideas](#61-layout-main-ideas)
-    2. [Impedance matching](#62-impedance-matching)
-    3. [Trace length](#63-trace-length)
-    4. [Layers](#64-layers)
-        1. [Layer 1](#641-layer-1)
-        2. [Layer 2](#642-layer-2)
-        3. [Layer 3](#643-layer-3)
-        4. [Layer 4](#644-layer-4)
+6. [I2C Addresses](#6-i2c-addresses)
+7. [Layout](#7-layout)
+    1. [Main ideas](#71-layout-main-ideas)
+    2. [Impedance matching](#72-impedance-matching)
+    3. [Trace length](#73-trace-length)
+    4. [Layers](#74-layers)
+        1. [Layer 1](#741-layer-1)
+        2. [Layer 2](#742-layer-2)
+        3. [Layer 3](#743-layer-3)
+        4. [Layer 4](#744-layer-4)
 
 ## 1. Jack2Bluetooth features
 
@@ -102,6 +103,7 @@ Requirements:
 - Core frequency (not the max supported but the integrated clock frequency)
 - Memory size
 
+Revision 3.1:
 First choice made in Rev3.0 was ESP32-C6-WROOM-N8.
 This was a bad choice because ESP32-C6 only supports Bluetooth Classic Low Energy and not Bluetooth classic.
 
@@ -129,12 +131,16 @@ Requirements:
 
 Final choice : **TLV320AIC3101** (Texas Instrument).
 
+Revision 3.1: efforts where made to consider other devices to avoid QFN packages. However, all the other packages seen were classified as outdated by the manufacturer or were missing important features. So, decision was made to stay with the TLV320AIC3101.
+
 ### 3.3 Battery
 
 The battery should provide at least 3 hours of operation.
 The most power-intensive components are the MCU, audio codec, and the screen.
 
 The screen is going to be on only when a user push a button (and stays on for ~30s). Therefore, it should be off in idle mode, in transmitting mode or receiving mode. Since the screen is mostly off, its consumption is negligible.
+
+Revision 3.1: The battery connector has been updated to avoid soldering.
 
 #### 3.3.1 ESP32-C6 Current consumption
 
@@ -151,6 +157,19 @@ So it is negligeable compared to the ESP32-C6 Bluetooth LE transmission currents
 #### 3.3.3 Current consumption conclusions
 
 The critical use case for current consumption is during audio sampling and Bluetooth transmission. Assuming the transmission is done at 9dBm, the required battery to power the device 3 hours is around 600mA.
+
+#### 3.3.4 Revision 3.1
+
+- Battery Capacity: 1200mAh（Real 1200mAh）
+- Battery Voltage:3.7V  
+- Battery Model: 103040
+- Battery Size: 10x30x40mm
+- Charging voltage:4.2V
+- Cut-off voltage:2.75V
+- Charging and discharging current:4A-8A
+- Cycle life:1000 times
+- Safety protection:charging,over-discharging,over-current,Protection
+- Connector: PH2.0 plug
 
 ### 3.4 PMIC : Power Management Integrated Circuit
 
@@ -300,49 +319,100 @@ The screen is going to be connected through an SPI interface. It will be powered
 
 ![Screen_schematic](images/Screen_schematic.png)
 
+Revision 3.1: Decision is made to keep an external SPI interface as most screen provide this setup. It should be make debug easier.
+
 ### 4.9 USB-C & UART Connectors
 
 The schematic done is based on the devkit of the ESP32.
 
 ![usbc_connector_schematic.png](images/usbc_connector_schematic.png)
 
+Revision 3.1: Decision is made to remove ESD protection for uart considering the PCB will be manipulated with the necessary ESD protections.
+A second UART is added for monitoring the ESP logs. The first one will therefore only be used to boot.
+
 ### 4.10 Control Buttons
 
 ![control_buttons_schematic](images/control_buttons_schematic.png)
 
+Revision 3.1: An IOs expander is added to avoid taking all the pins of the MCU.
+The buttons and leds are therefore connected to this expander.
+
+### 4.11 IOs Expander
+
+IOs expander should:
+
+- provide i2c interface for mcu.
+- control at least 8 GPIOs
+- support irq
+- be available in an easy soldering package
+
+Chip MCP23008 is selected because is do the job and it is available in DIP and SSOP packages!
+
+Pins A0, A1, A2 are used to set the package address for the I2C bus.
+So the address is: 0x2A_value.
+Here A0 are all set to GND. So final address is 0x20
+
+Final diagram is :
+![IOs expander](images/ios_expander_schematic.png)
+
 ## 5. GPIOs Pin Assignments
+
+### 5.1 MCU Pin Assignments
 
 This table contains all the pin assignments. It was done updated during layout to make rooting easier.
 
-|IO°   | Active Mode    | Debug/Bringup|
-|------|----------------|--------------|
-| IO0  | button_enter   |              |
-| IO1  | button_direction|              |
-| IO2  | lcd_vcc_ctrl   |              |
-| IO3  | lcd_scl        |              |
-| IO4  | button_back    | jtag_tms     |
-| IO5  | button_next    | jtag_tdi     |
-| IO6  | i2c_sda        | jtag_tck     |
-| IO7  | i2c_clk        | jtag_tdo     |
-| IO8  | led_dac        | boot         |
-| IO9  | led_adc        | boot         |
-| IO10 | pmic_nINT      |              |
-| IO11 | pmic_nCE       |              |
-| IO12 | usb_d-         | usb_d-       |
-| IO14 | usb_d+         | usb_d+       |
-| IO15 | lcd_res        |              |
-| IO16 | lcd_sda        | uart_tx      |
-| IO17 | lcd_dc         | uart_rx      |
-| IO18 | codec_reset_l  |              |
-| IO19 | codec_i2s_mclk |              |
-| IO20 | codec_i2s_bclk |              |
-| IO21 | codec_i2s_wclk |              |
-| IO22 | codec_i2s_din  |              |
-| IO23 | codec_i2s_dout |              |
+|IO°             |Type | Active Mode    | Debug/Bringup|
+|----------------|-----|----------------|--------------|
+| IO0            | I/O |                     | booting.      |
+| IO1 TXD0       | I/O | codec_i2s_mclk      | uart_tx_boot  |
+| IO2            | I/O | codec_i2s_bclk      |               |
+| IO3 RXD0       | I/O |                     | uart_rx_boot  |
+| IO4            | I/O | codec_i2s_wclk      |               |
+| IO5            | I/O | codec_i2s_din       |               |
+| IO12           | I/O |                     | jtag_tdi      |
+| IO13           | I/O |                     | jtag_tck      |
+| IO14           | I/O |                     | jtag_tms      |
+| IO15           | I/O |                     | jtag_tdo      |
+| IO18           | I/O | codec_i2s_dout      |               |
+| IO19           | I/O | i2c_sda             |               |
+| IO21           | I/O | i2c_clk             |               |
+| IO22           | I/O | lcd_scl             |               |
+| IO23           | I/O | lcd_sda             |               |
+| IO25           | I/O | lcd_res             |               |
+| IO26           | I/O | lcd_dc              |               |
+| IO27           | I/O | pmic_nCE            |               |
+| IO32           | I/O | io_expander_reset_l |               |
+| IO33           | I/O | uart_tx_log         |               |
+| IO34           | I   | uart_rx_log         |               |
+| IO35           | I   |                     |               |
+| IO36 SENSOR_VP | I   | io_expander_int     |               |
+| IO39 SENSOR_VN | I   | pmic_nINT           |               |
 
-## 6. Layout
+### 5.2 GPIOs Pin extender
 
-### 6.1 Layout main ideas
+|IO°  |Type | Active Mode      |
+|-----|-----|------------------|
+| IO0 |     | button_enter     |
+| IO1 |     | button_back      |
+| IO2 |     | button_next      |
+| IO3 |     | button_direction |
+| IO4 |     | led_adc          |
+| IO5 |     | led_dac          |
+| IO6 |     | lcd_vcc_ctrl     |
+| IO7 |     | codec_reset_l    |
+
+## 6. I2C addresses
+
+I2C address is over 7 bits.
+
+- 0x00 -> (ESP Master)
+- 0x18 -> Audio Codec
+- 0x6a -> PMIC
+- 0x20 -> IOs expander
+
+## 7. Layout
+
+### 7.1 Layout main ideas
 
 The goals were to have:
 
@@ -371,13 +441,13 @@ On the other side, the main one, there are all the main components and all the m
 
 All the inputs/outputs connectors are located on the same slide of the board. The antenna is outside of the board to have the maximum omni-directional radiation pattern. The analog part is as far as possible from the RF.
 
-### 6.2 Impedance matching
+### 7.2 Impedance matching
 
 The USB differential pair should be 90ohms.
 
 ![impedance_matching_computations](images/impedance_matching_computations.png)
 
-### 6.3 Trace Length
+### 7.3 Trace Length
 
 - usb are the same length (+-0.1mm)
 - left and right of jack 3.5mm are the same length (+-0.1mm)
@@ -387,25 +457,25 @@ The USB differential pair should be 90ohms.
   - Longest line : 31.42mm
   - delta is 5.67mm. Assuming a delay of 6.2ps/mm, it creates a delay of 35ps which respects the timing requirements of the audio-codec.
 
-### 6.4 Layers
+### 7.4 Layers
 
 L1 : Signals
 L2 : GND
 L3 : Power
 L4 : Low signals
 
-#### 6.4.1 Layer 1
+#### 7.4.1 Layer 1
 
 ![layout_l1.png](images/layout_l1.png)
 
-#### 6.4.2 Layer 2
+#### 7.4.2 Layer 2
 
 ![layout_l2.png](images/layout_l2.png)
 
-#### 6.4.3 Layer 3
+#### 7.4.3 Layer 3
 
 ![layout_l3.png](images/layout_l3.png)
 
-#### 6.4.4 Layer 4
+#### 7.4.4 Layer 4
 
 ![layout_l4.png](images/layout_l4.png)

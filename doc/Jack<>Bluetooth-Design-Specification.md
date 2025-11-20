@@ -26,8 +26,19 @@ The purpose of the *Jack <> Bluetooth Design Specification* is to document the d
     1. [Jack 3.5mm](#41-jack-35mm)
     2. [Jack 2.5mm](#42-jack-25mm)
     3. [Audio Codec](#43-audio-codec-tlv320aic3101)
-    4. [MCU](#44-mcu-esp32-c6-wroom-1)
+    4. [MCU](#44-mcu)
+        1. [Revision 3.0: ESP32-C6-WROOM-1](#441-revision-30-esp32-c6-wroom-1)
+        2. [Revision 3.1: ESP32-WROVER-E](#442-revision-31-esp32-wrover-e)
+    5. [PMIC](#45-pmic-bq25619rtwr)
+    6. [LDO](#46-ldo-tlv758p)
+    7. [Switch regulator](#47-switch-regulators-tps62a01pddcr)
+    8. [Screen](#48-screen)
+    9. [USB-C & UART connectors](#49-usb-c--uart-connectors)
+    10. [Control Buttons](#410-control-buttons)
+    11. [IOs expander](#411-ios-expander)
 5. [GPIOs pin assignments](#5-gpios-pin-assignments)
+    1. [MCU pin assignments](#51-mcu-pin-assignments)
+    2. [Pin expander](#52-pin-expander)
 6. [I2C Addresses](#6-i2c-addresses)
 7. [Layout](#7-layout)
     1. [Main ideas](#71-layout-main-ideas)
@@ -120,7 +131,10 @@ The version with the bigger flash (16MB) and PSRAM (8MB) is selected.
 
 Decision is made to use **ESP32-WROVER-E-N16R8**.
 
-Usefull link: [ESP HW Design guidelines](https://docs.espressif.com/projects/esp-hardware-design-guidelines/en/latest/esp32/index.html).
+Usefull links:
+
+- [ESP HW Design guidelines](https://docs.espressif.com/projects/esp-hardware-design-guidelines/en/latest/esp32/index.html).
+- <https://docs.espressif.com/projects/esp-adf/en/latest/design-guide/dev-boards/board-esp32-lyrat-v4.3.html>
 
 ### 3.2 Audio Codec
 
@@ -170,6 +184,8 @@ The critical use case for current consumption is during audio sampling and Bluet
 - Cycle life:1000 times
 - Safety protection:charging,over-discharging,over-current,Protection
 - Connector: PH2.0 plug
+
+Add a 100uF capacitor to the battery to avoid shutdown.
 
 ### 3.4 PMIC : Power Management Integrated Circuit
 
@@ -243,7 +259,13 @@ The audio bandwidth is 20-20kHz. A capacitor of 1uF gives fc = 8Hz for R=20kΩ a
 
 Under the hyptohesis that the load resistance on the jack 3.5mm is 10kΩ (same hypothesis as in the TLV320AIC3101 datasheet), C20 and Rload are doing an high pass filter. A 10uF capacitor ensures that for Rload > 800Ω, the audio bandwidth is respected. So C20=C21=10uF.
 
-### 4.4 MCU (ESP32-C6-WROOM-1)
+Revision 3.1 adds the possibility to change the filtering later.
+
+![IO audio schematic filtering](images/io_audio_schematic.png)
+
+### 4.4 MCU
+
+#### 4.4.1 Revision 3.0 (ESP32-C6-WROOM-1)
 
 The datasheet of the ESP32-C6-WROOM-1 recommend the following schematic:
 
@@ -259,6 +281,16 @@ Based on this two schematics, the schematic done is:
 
 To boot the option are based on table 7 from the ESP32-C6-WROOM-1 datasheet:
 ![ESP32-C6_boot.png](images/ESP32-C6_boot.png)
+
+#### 4.4.2 Revision 3.1 ESP32-WROVER-E
+
+The Reset/Download button behavior is taken from the ESP32-Lyrat-v4.3 schematic:
+
+![ESP32 boot button](images/esp32_boot_button.png)
+
+Based, on this the following schematic is built:
+
+![ESP32-WROVER-E schematic](images/ESP32-WROVER-E_schematic.png)
 
 ### 4.5 PMIC (BQ25619RTWR)
 
@@ -327,9 +359,6 @@ The schematic done is based on the devkit of the ESP32.
 
 ![usbc_connector_schematic.png](images/usbc_connector_schematic.png)
 
-Revision 3.1: Decision is made to remove ESD protection for uart considering the PCB will be manipulated with the necessary ESD protections.
-A second UART is added for monitoring the ESP logs. The first one will therefore only be used to boot.
-
 ### 4.10 Control Buttons
 
 ![control_buttons_schematic](images/control_buttons_schematic.png)
@@ -363,9 +392,9 @@ This table contains all the pin assignments. It was done updated during layout t
 
 |IO°             |Type | Active Mode    | Debug/Bringup|
 |----------------|-----|----------------|--------------|
-| IO0            | I/O |                     | booting.      |
-| IO1 TXD0       | I/O | codec_i2s_mclk      | uart_tx_boot  |
-| IO2            | I/O | codec_i2s_bclk      |               |
+| IO0            | I/O | codec_i2s_mclk      | booting.      |
+| IO1 TXD0       | I/O |                     | uart_tx_boot  |
+| IO2            | I/O | codec_i2s_bclk      | booting       |
 | IO3 RXD0       | I/O |                     | uart_rx_boot  |
 | IO4            | I/O | codec_i2s_wclk      |               |
 | IO5            | I/O | codec_i2s_din       |               |
@@ -382,13 +411,13 @@ This table contains all the pin assignments. It was done updated during layout t
 | IO26           | I/O | lcd_dc              |               |
 | IO27           | I/O | pmic_nCE            |               |
 | IO32           | I/O | io_expander_reset_l |               |
-| IO33           | I/O | uart_tx_log         |               |
-| IO34           | I   | uart_rx_log         |               |
+| IO33           | I/O |                     |               |
+| IO34           | I   |                     |               |
 | IO35           | I   |                     |               |
 | IO36 SENSOR_VP | I   | io_expander_int     |               |
 | IO39 SENSOR_VN | I   | pmic_nINT           |               |
 
-### 5.2 GPIOs Pin extender
+### 5.2 Pin expander
 
 |IO°  |Type | Active Mode      |
 |-----|-----|------------------|

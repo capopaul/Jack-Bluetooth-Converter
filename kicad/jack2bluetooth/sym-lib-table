@@ -9,5 +9,6 @@
   (lib (name "TLV320AIC3101IRHBR")(type "Legacy")(uri "${KIPRJMOD}/local_lib/TLV320AIC3101IRHBR/TLV320AIC3101IRHBR.lib")(options "")(descr ""))
   (lib (name "TLV75801PDBVR")(type "Legacy")(uri "${KIPRJMOD}/local_lib/TLV75801PDBVR/TLV75801PDBVR.lib")(options "")(descr ""))
   (lib (name "TPS62A01PDDCR")(type "Legacy")(uri "${KIPRJMOD}/local_lib/TPS62A01PDDCR/TPS62A01PDDCR.lib")(options "")(descr ""))
-  (lib (name "MCP23008T-E_SO")(type "Legacy")(uri "${KIPRJMOD}/local_lib/MCP23008/MCP23008T-E_SO.lib")(options "")(descr ""))
+  (lib (name "MCP23008T-E_SO")(type "Legacy")(uri "${KIPRJMOD}/local_lib/LIB_MCP23008T-E_SO/MCP23008T-E_SO.lib")(options "")(descr ""))
+  (lib (name "SMF5V0A-E3-08")(type "Legacy")(uri "${KIPRJMOD}/local_lib/LIB_SMF5V0A-E3-08/SMF5V0A-E3-08.lib")(options "")(descr ""))
 )

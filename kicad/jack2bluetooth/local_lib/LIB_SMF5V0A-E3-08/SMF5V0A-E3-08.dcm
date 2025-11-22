@@ -1,0 +1,9 @@
+EESchema-DOCLIB  Version 2.0
+#
+$CMP SMF5V0A-E3-08
+D 9.2V Clamp 21.7A Ipp Tvs Diode Surface Mount DO-219AB (SMF)
+K
+F https://www.vishay.com/docs/85881/smf5v0atosmf58a.pdf
+$ENDCMP
+#
+#End Doc Library

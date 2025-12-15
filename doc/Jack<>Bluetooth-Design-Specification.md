@@ -396,8 +396,8 @@ This table contains all the pin assignments. It was done updated during layout t
 | IO1 TXD0       | I/O |                     | uart_tx_boot  |
 | IO2            | I/O | codec_i2s_bclk      | booting       |
 | IO3 RXD0       | I/O |                     | uart_rx_boot  |
-| IO4            | I/O | codec_i2s_wclk      |               |
-| IO5            | I/O | codec_i2s_din       |               |
+| IO4            | I/O | codec_i2s_din       |               |
+| IO5            | I/O | codec_i2s_wclk      |               |
 | IO12           | I/O |                     | jtag_tdi      |
 | IO13           | I/O |                     | jtag_tck      |
 | IO14           | I/O |                     | jtag_tms      |

@@ -10005,6 +10005,12 @@
 		(uuid "e2886ff9-ee2e-4751-98a9-108fca4b849d")
 	)
 	(junction
+		(at 264.16 251.46)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "e29d7446-5eef-4458-899d-d41d97ead220")
+	)
+	(junction
 		(at 288.29 181.61)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -11748,7 +11754,7 @@
 	)
 	(wire
 		(pts
-			(xy 262.89 251.46) (xy 267.97 251.46)
+			(xy 262.89 251.46) (xy 264.16 251.46)
 		)
 		(stroke
 			(width 0)
@@ -12765,6 +12771,16 @@
 			(type default)
 		)
 		(uuid "b2e5fcd4-a908-496f-acb8-9cf4a79f037d")
+	)
+	(wire
+		(pts
+			(xy 264.16 251.46) (xy 267.97 251.46)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "b37bd4db-f76d-4d22-9ca5-5307ad060206")
 	)
 	(wire
 		(pts
@@ -14336,28 +14352,6 @@
 			)
 		)
 	)
-	(global_label "codec_i2s_wclk"
-		(shape input)
-		(at 347.98 214.63 0)
-		(fields_autoplaced yes)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left)
-		)
-		(uuid "08b8e57a-98fd-42f1-8aca-a5c4dc08f834")
-		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 365.419 214.63 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-				(hide yes)
-			)
-		)
-	)
 	(global_label "button_back"
 		(shape input)
 		(at 387.35 199.39 0)
@@ -15303,6 +15297,28 @@
 					(size 1.27 1.27)
 				)
 				(justify right)
+				(hide yes)
+			)
+		)
+	)
+	(global_label "codec_i2s_din"
+		(shape input)
+		(at 347.98 214.63 0)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "4bf28927-7b3e-43e4-97d7-c96fadd51ea3")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 364.2094 214.63 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
 				(hide yes)
 			)
 		)
@@ -18114,6 +18130,28 @@
 			)
 		)
 	)
+	(global_label "codec_i2s_wclk"
+		(shape input)
+		(at 347.98 217.17 0)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "e1f7d1d8-a260-433a-a985-eb85bb462c0c")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 365.419 217.17 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+				(hide yes)
+			)
+		)
+	)
 	(global_label "IO23"
 		(shape input)
 		(at 351.79 157.48 180)
@@ -18154,28 +18192,6 @@
 					(size 1.27 1.27)
 				)
 				(justify right)
-				(hide yes)
-			)
-		)
-	)
-	(global_label "codec_i2s_din"
-		(shape input)
-		(at 347.98 217.17 0)
-		(fields_autoplaced yes)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left)
-		)
-		(uuid "e2ca55ab-5c9a-46cd-a42f-14116933c8cd")
-		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 364.2094 217.17 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
 				(hide yes)
 			)
 		)
@@ -29265,6 +29281,72 @@
 			(project "jack2bluetooth"
 				(path "/4b32d186-730c-41ef-8802-f29516455534"
 					(reference "L1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:PWR_FLAG")
+		(at 264.16 251.46 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "953bbd6b-21c7-4fe3-bdef-33eb33d2ea6a")
+		(property "Reference" "#FLG09"
+			(at 264.16 249.555 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "PWR_FLAG"
+			(at 264.16 246.38 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 264.16 251.46 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 264.16 251.46 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Special symbol for telling ERC where power comes from"
+			(at 264.16 251.46 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "574a51f4-ed55-43dc-af95-d3a7db423ec6")
+		)
+		(instances
+			(project "jack2bluetooth"
+				(path "/4b32d186-730c-41ef-8802-f29516455534"
+					(reference "#FLG09")
 					(unit 1)
 				)
 			)

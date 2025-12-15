@@ -3,9 +3,24 @@
     "active_layer": 27,
     "active_layer_preset": "",
     "auto_track_width": true,
-    "hidden_netclasses": [],
+    "hidden_netclasses": [
+      "Power",
+      "USB"
+    ],
     "hidden_nets": [
-      ""
+      "",
+      "GND",
+      "GNDA",
+      "+3.3V",
+      "+1V8",
+      "BAT+",
+      "REGN",
+      "VCC",
+      "/usb_vbus",
+      "SYSTEM",
+      "+3.3VA",
+      "lcd_vdc",
+      "/1V8_SW"
     ],
     "high_contrast_mode": 0,
     "net_color_mode": 1,

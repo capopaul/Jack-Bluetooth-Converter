@@ -246,20 +246,7 @@
     "equivalence_files": []
   },
   "erc": {
-    "erc_exclusions": [
-      [
-        "footprint_link_issues|1066800|2743200|7d5560e4-99d3-4f37-b8f0-66a8647ae9ce|00000000-0000-0000-0000-000000000000|||",
-        "This jumper is based on a pin header."
-      ],
-      [
-        "footprint_link_issues|3581400|635000|d91c14fb-c71e-4c50-98d2-02e9fbe01c51|00000000-0000-0000-0000-000000000000|||",
-        "This fuse is 1210"
-      ],
-      [
-        "footprint_link_issues|800100|254000|b7085543-37d0-497a-978e-0a084c56e66d|00000000-0000-0000-0000-000000000000|||",
-        "This fuse is 1210."
-      ]
-    ],
+    "erc_exclusions": [],
     "meta": {
       "version": 0
     },
@@ -458,7 +445,7 @@
       "missing_input_pin": "warning",
       "missing_power_pin": "error",
       "missing_unit": "warning",
-      "multiple_net_names": "ignore",
+      "multiple_net_names": "warning",
       "net_not_bus_member": "warning",
       "no_connect_connected": "warning",
       "no_connect_dangling": "warning",

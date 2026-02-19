@@ -9837,6 +9837,12 @@
 		(uuid "95d284e7-af99-4240-b94f-c1c1c4da129d")
 	)
 	(junction
+		(at 95.25 274.32)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "973cf89a-8f19-49ba-8509-0ae79c9e29ad")
+	)
+	(junction
 		(at 213.36 138.43)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -10525,6 +10531,16 @@
 			(type default)
 		)
 		(uuid "0b5e0307-5665-48e0-8662-a1c8a1094cee")
+	)
+	(wire
+		(pts
+			(xy 95.25 276.86) (xy 95.25 274.32)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "0b82b9a4-49c7-4901-9fa9-74831509b0fd")
 	)
 	(wire
 		(pts
@@ -11395,6 +11411,16 @@
 			(type default)
 		)
 		(uuid "48f82ad4-09cb-4b1d-9101-049745a2dbb4")
+	)
+	(wire
+		(pts
+			(xy 95.25 274.32) (xy 100.33 274.32)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "4b04dfbb-b952-4afc-bfbf-80be8a0b53d8")
 	)
 	(wire
 		(pts
@@ -12308,7 +12334,7 @@
 	)
 	(wire
 		(pts
-			(xy 92.71 274.32) (xy 100.33 274.32)
+			(xy 92.71 274.32) (xy 95.25 274.32)
 		)
 		(stroke
 			(width 0)
@@ -14196,6 +14222,16 @@
 		)
 		(uuid "68beed6d-34a9-4ca7-80f4-3b6769c1b1e6")
 	)
+	(label "POS1"
+		(at 95.25 276.86 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "a832dd33-131b-4c85-b003-f76d07cb1e91")
+	)
 	(label "SW"
 		(at 181.61 214.63 0)
 		(effects
@@ -14285,28 +14321,6 @@
 			(justify left bottom)
 		)
 		(uuid "feafa0ea-1436-4416-9b1d-394999c560ae")
-	)
-	(global_label "i2c_sda"
-		(shape input)
-		(at 381 223.52 180)
-		(fields_autoplaced yes)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right)
-		)
-		(uuid "002080ef-29f8-40ec-8013-3da87b3ee9ff")
-		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 370.8182 223.52 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify right)
-				(hide yes)
-			)
-		)
 	)
 	(global_label "PMIC_SYSTEM"
 		(shape input)
@@ -14972,6 +14986,28 @@
 			)
 		)
 	)
+	(global_label "IO22"
+		(shape input)
+		(at 351.79 157.48 180)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "28c3717a-ebcc-4514-a84c-5e5e09c4119a")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 344.4505 157.48 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+				(hide yes)
+			)
+		)
+	)
 	(global_label "IO33"
 		(shape input)
 		(at 250.19 156.21 180)
@@ -15057,6 +15093,28 @@
 					(size 1.27 1.27)
 				)
 				(justify left)
+				(hide yes)
+			)
+		)
+	)
+	(global_label "i2c_sda"
+		(shape input)
+		(at 381 226.06 180)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "2f569545-6ef9-4ac3-82fb-7f066a2576be")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 370.8182 226.06 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
 				(hide yes)
 			)
 		)
@@ -15343,28 +15401,6 @@
 					(size 1.27 1.27)
 				)
 				(justify right)
-				(hide yes)
-			)
-		)
-	)
-	(global_label "SYSTEM"
-		(shape input)
-		(at 299.72 24.13 0)
-		(fields_autoplaced yes)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left)
-		)
-		(uuid "4261ff04-19b3-4d9f-820a-3ecc00979757")
-		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 309.7808 24.13 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
 				(hide yes)
 			)
 		)
@@ -15739,28 +15775,6 @@
 					(size 1.27 1.27)
 				)
 				(justify left)
-				(hide yes)
-			)
-		)
-	)
-	(global_label "i2c_clk"
-		(shape input)
-		(at 381 226.06 180)
-		(fields_autoplaced yes)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right)
-		)
-		(uuid "56487cdd-ee18-4903-a063-249bda278ebf")
-		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 371.3624 226.06 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify right)
 				(hide yes)
 			)
 		)
@@ -17401,6 +17415,28 @@
 			)
 		)
 	)
+	(global_label "i2c_clk"
+		(shape input)
+		(at 381 223.52 180)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "b5521379-bda6-439d-8bb7-cdc621406ea8")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 371.3624 223.52 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+				(hide yes)
+			)
+		)
+	)
 	(global_label "BATTS"
 		(shape input)
 		(at 355.6 58.42 0)
@@ -17577,6 +17613,28 @@
 			)
 		)
 	)
+	(global_label "IO23"
+		(shape input)
+		(at 351.79 154.94 180)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "b97a47cd-537e-457a-8e10-f1f65217a193")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 344.4505 154.94 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+				(hide yes)
+			)
+		)
+	)
 	(global_label "IO39"
 		(shape input)
 		(at 250.19 146.05 180)
@@ -17644,28 +17702,6 @@
 			)
 		)
 	)
-	(global_label "IO39"
-		(shape input)
-		(at 355.6 104.14 180)
-		(fields_autoplaced yes)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right)
-		)
-		(uuid "c1788ad8-007e-4470-b4db-0cc8a6ea9b68")
-		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 348.2605 104.14 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify right)
-				(hide yes)
-			)
-		)
-	)
 	(global_label "REGN"
 		(shape input)
 		(at 299.72 78.74 0)
@@ -17684,28 +17720,6 @@
 					(size 1.27 1.27)
 				)
 				(justify left)
-				(hide yes)
-			)
-		)
-	)
-	(global_label "IO36"
-		(shape input)
-		(at 347.98 232.41 180)
-		(fields_autoplaced yes)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right)
-		)
-		(uuid "c24cc20f-a7a6-4b8f-8ae6-f569499d2282")
-		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 340.6405 232.41 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify right)
 				(hide yes)
 			)
 		)
@@ -18020,6 +18034,28 @@
 			)
 		)
 	)
+	(global_label "IO36"
+		(shape input)
+		(at 355.6 104.14 180)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "d3d9dd7d-9e40-4f04-9ec6-7411c715d7ed")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 348.2605 104.14 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+				(hide yes)
+			)
+		)
+	)
 	(global_label "uart_rx_boot"
 		(shape input)
 		(at 389.89 20.32 0)
@@ -18153,9 +18189,9 @@
 			)
 		)
 	)
-	(global_label "IO22"
+	(global_label "IO39"
 		(shape input)
-		(at 351.79 154.94 180)
+		(at 347.98 232.41 180)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -18163,9 +18199,9 @@
 			)
 			(justify right)
 		)
-		(uuid "dcb68f88-4ec1-4d16-8d58-bc55c8092a3c")
+		(uuid "dafd2930-f3c1-4845-ba2a-e7d2711028c6")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 344.4505 154.94 0)
+			(at 340.6405 232.41 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -18282,28 +18318,6 @@
 					(size 1.27 1.27)
 				)
 				(justify left)
-				(hide yes)
-			)
-		)
-	)
-	(global_label "IO23"
-		(shape input)
-		(at 351.79 157.48 180)
-		(fields_autoplaced yes)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right)
-		)
-		(uuid "e244747e-ae05-49db-9094-665d4928d546")
-		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 344.4505 157.48 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify right)
 				(hide yes)
 			)
 		)
@@ -21600,71 +21614,6 @@
 			(project "jack2bluetooth"
 				(path "/4b32d186-730c-41ef-8802-f29516455534"
 					(reference "#PWR07")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Connector:TestPoint")
-		(at 299.72 34.29 90)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(uuid "303f72eb-1577-40c4-a128-858b32383352")
-		(property "Reference" "TP6"
-			(at 293.624 34.29 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "TestPoint"
-			(at 296.418 31.75 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Footprint" "TestPoint:TestPoint_Pad_D1.0mm"
-			(at 299.72 29.21 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" "~"
-			(at 299.72 29.21 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" "test point"
-			(at 299.72 34.29 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "1"
-			(uuid "dabfb8a6-4013-45af-9b7d-43975090dcc0")
-		)
-		(instances
-			(project "jack2bluetooth"
-				(path "/4b32d186-730c-41ef-8802-f29516455534"
-					(reference "TP6")
 					(unit 1)
 				)
 			)
@@ -27398,71 +27347,6 @@
 		)
 	)
 	(symbol
-		(lib_id "Connector:TestPoint")
-		(at 299.72 24.13 90)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(uuid "781a7f71-cfce-45ce-b04b-2b6748a1343a")
-		(property "Reference" "TP2"
-			(at 293.624 24.13 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "TestPoint"
-			(at 296.418 21.59 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Footprint" "TestPoint:TestPoint_Pad_D1.0mm"
-			(at 299.72 19.05 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" "~"
-			(at 299.72 19.05 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" "test point"
-			(at 299.72 24.13 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "1"
-			(uuid "e36fdac6-d392-449d-aa09-a481a3d24c6b")
-		)
-		(instances
-			(project "jack2bluetooth"
-				(path "/4b32d186-730c-41ef-8802-f29516455534"
-					(reference "TP2")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
 		(lib_id "Device:C")
 		(at 271.78 222.25 270)
 		(unit 1)
@@ -29782,6 +29666,7 @@
 					(size 1.27 1.27)
 				)
 				(justify right)
+				(hide yes)
 			)
 		)
 		(property "Footprint" ""

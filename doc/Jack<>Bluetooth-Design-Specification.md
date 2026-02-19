@@ -388,7 +388,7 @@ Final diagram is :
 
 ### 5.1 MCU Pin Assignments
 
-This table contains all the pin assignments. It was done updated during layout to make rooting easier.
+This table contains all the pin assignments. It was updated during layout to make rooting easier.
 
 |IO°             |Type | Active Mode    | Debug/Bringup|
 |----------------|-----|----------------|--------------|
@@ -414,8 +414,8 @@ This table contains all the pin assignments. It was done updated during layout t
 | IO33           | I/O |                     |               |
 | IO34           | I   |                     |               |
 | IO35           | I   |                     |               |
-| IO36 SENSOR_VP | I   | io_expander_int     |               |
-| IO39 SENSOR_VN | I   | pmic_nINT           |               |
+| IO36 SENSOR_VP | I   | pmic_nINT           |               |
+| IO39 SENSOR_VN | I   | io_expander_int     |               |
 
 ### 5.2 Pin expander
 

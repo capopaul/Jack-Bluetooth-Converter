@@ -66,3 +66,13 @@ Also available in pdf: [jack<>bluetooth_schematic_rev3.0.pdf](jack<>bluetooth_sc
 ## Rev 3.1
 
 Work in progress
+
+### Rev 3.1 Schematic
+
+Also available in pdf: [jack<>bluetooth_schematic_rev3..pdf](jack<>bluetooth_schematic_rev3.1.pdf)
+
+### Rev 3.1 Layout
+
+![jack<>bluetooth_rev3.0_top.png](images/jack<>bluetooth_rev3.1_top.png)
+
+![jack<>bluetooth_rev3.0_bottom.png](images/jack<>bluetooth_rev3.1_bottom.png)

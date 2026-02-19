@@ -1,5 +1,10 @@
 # Jack <> Bluetooth Design Specification/Details
 
+| Revision | Date        | Author       | Comment       |
+| -------- | ----------- | ------------ | --------------|
+| v3.0     | 2026 Feb 12 | Paul Capgras | Board rev 3.0 |
+| v3.1     | 2026 Feb 17 | Paul Capgras | Board rev 3.1 |
+
 ## Purpose
 
 The purpose of the *Jack <> Bluetooth Design Specification* is to document the design choices and provide details on this project.
@@ -44,11 +49,12 @@ The purpose of the *Jack <> Bluetooth Design Specification* is to document the d
     1. [Main ideas](#71-layout-main-ideas)
     2. [Impedance matching](#72-impedance-matching)
     3. [Trace length](#73-trace-length)
-    4. [Layers](#74-layers)
-        1. [Layer 1](#741-layer-1)
-        2. [Layer 2](#742-layer-2)
-        3. [Layer 3](#743-layer-3)
-        4. [Layer 4](#744-layer-4)
+    4. [Update footprints](#74-update-footprints)
+    5. [Layers](#75-layers)
+        1. [Layer 1](#751-layer-1)
+        2. [Layer 2](#752-layer-2)
+        3. [Layer 3](#753-layer-3)
+        4. [Layer 4](#754-layer-4)
 
 ## 1. Jack2Bluetooth features
 
@@ -390,8 +396,8 @@ Final diagram is :
 
 This table contains all the pin assignments. It was updated during layout to make rooting easier.
 
-|IO°             |Type | Active Mode    | Debug/Bringup|
-|----------------|-----|----------------|--------------|
+|IO°             |Type | Active Mode         | Debug/Bringup |
+|----------------|-----|---------------------|---------------|
 | IO0            | I/O | codec_i2s_mclk      | booting.      |
 | IO1 TXD0       | I/O |                     | uart_tx_boot  |
 | IO2            | I/O | codec_i2s_bclk      | booting       |
@@ -456,6 +462,8 @@ The goals were to have:
 - the RF should be far away from the analog
 - close to the antenna, there should be no HF signals and as much ground as possible.
 
+#### 7.1.1 Rev 3.0
+
 The user interface is the back of the PCB:
 
 ![jack<>bluetooth_rev3.0_bottom.png](images/jack<>bluetooth_rev3.0_bottom.png)
@@ -470,41 +478,56 @@ On the other side, the main one, there are all the main components and all the m
 
 All the inputs/outputs connectors are located on the same slide of the board. The antenna is outside of the board to have the maximum omni-directional radiation pattern. The analog part is as far as possible from the RF.
 
+#### 7.1.2 Rev 3.1
+
+![jack<>bluetooth_rev3.1_top.png](images/jack<>bluetooth_rev3.1_top.png)
+![jack<>bluetooth_rev3.1_bottom.png](images/jack<>bluetooth_rev3.1_bottom.png)
+
 ### 7.2 Impedance matching
 
 The USB differential pair should be 90ohms.
 
 ![impedance_matching_computations](images/impedance_matching_computations.png)
 
+Rev 3.1: Removed programming through USB so no need for impedance matching anymore.
+
 ### 7.3 Trace Length
 
-- usb are the same length (+-0.1mm)
 - left and right of jack 3.5mm are the same length (+-0.1mm)
 - left and right of jack 2.5mm are the same length (+-0.1mm)
+
+Rev 3.0:
+
 - for I2S:
   - Shortest line : 25.75mm
   - Longest line : 31.42mm
   - delta is 5.67mm. Assuming a delay of 6.2ps/mm, it creates a delay of 35ps which respects the timing requirements of the audio-codec.
 
-### 7.4 Layers
+Rev 3.1:
+
+I2S lines are tuned to have the same length.
+
+### 7.4 Update footprints
+
+The goal is to edit some footprints for easier debug.
+
+Footprint of Audio Codec before:
+![Footprint of Audio Codec before](images/footprint_codec_before.png)
+
+Footprint of Audio Codec after:
+![Footprint of Audio Codec after](images/footprint_codec_after.png)
+
+Footprint of PMIC before:
+![Footprint of PMIC before](images/footprint_pmic_before.png)
+
+Footprint of PMIC after:
+![Footprint of PMIC after](images/footprint_pmic_after.png)
+
+### 7.5 Layers
 
 L1 : Signals
 L2 : GND
 L3 : Power
 L4 : Low signals
 
-#### 7.4.1 Layer 1
-
-![layout_l1.png](images/layout_l1.png)
-
-#### 7.4.2 Layer 2
-
-![layout_l2.png](images/layout_l2.png)
-
-#### 7.4.3 Layer 3
-
-![layout_l3.png](images/layout_l3.png)
-
-#### 7.4.4 Layer 4
-
-![layout_l4.png](images/layout_l4.png)
+Refer to [Layout PDF](Jack<>Bluetooth-Layout_rev3.1.pdf)

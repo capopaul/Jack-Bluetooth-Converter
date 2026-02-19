@@ -1,10 +1,12 @@
 # Jack <> Bluetooth Converter
 
-Revision : 3.0
+Revision 3.1 (Not manufactured yet) :
+
+![jack<>bluetooth_rev3.1_top.png](doc/images/jack<>bluetooth_rev3.1_top.png)
+
+Revision 3.0 (Manufactured) :
 
 ![image pcb](doc/images_assembly/2025-07-02-PC-20250702_213134.jpg)
-
-![jack<>bluetooth_rev3.0_top.png](doc/images/jack<>bluetooth_rev3.0_top.png)
 
 ## Table of Content
 

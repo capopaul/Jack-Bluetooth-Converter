@@ -3,9 +3,9 @@
     "GenerationSoftware": {
       "Vendor": "KiCad",
       "Application": "Pcbnew",
-      "Version": "8.0.9-8.0.9-0~ubuntu24.04.1"
+      "Version": "9.0.7"
     },
-    "CreationDate": "2025-03-18T20:07:39+01:00"
+    "CreationDate": "2026-03-17T14:38:57-06:00"
   },
   "GeneralSpecs": {
     "ProjectId": {
@@ -14,8 +14,8 @@
       "Revision": "v3.0"
     },
     "Size": {
-      "X": 83.1,
-      "Y": 53.1
+      "X": 85.85,
+      "Y": 76.1
     },
     "LayerNumber": 4,
     "BoardThickness": 1.6,
@@ -25,8 +25,8 @@
   "DesignRules": [
     {
       "Layers": "Outer",
-      "PadToPad": 0.127,
-      "PadToTrack": 0.127,
+      "PadToPad": 0.1,
+      "PadToTrack": 0.1,
       "TrackToTrack": 0.13,
       "MinLineWidth": 0.2,
       "TrackToRegion": 0.5,
@@ -34,8 +34,8 @@
     },
     {
       "Layers": "Inner",
-      "PadToPad": 0.127,
-      "PadToTrack": 0.127,
+      "PadToPad": 0.1,
+      "PadToTrack": 0.1,
       "TrackToTrack": 0.13,
       "MinLineWidth": 0.5,
       "TrackToRegion": 0.5,
@@ -92,6 +92,11 @@
       "Path": "jack2bluetooth-B_Mask.gbr",
       "FileFunction": "SolderMask,Bot",
       "FilePolarity": "Negative"
+    },
+    {
+      "Path": "jack2bluetooth-User_Eco1.gbr",
+      "FileFunction": "Other,User",
+      "FilePolarity": "Positive"
     },
     {
       "Path": "jack2bluetooth-Edge_Cuts.gbr",

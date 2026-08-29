@@ -6,6 +6,7 @@
 	(paper "A3")
 	(title_block
 		(title "Jack2Bluetooth")
+		(date "2026-03-17")
 		(rev "3.1")
 		(comment 4 "Author : Paul Capgras")
 	)
@@ -20678,7 +20679,7 @@
 			(uuid "fdcc1d45-ec77-4fb6-befc-9fd72a451d86")
 		)
 		(instances
-			(project ""
+			(project "jack2bluetooth"
 				(path "/4b32d186-730c-41ef-8802-f29516455534"
 					(reference "IC2")
 					(unit 1)
@@ -21948,7 +21949,7 @@
 			(uuid "385f3190-772a-44e2-bd27-0bd44d9f4647")
 		)
 		(instances
-			(project ""
+			(project "jack2bluetooth"
 				(path "/4b32d186-730c-41ef-8802-f29516455534"
 					(reference "D3")
 					(unit 1)
@@ -22568,7 +22569,7 @@
 			(uuid "d4a1c0a4-ba7a-4e8c-a89d-4ea1163e4f31")
 		)
 		(instances
-			(project ""
+			(project "jack2bluetooth"
 				(path "/4b32d186-730c-41ef-8802-f29516455534"
 					(reference "PS1")
 					(unit 1)
@@ -23040,7 +23041,7 @@
 			(uuid "2335cc8c-e0a5-4172-b0c4-c9ca1b2e314c")
 		)
 		(instances
-			(project ""
+			(project "jack2bluetooth"
 				(path "/4b32d186-730c-41ef-8802-f29516455534"
 					(reference "J4")
 					(unit 1)
@@ -24920,7 +24921,7 @@
 			(uuid "1437132e-4a60-4248-a14d-e7a1d164ca1f")
 		)
 		(instances
-			(project ""
+			(project "jack2bluetooth"
 				(path "/4b32d186-730c-41ef-8802-f29516455534"
 					(reference "IC3")
 					(unit 1)
@@ -26220,7 +26221,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "1u"
+		(property "Value" "1uF"
 			(at 161.29 53.975 0)
 			(effects
 				(font
@@ -27541,7 +27542,7 @@
 			(uuid "fc9de3ed-8234-4a5e-b671-7a28fdcc485d")
 		)
 		(instances
-			(project ""
+			(project "jack2bluetooth"
 				(path "/4b32d186-730c-41ef-8802-f29516455534"
 					(reference "Q1")
 					(unit 1)
@@ -27954,7 +27955,7 @@
 			(uuid "3dc39823-f546-4d99-bd77-d73707af88b8")
 		)
 		(instances
-			(project ""
+			(project "jack2bluetooth"
 				(path "/4b32d186-730c-41ef-8802-f29516455534"
 					(reference "IC7")
 					(unit 1)
@@ -28623,7 +28624,7 @@
 			(uuid "0de2aa94-ccbc-4b84-b106-4cba643196c4")
 		)
 		(instances
-			(project ""
+			(project "jack2bluetooth"
 				(path "/4b32d186-730c-41ef-8802-f29516455534"
 					(reference "J1")
 					(unit 1)
@@ -29226,7 +29227,7 @@
 			(uuid "4b086fac-249b-43f4-8647-28b5864e7161")
 		)
 		(instances
-			(project ""
+			(project "jack2bluetooth"
 				(path "/4b32d186-730c-41ef-8802-f29516455534"
 					(reference "J8")
 					(unit 1)
@@ -30108,7 +30109,7 @@
 			(uuid "8d3095ea-0ab4-40f0-ace8-5c24e3758ef5")
 		)
 		(instances
-			(project ""
+			(project "jack2bluetooth"
 				(path "/4b32d186-730c-41ef-8802-f29516455534"
 					(reference "IC5")
 					(unit 1)
@@ -31186,7 +31187,7 @@
 			(uuid "5d8e9e29-721b-4185-985c-5bc4f01be91f")
 		)
 		(instances
-			(project ""
+			(project "jack2bluetooth"
 				(path "/4b32d186-730c-41ef-8802-f29516455534"
 					(reference "IC4")
 					(unit 1)
@@ -32060,7 +32061,7 @@
 			(uuid "176d6f19-f991-47e5-ad79-ae969e45662a")
 		)
 		(instances
-			(project ""
+			(project "jack2bluetooth"
 				(path "/4b32d186-730c-41ef-8802-f29516455534"
 					(reference "F1")
 					(unit 1)
@@ -32136,7 +32137,7 @@
 			(uuid "e5d0b48f-ed39-4613-bd27-5c9a114a3aec")
 		)
 		(instances
-			(project ""
+			(project "jack2bluetooth"
 				(path "/4b32d186-730c-41ef-8802-f29516455534"
 					(reference "Q2")
 					(unit 1)
@@ -34770,7 +34771,7 @@
 			(uuid "dd43b60a-4479-4252-a668-43e4df7a738b")
 		)
 		(instances
-			(project ""
+			(project "jack2bluetooth"
 				(path "/4b32d186-730c-41ef-8802-f29516455534"
 					(reference "D5")
 					(unit 1)
@@ -36416,7 +36417,7 @@
 			(uuid "ae285835-c896-492d-8f75-f75a8b7fca77")
 		)
 		(instances
-			(project ""
+			(project "jack2bluetooth"
 				(path "/4b32d186-730c-41ef-8802-f29516455534"
 					(reference "IC1")
 					(unit 1)

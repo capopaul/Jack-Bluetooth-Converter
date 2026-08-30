@@ -6,7 +6,7 @@
 Command order:
 
 - `get_idf`
-- `idf.py set-target esp32c6`
+- `idf.py set-target esp32`
 - `idf.py build`
 - `idf.py flash monitor`
 
@@ -76,9 +76,9 @@ Là ma carte est correctement alimentée. Je peux mener l'enquête
 
 ---
 
-![](../doc/images_sw/i2cdetect.png.png)
+![i2cdetect](../doc/images_sw/i2cdetect.png)
 
-![alt text](../doc/images_sw/i2cdump_audio_codec.png)
+![i2cdump](../doc/images_sw/i2cdump_audio_codec.png)
 
 ---
 

@@ -76,9 +76,9 @@ Là ma carte est correctement alimentée. Je peux mener l'enquête
 
 ---
 
-![](../doc/sw_images/i2cdetect.png.png)
+![](../doc/images_sw/i2cdetect.png.png)
 
-![alt text](../doc/sw_images/i2cdump_audio_codec.png)
+![alt text](../doc/images_sw/i2cdump_audio_codec.png)
 
 ---
 
@@ -136,17 +136,17 @@ Next step use the audio codec. For that, I need to
   - That is because it is supposed to be in 0x18. My README was bad. So no issue I see my audio codec successfully!!!
 
 The board setup now looks like that:
-![Board Setup](../doc/sw_images/board_setup.jpg)
+![Board Setup](../doc/images_sw/board_setup.jpg)
 
 | Pin name | ESP32c6 pin number | External ESP32 devkit pin number |
-|-|-|-|
-| IO6  | i2c_sda        | IO16 |
-| IO7  | i2c_clk        | IO17 |
-| IO18 | codec_reset_l  | IO32 |
+| - | - | - |
+| IO6 | i2c_sda | IO16 |
+| IO7 | i2c_clk | IO17 |
+| IO18 | codec_reset_l | IO32 |
 | IO19 | codec_i2s_mclk | IO33 |
 | IO20 | codec_i2s_bclk | IO25 |
 | IO21 | codec_i2s_wclk | IO26 |
-| IO22 | codec_i2s_din  | IO27 |
+| IO22 | codec_i2s_din | IO27 |
 | IO23 | codec_i2s_dout | IO14 |
 
 I was working on the folder esp32_b2j.
@@ -175,7 +175,7 @@ Two parts:
 ### Clocks
 
 I want my clock to be 256 of fs and it is coming from the master clock
-![figure17](../doc/sw_images/figure17.png)
+![figure17](../doc/images_sw/figure17.png)
 
 - So I choose to use the path on the left.
 - CLKDIV_CLKIN need to be enabled and select MCLK - Register 102.
@@ -208,8 +208,8 @@ is_expected(101, i2c_get(CODEC_ADDR, 101), 0b00000001);
 ### DAC
 
 I want my audio output on HPR/Lout:
-![DAC_path](../doc/sw_images/dac_path.png)
-![figure24](../doc/sw_images/figure24.png)
+![DAC_path](../doc/images_sw/dac_path.png)
+![figure24](../doc/images_sw/figure24.png)
 
 - so according to this : I should put my audio on DAC_L2 and DAC_R2 - Register 41.
 - Both DAC should be powered up - Register 37.
@@ -226,7 +226,7 @@ I am choosing not to use MCLK from the ESP and to generate the clock internally 
 ### Clock
 
 Let's configure the PLL.
-![figure17](../doc/sw_images/figure17.png)
+![figure17](../doc/images_sw/figure17.png)
 
 - CODEC_CLK (BCLK) = KxRxBCLK/(8xP) = 256 fs = KxRxfs/(8x8xP). Which implies that KxR/P = 64x256. So JxDxR/P = 64x256. Let's take P=1, R=2, J=32, D=256
 - Enable PLL and set P in register 3
@@ -289,13 +289,13 @@ is_expected(101, i2c_get(CODEC_ADDR, 101), 0b00000000);
 Let's check if the audio is sent successfully through the i2s interface:
 
 I do have my BCLK visible in the oscilloscope. Not the best clean clock I have seen... The frequency is fs(=44.1) * 256 / 8 = 1.41MHz so that is good. It is a free running clock.
-![BLCK](../doc/sw_images/bclk_oscilloscope.png)
+![BLCK](../doc/images_sw/bclk_oscilloscope.png)
 
 Ws is also free running.
-![WS](../doc/sw_images/ws_oscilloscope.png)
+![WS](../doc/images_sw/ws_oscilloscope.png)
 
 The Dout is also good when sending an audio:
-![Dout](../doc/sw_images/dout_oscilloscope.png)
+![Dout](../doc/images_sw/dout_oscilloscope.png)
 
 -> Not working. Three possibilities the overshoot are problematic. And/Or the PLL is bad. And/Or the DAC is badly configured.
 
@@ -374,13 +374,13 @@ i2c_set(CODEC_ADDR, 101, 0b00000000);
 is_expected(101, i2c_get(CODEC_ADDR, 101), 0b00000000);
 ```
 
-2. Let's filter this signals to have cleaner signals.
+1. Let's filter this signals to have cleaner signals.
 
 ### DAC
 
 I want my audio output on HPR/Lout:
-![DAC_path](../doc/sw_images/dac_path.png)
-![figure24](../doc/sw_images/figure24.png)
+![DAC_path](../doc/images_sw/dac_path.png)
+![figure24](../doc/images_sw/figure24.png)
 
 - so according to this : I should put my audio on DAC_L2 and DAC_R2 - Register 41.
 - Both DAC should be powered up - Register 37.

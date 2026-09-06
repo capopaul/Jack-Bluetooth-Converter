@@ -37,8 +37,8 @@
 
 static const char *TAG = "i2c-tools";
 
-static gpio_num_t i2c_gpio_sda = 19;
-static gpio_num_t i2c_gpio_scl = 21;
+static gpio_num_t i2c_gpio_sda = 21;
+static gpio_num_t i2c_gpio_scl = 19;
 
 static i2c_port_t i2c_port = I2C_NUM_0;
 
@@ -67,8 +67,6 @@ void app_main(void)
 
     hold_reset_low(IO_EXPANDER_RESETN_GPIO);
     hold_reset_low(AUDIO_CODEC_RESETN_GPIO);
-
-    vTaskDelay(pdMS_TO_TICKS(1000));
 
     // Create UART console
     esp_console_repl_t *repl = NULL;
@@ -104,6 +102,11 @@ void app_main(void)
 
     // Register commands
     register_i2ctools();
+
+    vTaskDelay(pdMS_TO_TICKS(1000));
+
+    release_reset(IO_EXPANDER_RESETN_GPIO);
+    release_reset(AUDIO_CODEC_RESETN_GPIO);
 
     // Start interactive console
     ESP_ERROR_CHECK(esp_console_start_repl(repl));

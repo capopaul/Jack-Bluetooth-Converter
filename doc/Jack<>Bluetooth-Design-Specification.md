@@ -423,14 +423,14 @@ This table contains all the pin assignments. It was updated during layout to mak
 
 |IO°  |Type | Active Mode      |
 |-----|-----|------------------|
-| IO0 |     | button_enter     |
-| IO1 |     | button_back      |
-| IO2 |     | button_next      |
-| IO3 |     | button_direction |
-| IO4 |     | led_adc          |
-| IO5 |     | led_dac          |
-| IO6 |     | lcd_vcc_ctrl     |
-| IO7 |     | codec_reset_l    |
+| IO0 |  I  | button_enter     |
+| IO1 |  I  | button_back      |
+| IO2 |  I  | button_next      |
+| IO3 |  I  | button_direction |
+| IO4 |  O  | led_adc          |
+| IO5 |  O  | led_dac          |
+| IO6 |  O  | lcd_vcc_ctrl     |
+| IO7 |  O  | codec_reset_l    |
 
 ## 6. I2C addresses
 

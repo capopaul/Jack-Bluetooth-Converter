@@ -51,10 +51,6 @@ The purpose of the *Jack <> Bluetooth Design Specification* is to document the d
     3. [Trace length](#73-trace-length)
     4. [Update footprints](#74-update-footprints)
     5. [Layers](#75-layers)
-        1. [Layer 1](#751-layer-1)
-        2. [Layer 2](#752-layer-2)
-        3. [Layer 3](#753-layer-3)
-        4. [Layer 4](#754-layer-4)
 
 ## 1. Jack2Bluetooth features
 
@@ -409,8 +405,8 @@ This table contains all the pin assignments. It was updated during layout to mak
 | IO14           | I/O |                     | jtag_tms      |
 | IO15           | I/O |                     | jtag_tdo      |
 | IO18           | I/O | codec_i2s_dout      |               |
-| IO19           | I/O | i2c_sda             |               |
-| IO21           | I/O | i2c_clk             |               |
+| IO19           | I/O | i2c_clk             |               |
+| IO21           | I/O | i2c_sda             |               |
 | IO22           | I/O | lcd_scl             |               |
 | IO23           | I/O | lcd_sda             |               |
 | IO25           | I/O | lcd_res             |               |

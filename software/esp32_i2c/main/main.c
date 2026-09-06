@@ -54,8 +54,7 @@ void hold_reset_low(gpio_num_t gpio)
         .mode = GPIO_MODE_OUTPUT,
         .pull_up_en = GPIO_PULLUP_DISABLE,
         .pull_down_en = GPIO_PULLDOWN_DISABLE,
-        .intr_type = GPIO_INTR_DISABLE
-    };
+        .intr_type = GPIO_INTR_DISABLE};
 
     ESP_ERROR_CHECK(gpio_config(&io_conf));
     ESP_ERROR_CHECK(gpio_set_level(gpio, 0));
@@ -66,7 +65,7 @@ void app_main(void)
     printf("Hello world!\n");
 
     hold_reset_low(IO_EXPANDER_RESETN_GPIO);
-    hold_reset_low(AUDIO_CODEC_RESETN_GPIO);
+    // hold_reset_low(AUDIO_CODEC_RESETN_GPIO);
 
     // Create UART console
     esp_console_repl_t *repl = NULL;
@@ -87,7 +86,6 @@ void app_main(void)
 
     ESP_ERROR_CHECK(i2c_new_master_bus(&i2c_bus_config, &tool_bus_handle));
 
-
     printf("\n ==============================================================\n");
     printf(" |             Steps to Use i2c-tools                         |\n");
     printf(" |                                                            |\n");
@@ -106,7 +104,7 @@ void app_main(void)
     vTaskDelay(pdMS_TO_TICKS(1000));
 
     release_reset(IO_EXPANDER_RESETN_GPIO);
-    release_reset(AUDIO_CODEC_RESETN_GPIO);
+    // release_reset(AUDIO_CODEC_RESETN_GPIO);
 
     // Start interactive console
     ESP_ERROR_CHECK(esp_console_start_repl(repl));

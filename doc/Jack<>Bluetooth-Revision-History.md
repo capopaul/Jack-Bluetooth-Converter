@@ -76,3 +76,11 @@ Also available in pdf: [jack<>bluetooth_schematic_rev3..pdf](jack<>bluetooth_sch
 ![jack<>bluetooth_rev3.0_top.png](images/jack<>bluetooth_rev3.1_top.png)
 
 ![jack<>bluetooth_rev3.0_bottom.png](images/jack<>bluetooth_rev3.1_bottom.png)
+
+### Issues
+
+1. When SW4 is pushed, Vbe of BJTs = 3.3V which is impossible.
+![BJT issue](images/BJT%20issue.png)
+**Quick Fix** : Cutting the pcb line and adding a 10k resistor on the bottom of the switch.
+2. Warning : Audio codec reset requires a good start of the I2C bus. It turns out working but it could have not.
+3. I2S MLCK was supposed to be connected to IO0 and not TXD0... That's why Q2 was added in the first place... ![mclk issue](images/mclk%20issue.png)

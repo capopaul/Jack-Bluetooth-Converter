@@ -1,7 +1,10 @@
 <!-- Author : Paul Capgras -->
-<!-- Date   : Jun 14, 2025 -->
 
-# Software Readme
+# Developments Notes of Rev 3.0
+
+> **Warning: This notes is outdated. It only aims to keep an history.**
+
+## Bringup
 
 Command order:
 
@@ -12,55 +15,168 @@ Command order:
 
 Then refer to bringup:
 
-## Bringup
+### Boot ESP32-C6 - From UART
 
 - Connect GND
-- Connect RX to **TX**
-- Connect TX to **RX**
+- Connect RX to **RX**
+- Connect TX to **TX**
 
+- Put 1 of OFF
+- Put 2 to ON
 - Send the program through UART
   - thanks to the esp idf platform
   - run `get_idf`
-  - esp32 should have been also selected
+  - esp32-c6 should have been also selected
   - `idf.py build` to build
-  - power up the board via usb-c
-  - connect the UART device using an usb-c to usb cable.
-  - check macos detect the device `ls /dev/cu.*`
-  - Push SW 4 (left) down
-  - flash the program `idf.py flash monitor`
-  - You might need to push reset button (SW 6, right, close to the esp32)
+  - `idf.py flash monitor`
+  - You might need to push reset button
   - to quit monitor terminal run CTRL-] on querty or CTRL+ALT GR+$ on azerty
+- Put 2 to OFF
+- Push reset button
+
+- `i2cdetect`
 
 > Ouput should be:
 
-- 0x00 -> (ESP Master)
-- 0x20 -> IO Expander
-- 0x18 -> Audio Codec
-- 0x6a -> PMIC
+- 00 -> (ESP Master)
+- 18 -> Audio Codec
+- 6a -> PMIC
 
-## Detect I2C peripherals
+### Good practice learnt
+
+- put a pin for all power lines
+- put an arrow for directive lines in the silkscreen
+- don't forget direction for the silkscreen for diodes (and leds !)
+
+### Detect I2C peripherals
 
 - use the i2c_tools from `/home/paul/esp/esp-idf/examples/peripherals/i2c`
 - go to the clone directory and run the idf commands.
 - i2c detect does not detect anything so far
 - connect oled i2c screen for a debug purpose. I might need a breadboard to connect grounds.
 
-## Embedded development
+### Embedded development
 
 - VS code with esp-idf extension (from Espressif Systems) and C/C++ (from Microsoft).
 - Some `#include`might me red, you need to add the esp path to the extension.
 - This video explains it at 7min15 : <https://www.youtube.com/watch?v=5IuZ-E8Tmhg&t=5s>
-- You can also use `CMD+SHIFT+P`, then click `ESP-IDF: Add VS Code Configuration Folder`.
-- You will need to build the project with `idf.py build` and it should solve all the issues
 
-## Development Notes
+i2cconfig --port=0 --freq=100000 --sda=6 --scl=7
 
-- [Former Development Notes of Rev3.0](./Development%20Notes%20of%20Rev3.0.md).
+## Jun 27
+
+- Je tente de remettre 5V sur Vcc et j'observe Vsystem
+- Vcc est connecté à mon PMIC donc c'est normal que rien ne se passe sur Vsystem vu que le PMIC est dead.
+
+- Je mets 3.323V sur Vsystem et j'observe:
+  - 3.3VA : mesure : 3.321V
+  - 1.8VDD: mesure : 1.823V
+  - 3.3VDD: mesure : 3.317V
+
+Là ma carte est correctement alimentée. Je peux mener l'enquête
+
+---
+
+![i2cdetect](../doc/images_sw/i2cdetect.png)
+
+![i2cdump](../doc/images_sw/i2cdump_audio_codec.png)
+
+---
+
+## Sept 17
+
+### Bringup from USB-C
+
+- Connect USB-C cable
+- Send the program
+- PB: interaction mode is not working
+
+So go to normal bringup
+[Refer to bringup](#bringup)
+
+## Sept 18th
+
+- Copied esp32/a2dp_sink.
+- Run it with internal DAC.
+- Access with my phone to the device ESP_speaker
+- Signal was visible on the oscilloscope!
+- Commit is called feat: setup classic bt audio_sink on the esp32 using internal DAC.
+
+Next step use the audio codec. For that, I need to
+
+- configure the audio codec using the esp32-c6.
+- send the signal using the other esp.
+
+## Oct 1
+
+- Issue 1 : Short between SW et Bat-. It is probably around the PMIC...
+  - I want to do an Xray to know if it is the chip, or the soldering
+    - No xray equipment at the U
+- I have added a wire on system.
+- Issue 2 : I can download the pogram on the esp32c6 but I can't leave the download mode.
+  - IO9 stays low. Pull up is not working.
+    - I removed the esp32c6 as they were no issue on the pcb.
+      - Now my voltage does not reach 3.3V anymore on VDD and AVDD. Nor 1.8V on AVDD
+
+## Oct 2
+
+- I have deeply cleaned the board with flux remover and the voltage issue was solved.
+
+## Oct 3
+
+- I have connected 6pins for the i2s and 2 pins for i2c to control these bus with the external esp32 dev kit.
+
+## Oct 6
+
+- I detect PMIC with i2c through external esp.
+- I don't detect audio codec.
+  - The reset pin goes from 0V to 1.4V. It is supposed to go up to 3.3V in idle.
+  - I am trying to remove external alimentation and to power everything with external esp
+  - powering everything with esp works - I have all the good voltages. The reset pin of the audio codec does go to 0V and then go back to 3.3V
+  - I still do not see my audio codec in 6a...
+  - That is because it is supposed to be in 0x18. My README was bad. So no issue I see my audio codec successfully!!!
+
+The board setup now looks like that:
+![Board Setup](../doc/images_sw/board_setup.jpg)
+
+| Pin name | ESP32c6 pin number | External ESP32 devkit pin number |
+| - | - | - |
+| IO6 | i2c_sda | IO16 |
+| IO7 | i2c_clk | IO17 |
+| IO18 | codec_reset_l | IO32 |
+| IO19 | codec_i2s_mclk | IO33 |
+| IO20 | codec_i2s_bclk | IO25 |
+| IO21 | codec_i2s_wclk | IO26 |
+| IO22 | codec_i2s_din | IO27 |
+| IO23 | codec_i2s_dout | IO14 |
+
+I was working on the folder esp32_b2j.
+
+I have removed what is linked with A2VRCP and try to keep only A2DP.
+Now I was trying to make the link with the external I2S codec.
+Two parts:
+
+- understand what has been programmed and how is the A2DP send to I2S: What are the I2S parameters
+- configure the audio codec according to these parameters
+
+## Oct 10
+
+- I have understood the esp example
+- I have reorganized and better name functions
+- I have removed the I2S link for now
+
+- I am now configuring the codec.
+- I based mon analysis on Figure 26 of the codec spec.
+- So I will be using HPL/ROUT
+
+## Oct 11
+
+- I am programming the AudioCodec
 
 ### Clocks
 
-<!-- I want my clock to be 256 of fs and it is coming from the master clock -->
-<!-- ![audio codec clocks](../doc/images_sw/figure17.png)
+I want my clock to be 256 of fs and it is coming from the master clock
+![figure17](../doc/images_sw/figure17.png)
 
 - So I choose to use the path on the left.
 - CLKDIV_CLKIN need to be enabled and select MCLK - Register 102.
@@ -277,4 +393,18 @@ Missing configuration:
 
 - Unmute L-DAC - Register 43
 - Unmute R-DAC - Register 44
- -->
+
+---
+
+I have not been able to make it work yet.
+
+My rise timing is bad with the current resistor (220 ohm) around 70ns.
+Spec required 4ns. I don't see how I could reach it though...
+
+Going to 100Ohm is better around 20-30ns
+
+50 Ohms overshoot...
+
+---
+
+Also I did not configured my audio codec after these edits regarding the slot offset.

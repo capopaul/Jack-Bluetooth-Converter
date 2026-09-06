@@ -14,6 +14,35 @@ Then refer to bringup:
 
 ## Bringup
 
+### Boot ESP32 - From UART
+
+- Connect GND
+- Connect RX to **TX**
+- Connect TX to **RX**
+
+- Send the program through UART
+  - thanks to the esp idf platform
+  - run `get_idf`
+  - esp32 should have been also selected
+  - `idf.py build` to build
+  - power up the board via usb-c
+  - connect the UART device using an usb-c to usb cable.
+  - check macos detect the device `ls /dev/cu.*`
+  - Push SW 4 (left) down
+  - flash the program `idf.py flash monitor`
+  - You might need to push reset button (SW 6, right, close to the esp32)
+  - to quit monitor terminal run CTRL-] on querty or CTRL+ALT GR+$ on azerty
+- Put 2 to OFF
+- Push reset button
+
+- `i2cdetect`
+
+> Ouput should be:
+
+- 00 -> (ESP Master)
+- 18 -> Audio Codec
+- 6a -> PMIC
+
 ### Boot ESP32-C6 - From UART
 
 - Connect GND

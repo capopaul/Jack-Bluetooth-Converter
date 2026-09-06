@@ -58,7 +58,7 @@ static size_t write_ringbuf(const uint8_t *data, size_t size);
  ******************************/
 
 static uint32_t s_pkt_cnt = 0; /* count for audio packet */
-static esp_a2d_audio_state_t s_audio_state = ESP_A2D_AUDIO_STATE_STOPPED;
+static esp_a2d_audio_state_t s_audio_state = ESP_A2D_AUDIO_STATE_SUSPEND;
 /* audio stream datapath state */
 static const char *s_a2d_conn_state_str[] = {"Disconnected", "Connecting", "Connected", "Disconnecting"};
 /* connection state in string */

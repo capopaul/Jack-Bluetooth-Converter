@@ -18,5 +18,6 @@
       "statusBarVisibility": "inherit",
       "inheritDefault": "hidden"
     }
-  }
+  },
+  "editor.formatOnSave": true,
 }

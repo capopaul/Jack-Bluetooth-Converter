@@ -45,27 +45,72 @@
 // Include audio codec
 #include "./drivers/audio_codec.h"
 
-static gpio_num_t i2c_gpio_sda = 16;
-static gpio_num_t i2c_gpio_scl = 17;
+#define IO_EXPANDER_RESETN_GPIO 32
+#define IO_EXPANDER_ADDR 0x20
+#define IO_EXPANDER_TAG "IO_EXPANDER"
 
 #define CODEC_ADDR 0x18
 #define CODEC_TAG "AUDIO_CODEC"
+
+static gpio_num_t i2c_gpio_sda = 21;
+static gpio_num_t i2c_gpio_scl = 19;
+
+// D7 - O - codec_reset_l
+#define IO_EXPANDER_CODEC_RESET_L_MASK (1 << 7)
+
+// D6 - O - lcd_vcc_ctrl
+#define IO_EXPANDER_LCD_VCC_CTRL_MASK (1 << 6)
+
+// D5 - O - led_dac
+#define IO_EXPANDER_LED_DAC_MASK (1 << 5)
+
+// D4 - O - led_adc
+#define IO_EXPANDER_LED_ADC_MASK (1 << 4)
+
+// D3 - I - button_direction
+#define IO_EXPANDER_BUTTON_DIRECTION_MASK (1 << 3)
+
+// D2 - I - button_next
+#define IO_EXPANDER_BUTTON_NEXT_MASK (1 << 2)
+
+// D1 - I - button_back
+#define IO_EXPANDER_BUTTON_BACK_MASK (1 << 1)
+
+// D0 - I - button_enter
+#define IO_EXPANDER_BUTTON_ENTER_MASK (1 << 0)
+
+// MCP23008 IODIR: 1 = input, 0 = output
+#define IO_EXPANDER_IODIR 0b00001111
+
+uint8_t io_expander_gpio = 0x00;
 
 /*******************************
  * STATIC FUNCTION DEFINITIONS
  ******************************/
 
-static void init_non_volatile_storage()
+// static void init_non_volatile_storage()
+// {
+//     /* initialize NVS (Non-volatile storage) — it is used to store PHY calibration data */
+//     esp_err_t err = nvs_flash_init();
+//     if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND)
+//     {
+//         ESP_ERROR_CHECK(nvs_flash_erase());
+//         err = nvs_flash_init();
+//     }
+//     ESP_ERROR_CHECK(err);
+// };
+
+static void set_io_expander(uint8_t mask)
 {
-    /* initialize NVS (Non-volatile storage) — it is used to store PHY calibration data */
-    esp_err_t err = nvs_flash_init();
-    if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND)
-    {
-        ESP_ERROR_CHECK(nvs_flash_erase());
-        err = nvs_flash_init();
-    }
-    ESP_ERROR_CHECK(err);
-};
+    io_expander_gpio |= mask;
+    i2c_set(IO_EXPANDER_ADDR, 0x09, io_expander_gpio);
+}
+
+static void clear_io_expander(uint8_t mask)
+{
+    io_expander_gpio &= ~mask;
+    i2c_set(IO_EXPANDER_ADDR, 0x09, io_expander_gpio);
+}
 
 static void is_expected(int register_address, uint8_t read_value, uint8_t expected_value)
 {
@@ -97,162 +142,201 @@ void app_main(void)
         .scl_io_num = i2c_gpio_scl,
         .sda_io_num = i2c_gpio_sda,
         .glitch_ignore_cnt = 7,
-        .flags.enable_internal_pullup = true,
+        .flags.enable_internal_pullup = false,
     };
 
     ESP_ERROR_CHECK(i2c_new_master_bus(&i2c_bus_config, &tool_bus_handle));
+
+    i2c_detect();
+
+    ///////////////////////
+    //    IO Expander    //
+    ///////////////////////
+
+    // Register IODIR - I/O DIRECTION REGISTER
+    i2c_set(IO_EXPANDER_ADDR, 0x0, IO_EXPANDER_IODIR);
+    is_expected(0x00, i2c_get(IO_EXPANDER_ADDR, 0x00), IO_EXPANDER_IODIR);
+
+    // default values for all the following registers
+    // i2c_get(IO_EXPANDER_ADDR, 0x01);
+    // i2c_get(IO_EXPANDER_ADDR, 0x02);
+    // i2c_get(IO_EXPANDER_ADDR, 0x03);
+    // i2c_get(IO_EXPANDER_ADDR, 0x04);
+    // i2c_get(IO_EXPANDER_ADDR, 0x05);
+    // i2c_get(IO_EXPANDER_ADDR, 0x06);
+    // i2c_get(IO_EXPANDER_ADDR, 0x07);
+    // i2c_get(IO_EXPANDER_ADDR, 0x08);
+
+    // GPIO - GENERAL PURPOSE I/O PORT REGISTER
+    i2c_set(IO_EXPANDER_ADDR, 0x09, io_expander_gpio);
+
+    // OLAT can be ignored.
+    // i2c_get(IO_EXPANDER_ADDR, 0x0A);
+
+    // Reset audio codec
+    clear_io_expander(IO_EXPANDER_CODEC_RESET_L_MASK);
+
+    // Wait 10 millisecond
+    vTaskDelay(pdMS_TO_TICKS(10));
+
+    // release reset audio codec
+    set_io_expander(IO_EXPANDER_CODEC_RESET_L_MASK);
+
+    // Wait 10 millisecond
+    vTaskDelay(pdMS_TO_TICKS(10));
+
+    // should see audio codec now.
+    i2c_detect();
+
+    set_io_expander(IO_EXPANDER_LED_ADC_MASK);
+    set_io_expander(IO_EXPANDER_LED_DAC_MASK);
 
     ///////////////////////
     //    Audio Codec    //
     ///////////////////////
 
-    i2c_detect();
+    // // Register 1 - SW reset
+    // i2c_set(CODEC_ADDR, 1, 0x80);
 
-    uint8_t read_value;
-    uint8_t expected_value;
+    // /*
+    //  * Clock
+    //  */
 
-    // Register 1 - SW reset
-    i2c_set(CODEC_ADDR, 1, 0x80);
+    // // Register 3 - PLL Programming Register A
+    // // D7   - 1    - PLL is enabled
+    // // D6-3 - 0000 -
+    // // D2-0 - 001  - P= 1
+    // i2c_set(CODEC_ADDR, 3, 0b10000001);
+    // is_expected(3, i2c_get(CODEC_ADDR, 3), 0b10000001);
 
-    /*
-     * Clock
-     */
+    // // Register 4 - PLL Programming Register B
+    // // D7-2 - 100000 // Set J to 32
+    // // D1-0 - 00
+    // i2c_set(CODEC_ADDR, 4, 0b10000000);
+    // is_expected(4, i2c_get(CODEC_ADDR, 4), 0b10000000);
 
-    // Register 3 - PLL Programming Register A
-    // D7   - 1    - PLL is enabled
-    // D6-3 - 0000 -
-    // D2-0 - 001  - P= 1
-    i2c_set(CODEC_ADDR, 3, 0b10000001);
-    is_expected(3, i2c_get(CODEC_ADDR, 3), 0b10000001);
+    // // Register 5 and 6
+    // // Set D to 0
+    // // MSB D7-0 (reg 5) 0
+    // // LSB D7-2 (reg 6) 0
+    // // D1-0             0
+    // // always write both, and in the order reg5 then reg6.
+    // is_expected(5, i2c_get(CODEC_ADDR, 5), 0b00000000);
+    // is_expected(6, i2c_get(CODEC_ADDR, 6), 0b00000000);
 
-    // Register 4 - PLL Programming Register B
-    // D7-2 - 100000 // Set J to 32
-    // D1-0 - 00
-    i2c_set(CODEC_ADDR, 4, 0b10000000);
-    is_expected(4, i2c_get(CODEC_ADDR, 4), 0b10000000);
+    // // Register 11 - Audio Codec Overflow Flag Register
+    // // D7-4 0
+    // // D3-0 0010 Set R to 0001
+    // i2c_set(CODEC_ADDR, 11, 0b00000010);
+    // is_expected(11, i2c_get(CODEC_ADDR, 11), 0b00000010);
 
-    // Register 5 and 6
-    // Set D to 0
-    // MSB D7-0 (reg 5) 0
-    // LSB D7-2 (reg 6) 0
-    // D1-0             0
-    // always write both, and in the order reg5 then reg6.
-    is_expected(5, i2c_get(CODEC_ADDR, 5), 0b00000000);
-    is_expected(6, i2c_get(CODEC_ADDR, 6), 0b00000000);
+    // // Register 102 - Clock Generation Control Register
+    // // D7-6 - 0  -
+    // // D5-4 - 10 - PLLCLK_IN uses BCLK
+    // // D3-0 - 0010
+    // // No need to write
+    // i2c_set(CODEC_ADDR, 102, 0b00100010);
+    // is_expected(102, i2c_get(CODEC_ADDR, 102), 0b00100010);
 
-    // Register 11 - Audio Codec Overflow Flag Register
-    // D7-4 0
-    // D3-0 0010 Set R to 0001
-    i2c_set(CODEC_ADDR, 11, 0b00000010);
-    is_expected(11, i2c_get(CODEC_ADDR, 11), 0b00000010);
+    // // Register 101 - Clock register
+    // // D7-1 - 0
+    // // D0   - 0 - CODEC_CLKIN uses PLLDIV_OUT
+    // i2c_set(CODEC_ADDR, 101, 0b00000000);
+    // is_expected(101, i2c_get(CODEC_ADDR, 101), 0b00000000);
 
-    // Register 102 - Clock Generation Control Register
-    // D7-6 - 0  -
-    // D5-4 - 10 - PLLCLK_IN uses BCLK
-    // D3-0 - 0010
-    // No need to write
-    i2c_set(CODEC_ADDR, 102, 0b00100010);
-    is_expected(102, i2c_get(CODEC_ADDR, 102), 0b00100010);
+    // /*
+    //  * Audio codec
+    //  */
 
-    // Register 101 - Clock register
-    // D7-1 - 0
-    // D0   - 0 - CODEC_CLKIN uses PLLDIV_OUT
-    i2c_set(CODEC_ADDR, 101, 0b00000000);
-    is_expected(101, i2c_get(CODEC_ADDR, 101), 0b00000000);
+    // // Register 7 - Codec Data-Path Setup Register
+    // // D7   - 1  - Set fs=44.1kHz
+    // // D6-5 - 00
+    // // D4-3 - 01 - Left DAC plays left input data
+    // // D2-1 - 01 - Right DAC plays right input data
+    // // D0   - 0
+    // // 1000 1010
+    // i2c_set(CODEC_ADDR, 7, 0b10001010);
+    // // // read again
+    // is_expected(7, i2c_get(CODEC_ADDR, 7), 0b10001010);
 
-    /*
-     * Audio codec
-     */
+    // // Register 37 - DAC Power and Output Driver Control Register
+    // // D7   - 1 - Left DAC is powered up
+    // // D6   - 1 - Right DAC is powered up
+    // // D5-0 - 0
+    // // Write 1100 0000
+    // i2c_set(CODEC_ADDR, 37, 0b11000000);
+    // is_expected(37, i2c_get(CODEC_ADDR, 37), 0b11000000);
 
-    // Register 7 - Codec Data-Path Setup Register
-    // D7   - 1  - Set fs=44.1kHz
-    // D6-5 - 00
-    // D4-3 - 01 - Left DAC plays left input data
-    // D2-1 - 01 - Right DAC plays right input data
-    // D0   - 0
-    // 1000 1010
-    i2c_set(CODEC_ADDR, 7, 0b10001010);
-    // // read again
-    is_expected(7, i2c_get(CODEC_ADDR, 7), 0b10001010);
+    // // Register 41 - DAC Output Switching Control Register
+    // // D7-6 - 10 - Left DAC output selects DAC-L2 path to left high power output drivers
+    // // D5-4 - 10 - Right DAC output selects DAC-R2 path to right high power output drivers
+    // // D3-0 - 0000
+    // i2c_set(CODEC_ADDR, 41, 0b10100000);
+    // is_expected(41, i2c_get(CODEC_ADDR, 41), 0b10100000);
 
-    // Register 37 - DAC Power and Output Driver Control Register
-    // D7   - 1 - Left DAC is powered up
-    // D6   - 1 - Right DAC is powered up
-    // D5-0 - 0
-    // Write 1100 0000
-    i2c_set(CODEC_ADDR, 37, 0b11000000);
-    is_expected(37, i2c_get(CODEC_ADDR, 37), 0b11000000);
+    // // Register 51 - HPLout output level control register
+    // // D7-4 - 0000
+    // // D3   - 1 - Unmute
+    // // D2   - 1
+    // // D1   - 1
+    // // D0   - 1 - Power up
+    // // write 0000 1111
+    // i2c_set(CODEC_ADDR, 51, 0b00001111);
+    // is_expected(51, i2c_get(CODEC_ADDR, 51), 0b00001111);
 
-    // Register 41 - DAC Output Switching Control Register
-    // D7-6 - 10 - Left DAC output selects DAC-L2 path to left high power output drivers
-    // D5-4 - 10 - Right DAC output selects DAC-R2 path to right high power output drivers
-    // D3-0 - 0000
-    i2c_set(CODEC_ADDR, 41, 0b10100000);
-    is_expected(41, i2c_get(CODEC_ADDR, 41), 0b10100000);
+    // // Register 65 - HPRout output level control register
+    // // D7-4 - 0000
+    // // D3   - 1 - Unmute
+    // // D2   - 1
+    // // D1   - 1
+    // // D0   - 1 - Power up
+    // // write 0000 1111
+    // i2c_set(CODEC_ADDR, 65, 0b00001111);
+    // is_expected(65, i2c_get(CODEC_ADDR, 65), 0b00001111);
 
-    // Register 51 - HPLout output level control register
-    // D7-4 - 0000
-    // D3   - 1 - Unmute
-    // D2   - 1
-    // D1   - 1
-    // D0   - 1 - Power up
-    // write 0000 1111
-    i2c_set(CODEC_ADDR, 51, 0b00001111);
-    is_expected(51, i2c_get(CODEC_ADDR, 51), 0b00001111);
+    // // Register 43 - Left-DAC Digital Volume Control Register
+    // // D7   - 0 - Unmute left-DAC channel
+    // // D6-0 - 0
+    // i2c_set(CODEC_ADDR, 43, 0b00000000);
+    // is_expected(43, i2c_get(CODEC_ADDR, 43), 0b00000000);
 
-    // Register 65 - HPRout output level control register
-    // D7-4 - 0000
-    // D3   - 1 - Unmute
-    // D2   - 1
-    // D1   - 1
-    // D0   - 1 - Power up
-    // write 0000 1111
-    i2c_set(CODEC_ADDR, 65, 0b00001111);
-    is_expected(65, i2c_get(CODEC_ADDR, 65), 0b00001111);
+    // // Register 44 - Right-DAC Digital Volume Control Register
+    // // D7   - 0 - Unmute right-DAC channel
+    // // D6-0 - 0
+    // i2c_set(CODEC_ADDR, 44, 0b00000000);
+    // is_expected(44, i2c_get(CODEC_ADDR, 44), 0b00000000);
 
-    // Register 43 - Left-DAC Digital Volume Control Register
-    // D7   - 0 - Unmute left-DAC channel
-    // D6-0 - 0
-    i2c_set(CODEC_ADDR, 43, 0b00000000);
-    is_expected(43, i2c_get(CODEC_ADDR, 43), 0b00000000);
+    // // Status
 
-    // Register 44 - Right-DAC Digital Volume Control Register
-    // D7   - 0 - Unmute right-DAC channel
-    // D6-0 - 0
-    i2c_set(CODEC_ADDR, 44, 0b00000000);
-    is_expected(44, i2c_get(CODEC_ADDR, 44), 0b00000000);
+    // // Register 94 - Module power status register
+    // is_expected(94, i2c_get(CODEC_ADDR, 94), 0b11000110);
 
-    // Status
+    // // Register 95 - Output driver short circuit detection status register
+    // is_expected(95, i2c_get(CODEC_ADDR, 95), 0b00000000);
+    // // -> 0c
+    // // DEBUG - WHY is HPRCOM Power up???
+    // // Read register 72
+    // is_expected(72, i2c_get(CODEC_ADDR, 72), 0b00000110);
+    // // Read register 97
+    // is_expected(97, i2c_get(CODEC_ADDR, 97), 0b00000011);
+    // //
+    // // Maybe a yield problem?
 
-    // Register 94 - Module power status register
-    is_expected(94, i2c_get(CODEC_ADDR, 94), 0b11000110);
+    // // Register 96 - Sticky Interrupt Flags register
+    // is_expected(96, i2c_get(CODEC_ADDR, 96), 0b00000000);
 
-    // Register 95 - Output driver short circuit detection status register
-    is_expected(95, i2c_get(CODEC_ADDR, 95), 0b00000000);
-    // -> 0c
-    // DEBUG - WHY is HPRCOM Power up???
-    // Read register 72
-    is_expected(72, i2c_get(CODEC_ADDR, 72), 0b00000110);
-    // Read register 97
-    is_expected(97, i2c_get(CODEC_ADDR, 97), 0b00000011);
-    //
-    // Maybe a yield problem?
+    // ///////////////////////
+    // //     Bluetooth     //
+    // ///////////////////////
 
-    // Register 96 - Sticky Interrupt Flags register
-    is_expected(96, i2c_get(CODEC_ADDR, 96), 0b00000000);
+    // init_non_volatile_storage();
 
-    ///////////////////////
-    //     Bluetooth     //
-    ///////////////////////
+    // bt_app_init();
 
-    init_non_volatile_storage();
+    // bt_app_task_start_up();
 
-    bt_app_init();
+    // bt_app_work_dispatch(bt_app_register_callback_function, BT_APP_EVT_REGISTER_CB_FUNCTION, NULL, 0, NULL);
 
-    bt_app_task_start_up();
-
-    bt_app_work_dispatch(bt_app_register_callback_function, BT_APP_EVT_REGISTER_CB_FUNCTION, NULL, 0, NULL);
-
-    // Wait 1 millisecond
+    // Wait 1 second
     vTaskDelay(pdMS_TO_TICKS(1000));
 }

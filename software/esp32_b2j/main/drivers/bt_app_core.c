@@ -115,6 +115,7 @@ static void set_bluetooth_pairing_parameters()
 };
 
 // Usefull function for bt_app_work_dispatch
+// Add a bluetooth message to the bluetooth message queue
 static bool bt_app_send_msg(bt_app_msg_t *msg)
 {
     if (msg == NULL)
@@ -132,6 +133,7 @@ static bool bt_app_send_msg(bt_app_msg_t *msg)
 }
 
 // Usefull function for task__bt_msg_handler
+// call the callback function associated with the message
 static void bt_app_work_dispatched(bt_app_msg_t *msg)
 {
     if (msg->cb)
@@ -157,6 +159,7 @@ static void task__bt_msg_handler(void *arg)
             case BT_APP_SIG_WORK_DISPATCH:
                 // if we received a message we dispatch it:
                 // Dispatch = take a piece of work and send it to the right place to be handled.
+                // here = calling the call back function
                 bt_app_work_dispatched(&msg);
                 break;
             default:
@@ -285,9 +288,12 @@ void bt_app_init(void)
     set_bluetooth_pairing_parameters();
 }
 
+// Create a queue for new bluetooth messages.
+// Create a task to call the call back functions of the new messages.
 void bt_app_task_start_up(void)
 {
     s_bt_app_task_queue = xQueueCreate(10, sizeof(bt_app_msg_t));
+
     xTaskCreate(task__bt_msg_handler, "BtAppTask", 3072, NULL, 10, &s_bt_app_task_handle);
 }
 
@@ -305,6 +311,7 @@ void bt_app_task_shut_down(void)
     }
 }
 
+// Create a bluetooth message and add it to the queue.
 bool bt_app_work_dispatch(bt_app_cb_t p_cback, uint16_t event, void *p_params, int param_len, bt_app_copy_cb_t p_copy_cback)
 {
     ESP_LOGD(BT_APP_CORE_TAG, "%s event: 0x%x, param len: %d", __func__, event, param_len);

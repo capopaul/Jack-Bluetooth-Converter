@@ -51,17 +51,6 @@ void bt_app_init(void);
 void bt_app_task_start_up(void);
 void bt_app_task_shut_down(void);
 
-/**
- * @brief  work dispatcher for the application task
- *
- * @param [in] p_cback       callback function
- * @param [in] event         event id
- * @param [in] p_params      callback paramters
- * @param [in] param_len     parameter length in byte
- * @param [in] p_copy_cback  parameter deep-copy function
- *
- * @return  true if work dispatch successfully, false otherwise
- */
 bool bt_app_work_dispatch(bt_app_cb_t p_cback, uint16_t event, void *p_params, int param_len, bt_app_copy_cb_t p_copy_cback);
 
 void bt_app_register_callback_function(uint16_t event, void *p_param);

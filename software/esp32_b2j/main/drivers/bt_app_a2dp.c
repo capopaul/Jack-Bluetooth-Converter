@@ -2,6 +2,7 @@
 // Date   : Oct 10, 2025
 
 #include <stdint.h>
+#include "audio_codec.h"
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
@@ -77,8 +78,7 @@ i2s_std_clk_config_t clk_cfg = {
     .mclk_multiple = I2S_MCLK_MULTIPLE_256,
     .bclk_div = 8};
 
-// So now, MCLK = 11.2896 MHz
-// BCLK = 2.822 MHz
+// So MCLK = 11.2896 MHz
 
 i2s_std_slot_config_t slot_cfg = {
     .data_bit_width = I2S_DATA_BIT_WIDTH_16BIT,
@@ -90,20 +90,14 @@ i2s_std_slot_config_t slot_cfg = {
     .bit_shift = true,
     .msb_right = false};
 
-// | pin name       | esp32_c6 | esp32 |
-// | codec_reset_l  | IO18     | IO32  |
-// | codec_i2s_mclk | IO19     | IO1   | (SPECIAL PIN)
-// | codec_i2s_bclk | IO20     | IO25  |
-// | codec_i2s_wclk | IO21     | IO26  |
-// | codec_i2s_din  | IO22     | IO27  |
-// | codec_i2s_dout | IO23     | IO14  |
+// So BCLK = 2.822 MHz
 
 i2s_std_gpio_config_t gpio_cfg = {
-    .mclk = I2S_GPIO_UNUSED,
-    .bclk = GPIO_NUM_25,
-    .ws = GPIO_NUM_26,
-    .dout = GPIO_NUM_14,
-    .din = GPIO_NUM_27,
+    .mclk = I2S_GPIO_MCLK,
+    .bclk = I2S_GPIO_BCLK,
+    .ws = I2S_GPIO_WCLK,
+    .dout = I2S_GPIO_DOUT,
+    .din = I2S_GPIO_DIN,
     .invert_flags = {
         .mclk_inv = false,
         .bclk_inv = false,
@@ -128,6 +122,7 @@ void esp_i2s_driver_install(void)
     ESP_ERROR_CHECK(i2s_new_channel(&chan_cfg, &tx_chan, NULL));
     ESP_ERROR_CHECK(i2s_channel_init_std_mode(tx_chan, &std_cfg));
     ESP_ERROR_CHECK(i2s_channel_enable(tx_chan));
+    audio_codec_check_power_ready();
 }
 
 static void esp_i2s_driver_uninstall(void)
@@ -299,6 +294,7 @@ static void handle_a2dp_event(uint16_t event, void *p_param)
     }
 }
 
+// Create the data ring and the task to empty it
 static void i2s_task_start_up(void)
 {
     ESP_LOGI(BT_APP_A2DP_TAG, "ringbuffer data empty! mode changed: RINGBUFFER_MODE_PREFETCHING");
@@ -313,6 +309,7 @@ static void i2s_task_start_up(void)
         ESP_LOGE(BT_APP_A2DP_TAG, "%s, ringbuffer create failed", __func__);
         return;
     }
+    // This task handle the new data added to the ring.
     xTaskCreate(task__i2s_handler, "BtI2STask", 8192, NULL, configMAX_PRIORITIES - 3, &s_bt_i2s_task_handle);
 }
 
@@ -416,6 +413,7 @@ static size_t write_ringbuf(const uint8_t *data, size_t size)
  *******************************/
 
 // Callback function for bluetooth HW events - A2DP events
+// Create a new bluetooth message
 void bt_app_a2dp_cb(esp_a2d_cb_event_t event, esp_a2d_cb_param_t *param)
 {
     switch (event)
@@ -439,6 +437,7 @@ void bt_app_a2dp_cb(esp_a2d_cb_event_t event, esp_a2d_cb_param_t *param)
 }
 
 // Callback function for bluetooth HW events - A2DP data events
+// Write data to ring buffer
 void bt_app_a2dp_data_cb(const uint8_t *data, uint32_t len)
 {
     write_ringbuf(data, len);

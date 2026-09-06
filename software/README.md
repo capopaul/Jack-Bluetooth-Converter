@@ -59,42 +59,30 @@ Then refer to bringup:
 
 ### Clocks
 
-<!-- I want my clock to be 256 of fs and it is coming from the master clock -->
-<!-- ![audio codec clocks](../doc/images_sw/figure17.png)
+The is an issue on my PCB with i2s_mclk. It was supposed to be IO0 and it turns out to be TXD0...
 
-- So I choose to use the path on the left.
-- CLKDIV_CLKIN need to be enabled and select MCLK - Register 102.
-- Q should be be equal to 2 - Register 3.
-- CODEC_CLKIN should select CLKDIV_OUT -> Register 101.
-- CLK_DIV uses MCLK -> Register 102
+So let's try not to use i2s_mclk and only i2s_bclk.
 
-```c
-// Register 3 - PLL Programming Register A
-// D7   - 0    -
-// D6-3 - 0010 - Q = 2
-// D2-0 - 000  -
-is_expected(3, i2c_get(CODEC_ADDR, 3), 0b00010000);
+![audio codec clocks](../doc/images_sw/figure17.png)
 
-// Register 102 - Clock Generation Control Register
-// D7-6 - 00 - CLKDIV_IN selects MCLK
-// D5-4 - 0
-// D3-0 - 0010
-// No need to write
-is_expected(102, i2c_get(CODEC_ADDR, 102), 0b00000010);
+The goal is to have : `CODEC_CLK = 256 x fs`.
 
-// Register 101 - Clock register
-i2c_get(CODEC_ADDR, 101);
-// D7-1 - 0
-// D0   - 1 - CODEC_CLKIN uses CLKDIV_OUT
-i2c_set(CODEC_ADDR, 101, 0b00000001);
-is_expected(101, i2c_get(CODEC_ADDR, 101), 0b00000001);
-```
+- `fs = 44,100 Hz`
+- So the goal is to have : `CODEC_CLK = 256 x fs = 11.2896 MHz`.
+- Right now, `BCLK = 2.822 MHz` with 16 bit stereo but 32 bit slots.
+- So in the clock path I choose to use the path on the right, using the audio codec internal PLL.
+- `PLLDIV_OUT = BLCK x K x R / (8 x P) = BLCK x (J.D) x R / (8 x P)`
+- **Warning** J is the integer portion of K (the numbers to the left of the decimal point), while D is the fractional portion of K.
+- `P = 1, R = 1, D = 0, J = 32` should work
+- `PLL_CLKIN` needs to be set
+- `CODEC_CLKIN` needs to be set
 
 ### DAC
 
-I want my audio output on HPR/Lout:
 ![DAC_path](../doc/images_sw/dac_path.png)
 ![figure24](../doc/images_sw/figure24.png)
+
+Goal: I want my audio output on HPR/Lout:
 
 - so according to this : I should put my audio on DAC_L2 and DAC_R2 - Register 41.
 - Both DAC should be powered up - Register 37.
@@ -104,6 +92,7 @@ I want my audio output on HPR/Lout:
 
 Crash when I send the audio. Honnestly without UART working (as it is used to trasnmit MCLK), it is really a mess to debug.
 
+<!-- 
 ## Oct 12
 
 I am choosing not to use MCLK from the ESP and to generate the clock internally in my audio codec with the internal PLL using the BCLK as a source.

@@ -2,6 +2,7 @@
 // Date   : Oct 10, 2025
 
 #include <stdint.h>
+#include <assert.h>
 #include "audio_codec.h"
 #include <stdbool.h>
 #include <stdlib.h>
@@ -81,7 +82,8 @@ i2s_std_clk_config_t clk_cfg = {
 // So MCLK = 11.2896 MHz
 
 i2s_std_slot_config_t slot_cfg = {
-    .data_bit_width = I2S_DATA_BIT_WIDTH_16BIT,
+    // Original ESP32 requires matching data and slot widths.
+    .data_bit_width = I2S_DATA_BIT_WIDTH_32BIT,
     .slot_bit_width = I2S_SLOT_BIT_WIDTH_32BIT,
     .slot_mode = I2S_SLOT_MODE_STEREO,
     .slot_mask = I2S_STD_SLOT_BOTH,
@@ -332,6 +334,55 @@ static void i2s_task_shut_down(void)
     }
 }
 
+#define I2S_PCM_CHUNK_BYTES (240 * 6)
+
+typedef struct
+{
+    bool have_low_byte;
+    uint8_t low_byte;
+} pcm_conversion_state_t;
+
+// Accept up to I2S_PCM_CHUNK_BYTES of PCM; state persists between chunks.
+static void write_pcm16_to_i2s(const uint8_t *data, size_t size, pcm_conversion_state_t *state)
+{
+    uint32_t samples_32[I2S_PCM_CHUNK_BYTES / 2];
+    assert(size <= I2S_PCM_CHUNK_BYTES);
+    // Bluetooth PCM is little-endian, signed 16-bit. Preserve its
+    // bit pattern in the upper 16 bits of each 32-bit I2S word.
+    // Keep a trailing byte across ring-buffer boundaries if needed.
+    size_t sample_count = 0;
+    for (size_t i = 0; i < size; ++i)
+    {
+        if (!state->have_low_byte)
+        {
+            state->low_byte = data[i];
+            state->have_low_byte = true;
+        }
+        else
+        {
+            uint32_t sample = (uint32_t)state->low_byte | ((uint32_t)data[i] << 8);
+            samples_32[sample_count++] = sample << 16;
+            state->have_low_byte = false;
+        }
+    }
+    size_t output_size = sample_count * sizeof(samples_32[0]);
+    size_t offset = 0;
+    while (offset < output_size)
+    {
+        size_t bytes_written = 0;
+        esp_err_t err = i2s_channel_write(tx_chan,
+            (const uint8_t *)samples_32 + offset, output_size - offset,
+            &bytes_written, portMAX_DELAY);
+        offset += bytes_written;
+        if (err != ESP_OK || bytes_written == 0)
+        {
+            ESP_LOGE(BT_APP_A2DP_TAG, "I2S write failed: %s, sent %u/%u bytes",
+                     esp_err_to_name(err), (unsigned)offset, (unsigned)output_size);
+            break;
+        }
+    }
+}
+
 static void task__i2s_handler(void *arg)
 {
     uint8_t *data = NULL;
@@ -341,8 +392,8 @@ static void task__i2s_handler(void *arg)
      * `dma_frame_num * dma_desc_num * i2s_channel_num * i2s_data_bit_width / 8`.
      * Transmit `dma_frame_num * dma_desc_num` bytes to DMA is trade-off.
      */
-    const size_t item_size_upto = 240 * 6;
-    size_t bytes_written = 0;
+    const size_t item_size_upto = I2S_PCM_CHUNK_BYTES;
+    pcm_conversion_state_t pcm_state = {0};
 
     for (;;)
     {
@@ -359,7 +410,7 @@ static void task__i2s_handler(void *arg)
                     ringbuffer_mode = RINGBUFFER_MODE_PREFETCHING;
                     break;
                 }
-                i2s_channel_write(tx_chan, data, item_size, &bytes_written, portMAX_DELAY);
+                write_pcm16_to_i2s(data, item_size, &pcm_state);
                 vRingbufferReturnItem(s_ringbuf_i2s, (void *)data);
             }
         }

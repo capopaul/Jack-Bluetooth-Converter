@@ -63,7 +63,7 @@ static void init_bluetooth_controller()
     if (err != ESP_OK)
     {
         ESP_LOGE(BT_APP_CORE_TAG, "%s initialize controller failed: %s", __func__, esp_err_to_name(err));
-        return;
+        ESP_ERROR_CHECK(err);
     }
 };
 
@@ -74,7 +74,7 @@ static void enable_bluetooth_controller()
     if (err != ESP_OK)
     {
         ESP_LOGE(BT_APP_CORE_TAG, "%s enable controller failed: %s", __func__, esp_err_to_name(err));
-        return;
+        ESP_ERROR_CHECK(err);
     }
 };
 
@@ -87,7 +87,7 @@ static void init_bluedroid_host()
     if (err != ESP_OK)
     {
         ESP_LOGE(BT_APP_CORE_TAG, "%s initialize bluedroid failed: %s", __func__, esp_err_to_name(err));
-        return;
+        ESP_ERROR_CHECK(err);
     }
 };
 
@@ -98,7 +98,7 @@ static void enable_bluedroid_host()
     if (err != ESP_OK)
     {
         ESP_LOGE(BT_APP_CORE_TAG, "%s enable bluedroid failed", __func__);
-        return;
+        ESP_ERROR_CHECK(err);
     }
 };
 

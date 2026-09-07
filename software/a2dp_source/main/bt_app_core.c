@@ -14,15 +14,24 @@
 #include "esp_log.h"
 #include "bt_app_core.h"
 
+// Bluetooth
+#include "esp_bt.h"
+#include "esp_bt_main.h"
+#include "esp_bt_device.h"
+#include "esp_gap_bt_api.h"
+#include "esp_a2dp_api.h"
+
 /*********************************
  * STATIC FUNCTION DECLARATIONS
  ********************************/
 
-/* application task handler */
+static void init_bluetooth_controller();
+static void enable_bluetooth_controller();
+static void init_bluedroid_host();
+static void enable_bluedroid_host();
+
 static void bt_app_task_handler(void *arg);
-/* message sender for Work queue */
 static bool bt_app_send_msg(bt_app_msg_t *msg);
-/* handler for dispatched message */
 static void bt_app_work_dispatched(bt_app_msg_t *msg);
 
 /*********************************
@@ -35,13 +44,78 @@ static TaskHandle_t s_bt_app_task_handle = NULL;
  * STATIC FUNCTION DEFINITIONS
  ********************************/
 
+static void init_bluetooth_controller()
+{
+    // We only uses the functions of Classical Bluetooth.
+    // So release the controller memory for Bluetooth Low Energy.
+    ESP_ERROR_CHECK(esp_bt_controller_mem_release(ESP_BT_MODE_BLE));
+
+    /* initialize Bluetooth Controller with default configuration */
+    esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
+    esp_err_t err = esp_bt_controller_init(&bt_cfg);
+    if (err != ESP_OK)
+    {
+        ESP_LOGE(BT_APP_CORE_TAG, "%s initialize controller failed: %s", __func__, esp_err_to_name(err));
+        ESP_ERROR_CHECK(err);
+    }
+};
+
+static void enable_bluetooth_controller()
+{
+    /* enable Bluetooth Controller in Classic Bluetooth mode */
+    esp_err_t err = esp_bt_controller_enable(ESP_BT_MODE_CLASSIC_BT);
+    if (err != ESP_OK)
+    {
+        ESP_LOGE(BT_APP_CORE_TAG, "%s enable controller failed: %s", __func__, esp_err_to_name(err));
+        ESP_ERROR_CHECK(err);
+    }
+};
+
+static void init_bluedroid_host()
+{
+    /* initialize Bluedroid Host */
+    esp_bluedroid_config_t bluedroid_cfg = BT_BLUEDROID_INIT_CONFIG_DEFAULT();
+    bluedroid_cfg.ssp_en = false;
+    esp_err_t err = esp_bluedroid_init_with_cfg(&bluedroid_cfg);
+    if (err != ESP_OK)
+    {
+        ESP_LOGE(BT_APP_CORE_TAG, "%s initialize bluedroid failed: %s", __func__, esp_err_to_name(err));
+        ESP_ERROR_CHECK(err);
+    }
+};
+
+static void enable_bluedroid_host()
+{
+    /* enable Bluedroid Host */
+    esp_err_t err = esp_bluedroid_enable();
+    if (err != ESP_OK)
+    {
+        ESP_LOGE(BT_APP_CORE_TAG, "%s enable bluedroid failed", __func__);
+        ESP_ERROR_CHECK(err);
+    }
+};
+
+static void set_bluetooth_pairing_parameters()
+{
+    /* set default parameters for Legacy Pairing (use fixed pin code 1234) */
+    esp_bt_pin_type_t pin_type = ESP_BT_PIN_TYPE_FIXED;
+    esp_bt_pin_code_t pin_code;
+    // pin_code[0] = '1';
+    // pin_code[1] = '2';
+    // pin_code[2] = '3';
+    // pin_code[3] = '4';
+    esp_bt_gap_set_pin(pin_type, 4, pin_code);
+};
+
 static bool bt_app_send_msg(bt_app_msg_t *msg)
 {
-    if (msg == NULL || s_bt_app_task_queue == NULL) {
+    if (msg == NULL || s_bt_app_task_queue == NULL)
+    {
         return false;
     }
 
-    if (pdTRUE != xQueueSend(s_bt_app_task_queue, msg, 10 / portTICK_PERIOD_MS)) {
+    if (pdTRUE != xQueueSend(s_bt_app_task_queue, msg, 10 / portTICK_PERIOD_MS))
+    {
         ESP_LOGE(BT_APP_CORE_TAG, "%s xQueue send failed", __func__);
         return false;
     }
@@ -51,7 +125,8 @@ static bool bt_app_send_msg(bt_app_msg_t *msg)
 
 static void bt_app_work_dispatched(bt_app_msg_t *msg)
 {
-    if (msg->cb) {
+    if (msg->cb)
+    {
         msg->cb(msg->event, msg->param);
     }
 }
@@ -60,12 +135,15 @@ static void bt_app_task_handler(void *arg)
 {
     bt_app_msg_t msg;
 
-    for (;;) {
+    for (;;)
+    {
         /* receive message from work queue and handle it */
-        if (pdTRUE == xQueueReceive(s_bt_app_task_queue, &msg, (TickType_t)portMAX_DELAY)) {
+        if (pdTRUE == xQueueReceive(s_bt_app_task_queue, &msg, (TickType_t)portMAX_DELAY))
+        {
             ESP_LOGD(BT_APP_CORE_TAG, "%s, signal: 0x%x, event: 0x%x", __func__, msg.sig, msg.event);
 
-            switch (msg.sig) {
+            switch (msg.sig)
+            {
             case BT_APP_SIG_WORK_DISPATCH:
                 bt_app_work_dispatched(&msg);
                 break;
@@ -74,8 +152,10 @@ static void bt_app_task_handler(void *arg)
                 break;
             }
 
-            if (msg.param) {
-                if (msg.free_cb) {
+            if (msg.param)
+            {
+                if (msg.free_cb)
+                {
                     msg.free_cb(msg.param);
                 }
                 free(msg.param);
@@ -87,6 +167,17 @@ static void bt_app_task_handler(void *arg)
 /*********************************
  * EXTERN FUNCTION DEFINITIONS
  ********************************/
+
+void bt_app_init(void)
+{
+    init_bluetooth_controller();
+    enable_bluetooth_controller();
+
+    init_bluedroid_host();
+    enable_bluedroid_host();
+
+    set_bluetooth_pairing_parameters();
+}
 
 bool bt_app_work_dispatch(bt_app_cb_t p_cback, uint16_t event, void *p_params, int param_len,
                           bt_app_copy_cb_t p_copy_cback, bt_app_free_cb_t p_free_cback)
@@ -101,17 +192,24 @@ bool bt_app_work_dispatch(bt_app_cb_t p_cback, uint16_t event, void *p_params, i
     msg.cb = p_cback;
     msg.free_cb = p_free_cback;
 
-    if (param_len == 0) {
+    if (param_len == 0)
+    {
         return bt_app_send_msg(&msg);
-    } else if (p_params && param_len > 0) {
-        if ((msg.param = malloc(param_len)) != NULL) {
+    }
+    else if (p_params && param_len > 0)
+    {
+        if ((msg.param = malloc(param_len)) != NULL)
+        {
             memcpy(msg.param, p_params, param_len);
             /* check if caller has provided a copy callback to do the deep copy */
-            if (p_copy_cback) {
+            if (p_copy_cback)
+            {
                 p_copy_cback(msg.param, p_params, param_len);
             }
-            if (!bt_app_send_msg(&msg)) {
-                if (p_free_cback) {
+            if (!bt_app_send_msg(&msg))
+            {
+                if (p_free_cback)
+                {
                     p_free_cback(msg.param);
                 }
                 free(msg.param);
@@ -132,15 +230,20 @@ void bt_app_task_start_up(void)
 
 void bt_app_task_shut_down(void)
 {
-    if (s_bt_app_task_handle) {
+    if (s_bt_app_task_handle)
+    {
         vTaskDelete(s_bt_app_task_handle);
         s_bt_app_task_handle = NULL;
     }
-    if (s_bt_app_task_queue) {
+    if (s_bt_app_task_queue)
+    {
         bt_app_msg_t msg;
-        while (xQueueReceive(s_bt_app_task_queue, &msg, 0) == pdTRUE) {
-            if (msg.param) {
-                if (msg.free_cb) {
+        while (xQueueReceive(s_bt_app_task_queue, &msg, 0) == pdTRUE)
+        {
+            if (msg.param)
+            {
+                if (msg.free_cb)
+                {
                     msg.free_cb(msg.param);
                 }
                 free(msg.param);

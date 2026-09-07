@@ -29,9 +29,6 @@
 #define BT_AV_TAG "BT_AV"
 #define BT_RC_CT_TAG "RC_CT"
 
-/* device name */
-#define LOCAL_DEVICE_NAME "ESP_A2DP_SRC"
-
 /* AVRCP used transaction label */
 #define APP_RC_CT_TL_GET_CAPS (0)
 #define APP_RC_CT_TL_RN_VOLUME_CHANGE (1)
@@ -81,9 +78,6 @@ static void bt_app_a2d_cb(esp_a2d_cb_event_t event, esp_a2d_cb_param_t *param);
 
 /* callback function for A2DP source audio data stream */
 static int32_t bt_app_a2d_data_cb(uint8_t *data, int32_t len);
-
-/* callback function for AVRCP controller */
-static void bt_app_rc_ct_cb(esp_avrc_ct_cb_event_t event, esp_avrc_ct_cb_param_t *param);
 
 /* handler for heart beat timer */
 static void bt_app_a2d_heart_beat(TimerHandle_t arg);
@@ -356,23 +350,33 @@ static void bt_av_hdl_stack_evt(uint16_t event, void *p_param)
     /* when stack up worked, this event comes */
     case BT_APP_STACK_UP_EVT:
     {
-        char *dev_name = LOCAL_DEVICE_NAME;
-        esp_bt_gap_set_device_name(dev_name);
+        // Set the local device name
+        esp_bt_gap_set_device_name("ESP_A2DP_SRC");
+
+        // Register the GAP (Generic Access Profile) callback function (handles authentication, encryption, etc.)
         esp_bt_gap_register_callback(bt_app_gap_cb);
 
-        esp_avrc_ct_init();
-        esp_avrc_ct_register_callback(bt_app_rc_ct_cb);
+        // AVRCP handles media controls, metadata, and volume synchronization.
+        // esp_avrc_ct_init();
+        // esp_avrc_ct_register_callback(bt_app_rc_ct_cb);
 
-        esp_avrc_rn_evt_cap_mask_t evt_set = {0};
-        esp_avrc_rn_evt_bit_mask_operation(ESP_AVRC_BIT_MASK_OP_SET, &evt_set, ESP_AVRC_RN_VOLUME_CHANGE);
-        ESP_ERROR_CHECK(esp_avrc_tg_set_rn_evt_cap(&evt_set));
+        // esp_avrc_rn_evt_cap_mask_t evt_set = {0};
+        // esp_avrc_rn_evt_bit_mask_operation(ESP_AVRC_BIT_MASK_OP_SET, &evt_set, ESP_AVRC_RN_VOLUME_CHANGE);
+        // ESP_ERROR_CHECK(esp_avrc_tg_set_rn_evt_cap(&evt_set));
 
+        // Initialize and register the A2DP Source profile (Advanced Audio Distribution Profile)
         esp_a2d_source_init();
+
+        // Register callback for handling A2DP connection events (e.g., connection state, codec configuration)
         esp_a2d_register_callback(&bt_app_a2d_cb);
-        esp_a2d_source_register_data_callback(bt_app_a2d_data_cb);
+
+        // Register callback for sending audio data streamed with A2DP
+        // esp_a2d_source_register_data_callback(bt_app_a2d_data_cb);
 
         /* Avoid the state error of s_a2d_state caused by the connection initiated by the peer device. */
         esp_bt_gap_set_scan_mode(ESP_BT_NON_CONNECTABLE, ESP_BT_NON_DISCOVERABLE);
+
+        /* Get local device name */
         esp_bt_gap_get_device_name();
 
         ESP_LOGI(BT_AV_TAG, "Starting device discovery...");
@@ -808,30 +812,6 @@ static void bt_app_av_state_disconnecting_hdlr(uint16_t event, void *param)
     }
 }
 
-/* callback function for AVRCP controller */
-static void bt_app_rc_ct_cb(esp_avrc_ct_cb_event_t event, esp_avrc_ct_cb_param_t *param)
-{
-    switch (event)
-    {
-    case ESP_AVRC_CT_CONNECTION_STATE_EVT:
-    case ESP_AVRC_CT_PASSTHROUGH_RSP_EVT:
-    case ESP_AVRC_CT_CHANGE_NOTIFY_EVT:
-    case ESP_AVRC_CT_REMOTE_FEATURES_EVT:
-    case ESP_AVRC_CT_GET_RN_CAPABILITIES_RSP_EVT:
-    case ESP_AVRC_CT_SET_ABSOLUTE_VOLUME_RSP_EVT:
-    case ESP_AVRC_CT_PROF_STATE_EVT:
-    {
-        bt_app_work_dispatch(bt_av_hdl_avrc_ct_evt, event, param, sizeof(esp_avrc_ct_cb_param_t), NULL, NULL);
-        break;
-    }
-    default:
-    {
-        ESP_LOGE(BT_RC_CT_TAG, "Invalid AVRC event: %d", event);
-        break;
-    }
-    }
-}
-
 static void bt_av_volume_changed(void)
 {
     if (esp_avrc_rn_evt_bit_mask_operation(ESP_AVRC_BIT_MASK_OP_TEST, &s_avrc_peer_rn_cap,
@@ -947,73 +927,39 @@ static void bt_av_hdl_avrc_ct_evt(uint16_t event, void *p_param)
     }
 }
 
+static void init_non_volatile_storage()
+{
+    /* initialize NVS (Non-volatile storage) — it is used to store PHY calibration data */
+    esp_err_t err = nvs_flash_init();
+    if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND)
+    {
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        err = nvs_flash_init();
+    }
+    ESP_ERROR_CHECK(err);
+};
+
 /*********************************
  * MAIN ENTRY POINT
  ********************************/
 
 void app_main(void)
 {
-    char bda_str[18] = {0};
+
+    ///////////////////////
+    //     Bluetooth     //
+    ///////////////////////
+
     /* initialize NVS — it is used to store PHY calibration data */
-    esp_err_t ret = nvs_flash_init();
-    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
-    {
-        ESP_ERROR_CHECK(nvs_flash_erase());
-        ret = nvs_flash_init();
-    }
-    ESP_ERROR_CHECK(ret);
+    init_non_volatile_storage();
 
-    /*
-     * This example only uses the functions of Classical Bluetooth.
-     * So release the controller memory for Bluetooth Low Energy.
-     */
-    ESP_ERROR_CHECK(esp_bt_controller_mem_release(ESP_BT_MODE_BLE));
+    bt_app_init();
 
-    esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
-    if (esp_bt_controller_init(&bt_cfg) != ESP_OK)
-    {
-        ESP_LOGE(BT_AV_TAG, "%s initialize controller failed", __func__);
-        return;
-    }
-    if (esp_bt_controller_enable(ESP_BT_MODE_CLASSIC_BT) != ESP_OK)
-    {
-        ESP_LOGE(BT_AV_TAG, "%s enable controller failed", __func__);
-        return;
-    }
-
-    esp_bluedroid_config_t bluedroid_cfg = BT_BLUEDROID_INIT_CONFIG_DEFAULT();
-#if (CONFIG_EXAMPLE_SSP_ENABLED == false)
-    bluedroid_cfg.ssp_en = false;
-#endif
-    if ((ret = esp_bluedroid_init_with_cfg(&bluedroid_cfg)) != ESP_OK)
-    {
-        ESP_LOGE(BT_AV_TAG, "%s initialize bluedroid failed: %s", __func__, esp_err_to_name(ret));
-        return;
-    }
-
-    if (esp_bluedroid_enable() != ESP_OK)
-    {
-        ESP_LOGE(BT_AV_TAG, "%s enable bluedroid failed", __func__);
-        return;
-    }
-
-#if (CONFIG_EXAMPLE_SSP_ENABLED == true)
-    /* set default parameters for Secure Simple Pairing */
-    esp_bt_sp_param_t param_type = ESP_BT_SP_IOCAP_MODE;
-    esp_bt_io_cap_t iocap = ESP_BT_IO_CAP_IO;
-    esp_bt_gap_set_security_param(param_type, &iocap, sizeof(uint8_t));
-#endif
-
-    /*
-     * Set default parameters for Legacy Pairing
-     * Use variable pin, input pin code when pairing
-     */
-    esp_bt_pin_type_t pin_type = ESP_BT_PIN_TYPE_VARIABLE;
-    esp_bt_pin_code_t pin_code;
-    esp_bt_gap_set_pin(pin_type, 0, pin_code);
-
+    char bda_str[18] = {0};
     ESP_LOGI(BT_AV_TAG, "Own address:[%s]", bda2str((uint8_t *)esp_bt_dev_get_address(), bda_str, sizeof(bda_str)));
+
     bt_app_task_start_up();
-    /* Bluetooth device name, connection mode and profile set up */
+
+    // create a bluetooth message to register callback functions
     bt_app_work_dispatch(bt_av_hdl_stack_evt, BT_APP_STACK_UP_EVT, NULL, 0, NULL, NULL);
 }

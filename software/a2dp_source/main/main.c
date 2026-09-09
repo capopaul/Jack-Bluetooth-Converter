@@ -114,6 +114,7 @@ static esp_avrc_rn_evt_cap_mask_t s_avrc_peer_rn_cap;        /* AVRC target noti
 static TimerHandle_t s_tmr;                                  /* handle of heart beat timer */
 
 static const char remote_device_name[] = "Bose-Paul-2";
+// static const char remote_device_name[] = "Paul's JBL Charge 6";
 
 /*********************************
  * STATIC FUNCTION DEFINITIONS
@@ -173,13 +174,13 @@ static bool get_name_from_eir(uint8_t *eir, uint8_t *bdname, uint8_t *bdname_len
 static void filter_inquiry_scan_result(esp_bt_gap_cb_param_t *param)
 {
     char bda_str[18];
+    uint8_t discovered_name[ESP_BT_GAP_MAX_BDNAME_LEN + 1] = {0};
     uint32_t cod = 0;    /* class of device */
     int32_t rssi = -129; /* invalid value */
     uint8_t *eir = NULL;
     esp_bt_gap_dev_prop_t *p;
 
-    /* handle the discovery results */
-    ESP_LOGI(BT_AV_TAG, "Scanned device: %s", bda2str(param->disc_res.bda, bda_str, 18));
+    /* Collect the discovery result properties. */
     for (int i = 0; i < param->disc_res.num_prop; i++)
     {
         p = param->disc_res.prop + i;
@@ -197,10 +198,30 @@ static void filter_inquiry_scan_result(esp_bt_gap_cb_param_t *param)
             eir = (uint8_t *)(p->val);
             break;
         case ESP_BT_GAP_DEV_PROP_BDNAME:
+        {
+            size_t name_len = p->len;
+            if (name_len > ESP_BT_GAP_MAX_BDNAME_LEN)
+            {
+                name_len = ESP_BT_GAP_MAX_BDNAME_LEN;
+            }
+            memcpy(discovered_name, p->val, name_len);
+            discovered_name[name_len] = '\0';
+            break;
+        }
         default:
             break;
         }
     }
+
+    /* Some devices provide their name only in the EIR data. */
+    if (discovered_name[0] == '\0' && eir)
+    {
+        get_name_from_eir(eir, discovered_name, NULL);
+    }
+
+    ESP_LOGI(BT_AV_TAG, "Device: %s, name: '%s', RSSI: %" PRId32 ", class: 0x%06" PRIx32,
+             bda2str(param->disc_res.bda, bda_str, sizeof(bda_str)),
+             discovered_name[0] ? (char *)discovered_name : "<unknown>", rssi, cod);
 
     /* search for device with MAJOR service class as "rendering" in COD */
     if (!esp_bt_gap_is_valid_cod(cod) ||
@@ -209,18 +230,16 @@ static void filter_inquiry_scan_result(esp_bt_gap_cb_param_t *param)
         return;
     }
 
-    /* search for target device in its Extended Inqury Response */
-    if (eir)
+    /* Search for the configured target by its advertised name. */
+    if (discovered_name[0] != '\0' &&
+        strcmp((char *)discovered_name, remote_device_name) == 0)
     {
-        get_name_from_eir(eir, s_peer_bdname, NULL);
-        if (strcmp((char *)s_peer_bdname, remote_device_name) == 0)
-        {
-            ESP_LOGI(BT_AV_TAG, "Found a target device, address %s, name %s", bda_str, s_peer_bdname);
-            s_a2d_state = APP_AV_STATE_DISCOVERED;
-            memcpy(s_peer_bda, param->disc_res.bda, ESP_BD_ADDR_LEN);
-            ESP_LOGI(BT_AV_TAG, "Cancel device discovery ...");
-            esp_bt_gap_cancel_discovery();
-        }
+        memcpy(s_peer_bdname, discovered_name, sizeof(s_peer_bdname));
+        ESP_LOGI(BT_AV_TAG, "Found a target device, address %s, name %s", bda_str, s_peer_bdname);
+        s_a2d_state = APP_AV_STATE_DISCOVERED;
+        memcpy(s_peer_bda, param->disc_res.bda, ESP_BD_ADDR_LEN);
+        ESP_LOGI(BT_AV_TAG, "Cancel device discovery ...");
+        esp_bt_gap_cancel_discovery();
     }
 }
 
@@ -371,7 +390,7 @@ static void bt_av_hdl_stack_evt(uint16_t event, void *p_param)
         esp_a2d_register_callback(&bt_app_a2d_cb);
 
         // Register callback for sending audio data streamed with A2DP
-        // esp_a2d_source_register_data_callback(bt_app_a2d_data_cb);
+        esp_a2d_source_register_data_callback(bt_app_a2d_data_cb);
 
         /* Avoid the state error of s_a2d_state caused by the connection initiated by the peer device. */
         esp_bt_gap_set_scan_mode(ESP_BT_NON_CONNECTABLE, ESP_BT_NON_DISCOVERABLE);

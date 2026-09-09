@@ -75,7 +75,9 @@ static void init_bluedroid_host()
 {
     /* initialize Bluedroid Host */
     esp_bluedroid_config_t bluedroid_cfg = BT_BLUEDROID_INIT_CONFIG_DEFAULT();
+#if (CONFIG_EXAMPLE_SSP_ENABLED == false)
     bluedroid_cfg.ssp_en = false;
+#endif
     esp_err_t err = esp_bluedroid_init_with_cfg(&bluedroid_cfg);
     if (err != ESP_OK)
     {
@@ -97,14 +99,17 @@ static void enable_bluedroid_host()
 
 static void set_bluetooth_pairing_parameters()
 {
-    /* set default parameters for Legacy Pairing (use fixed pin code 1234) */
-    esp_bt_pin_type_t pin_type = ESP_BT_PIN_TYPE_FIXED;
+#if (CONFIG_EXAMPLE_SSP_ENABLED == true)
+    /* This board has no keyboard or display; SSP will use Just Works pairing. */
+    esp_bt_sp_param_t param_type = ESP_BT_SP_IOCAP_MODE;
+    esp_bt_io_cap_t iocap = ESP_BT_IO_CAP_NONE;
+    ESP_ERROR_CHECK(esp_bt_gap_set_security_param(param_type, &iocap, sizeof(iocap)));
+#endif
+
+    /* Keep variable-PIN legacy pairing available for older receivers. */
+    esp_bt_pin_type_t pin_type = ESP_BT_PIN_TYPE_VARIABLE;
     esp_bt_pin_code_t pin_code;
-    // pin_code[0] = '1';
-    // pin_code[1] = '2';
-    // pin_code[2] = '3';
-    // pin_code[3] = '4';
-    esp_bt_gap_set_pin(pin_type, 4, pin_code);
+    ESP_ERROR_CHECK(esp_bt_gap_set_pin(pin_type, 0, pin_code));
 };
 
 static bool bt_app_send_msg(bt_app_msg_t *msg)

@@ -12,6 +12,8 @@ software/esp32_i2c/build/**
 software/esp32_j2b/build/**
 software/esp32_b2j/build/**
 software/a2dp_source/build/**
+software/a2dp_source_aac/build/**
+software/a2dp_source_aac/managed_components/**
 software/a2dp_sink/
 
 .DS_Store

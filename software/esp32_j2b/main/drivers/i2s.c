@@ -5,6 +5,8 @@
 #include "audio_codec.h"
 #include "driver/i2s_std.h"
 
+#define BUFF_SIZE 512
+
 i2s_chan_handle_t rx_chan = NULL;
 
 i2s_std_clk_config_t clk_cfg = {
@@ -40,6 +42,31 @@ i2s_std_gpio_config_t gpio_cfg = {
         .ws_inv = false,
     }};
 
+static void task__i2s_read(void *arg)
+{
+    uint32_t samples[BUFF_SIZE];
+    size_t bytes_read = 0;
+
+    while (1)
+    {
+        esp_err_t err = i2s_channel_read(
+            rx_chan,
+            samples,
+            sizeof(samples),
+            &bytes_read,
+            1000 // Timeout in milliseconds
+        );
+
+        if (err == ESP_OK)
+        {
+            size_t sample_count = bytes_read / sizeof(samples[0]);
+            // Process sample_count received 32-bit words.
+        }
+    }
+
+    vTaskDelete(NULL);
+}
+
 /********************************
  * EXTERNAL FUNCTION DEFINITIONS
  *******************************/
@@ -58,6 +85,7 @@ void esp_i2s_driver_install(void)
     ESP_ERROR_CHECK(i2s_new_channel(&chan_cfg, NULL, &rx_chan));
     ESP_ERROR_CHECK(i2s_channel_init_std_mode(rx_chan, &std_cfg));
     ESP_ERROR_CHECK(i2s_channel_enable(rx_chan));
+    xTaskCreate(task__i2s_read, "i2s_example_read_task", 4096, NULL, 5, NULL);
     // audio_codec_check_power_ready();
 }
 

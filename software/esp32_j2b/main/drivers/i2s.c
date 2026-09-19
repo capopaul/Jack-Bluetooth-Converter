@@ -58,7 +58,7 @@ void esp_i2s_driver_install(void)
     ESP_ERROR_CHECK(i2s_new_channel(&chan_cfg, NULL, &rx_chan));
     ESP_ERROR_CHECK(i2s_channel_init_std_mode(rx_chan, &std_cfg));
     ESP_ERROR_CHECK(i2s_channel_enable(rx_chan));
-    audio_codec_check_power_ready();
+    // audio_codec_check_power_ready();
 }
 
 void esp_i2s_driver_uninstall(void)

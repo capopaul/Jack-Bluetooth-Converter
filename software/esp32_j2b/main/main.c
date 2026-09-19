@@ -155,54 +155,82 @@ void app_main(void)
      * Configure Codec
      */
 
-    // // Register 2 - default is good
-    // // Register 8 - default is good
-    // // Register 9 - default is good
-    // // Register 10 - default is good
+    // Register 2 - default is good
+    // Register 8 - default is good
+    // Register 9 - default is good
+    // Register 10 - default is good
 
-    // // Register 7 - Codec Data-Path Setup Register
-    // // D7   - 1  - Set fs=44.1kHz
-    // // D6-5 - 00
-    // // D4-3 - 00
-    // // D2-1 - 00
-    // // D0   - 0
-    // // 1000 0000
-    // i2c_set(CODEC_ADDR, 7, 0b10000000);
-    // // read again
-    // is_expected(CODEC_TAG, 7, i2c_get(CODEC_ADDR, 7), 0b10000000);
+    // Register 7 - Codec Data-Path Setup Register
+    // D7   - 1  - Set fs=44.1kHz
+    // D6-5 - 00
+    // D4-3 - 00
+    // D2-1 - 00
+    // D0   - 0
+    // 1000 0000
+    i2c_set(CODEC_ADDR, 7, 0b10000000);
+    is_expected(CODEC_TAG, 7, i2c_get(CODEC_ADDR, 7), 0b10000000);
 
-    // /*
-    //  * Configure Routing
-    //  */
+    /*
+     * Configure Routing
+     */
 
-    // // Register 17 - MIC2L/R to Left-ADC Control Register
-    // // D7-4 - 0000 - Connect LINE2L to left-ADC PGA - Input level control gain = 0 dB
-    // // D3-0 - 1111 - LINE2R is not connected to the left-ADC PGA
-    // // 0000 1111
-    // i2c_set(CODEC_ADDR, 17, 0b00001111);
-    // // read again
-    // is_expected(CODEC_TAG, 17, i2c_get(CODEC_ADDR, 17), 0b00001111);
+    // Register 17 - MIC2L/R to Left-ADC Control Register
+    // D7-4 - 0000 - Connect LINE2L to left-ADC PGA - Input level control gain = 0 dB
+    // D3-0 - 1111 - LINE2R is not connected to the left-ADC PGA
+    // 0000 1111
+    i2c_set(CODEC_ADDR, 17, 0b00001111);
+    is_expected(CODEC_TAG, 17, i2c_get(CODEC_ADDR, 17), 0b00001111);
+
+    // Register 18 - MIC2/LINE2 to Right-ADC Control Register
+    // D7-4 - 1111 - LINE2L is not connected to the right-ADC PGA
+    // D3-0 - 0000 - Connect LINE2R to right-ADC PGA - Input level control gain = 0 dB
+    // 1111 0000
+    i2c_set(CODEC_ADDR, 18, 0b11110000);
+    is_expected(CODEC_TAG, 18, i2c_get(CODEC_ADDR, 18), 0b11110000);
 
     /*
      * Configure the topology
      */
 
+    // nothing to do
+
     /*
      * Power the ADC
      */
 
-    /*
-     * Power the headphone outputs
-     * Keep the headphone muted
-     */
+    // Register 19 - Power up Left-ADC
+    // D7   - 0
+    // D6-3 - 1111
+    // D2   - 1    - Left-ADC channel is powered up
+    // D1-0 - 00
+    // 0111 1100
+    i2c_set(CODEC_ADDR, 19, 0b01111100);
+    is_expected(CODEC_TAG, 19, i2c_get(CODEC_ADDR, 19), 0b01111100);
+
+    // Register 22 - Power up right-ADC
+    // D7   - 0
+    // D6-3 - 1111
+    // D2   - 1    - Right-ADC channel is powered up
+    // D1-0 - 00
+    // 0111 1100
+    i2c_set(CODEC_ADDR, 22, 0b01111100);
+    is_expected(CODEC_TAG, 22, i2c_get(CODEC_ADDR, 22), 0b01111100);
 
     /*
-     * Volume control
+     * Unmute ADCs
      */
 
-    /*
-     * Unmute the headphone outputs
-     */
+    // Register 15 - Left-ADC PGA Gain Control Register
+    // D7   - 0 - The left-ADC PGA is not muted.
+    // D6-0 - 0
+    i2c_set(CODEC_ADDR, 15, 0b00000000);
+    is_expected(CODEC_TAG, 15, i2c_get(CODEC_ADDR, 15), 0b00000000);
+
+    // Register 16 - Right-ADC PGA Gain Control Register
+    // D7   - 0 - The right-ADC PGA is not muted.
+    // D6-0 - 0
+    i2c_set(CODEC_ADDR, 16, 0b00000000);
+    is_expected(CODEC_TAG, 16, i2c_get(CODEC_ADDR, 16), 0b00000000);
 
     /*
      * Status

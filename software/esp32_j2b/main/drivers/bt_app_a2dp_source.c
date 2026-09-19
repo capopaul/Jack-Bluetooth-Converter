@@ -1137,12 +1137,6 @@ static void bt_av_hdl_avrc_ct_evt(uint16_t event, void *p_param)
 
 esp_err_t bt_app_a2dp_source_start(void)
 {
-    char bda_str[18] = {0};
-
-    ESP_LOGI(BT_AV_TAG, "Own address:[%s]",
-             bda2str((uint8_t *)esp_bt_dev_get_address(), bda_str, sizeof(bda_str)));
-
-    bt_app_task_start_up();
     if (!bt_app_work_dispatch(bt_av_hdl_stack_evt, BT_APP_STACK_UP_EVT, NULL, 0, NULL, NULL))
     {
         ESP_LOGE(BT_AV_TAG, "failed to dispatch Bluetooth stack initialization");

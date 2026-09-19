@@ -51,29 +51,15 @@ typedef struct
  */
 typedef void (*bt_app_copy_cb_t)(void *p_dest, void *p_src, int len);
 
-/**
- * @brief    work dispatcher for the application task
- *
- * @param [in] p_cback       handler for the dispatched work (event handler)
- * @param [in] event         message event id
- * @param [in] p_params      pointer to the parameter
- * @param [in] param_len     length of the parameter
- * @param [in] p_copy_cback  parameter deep-copy function
- * @param [in] p_free_cback  parameter deep-free function
- *
- * @return  true if work dispatch successfully, false otherwise
- */
+/********************************
+ * EXTERNAL FUNCTION DECLARATIONS
+ *******************************/
+
+void bt_app_init(void);
+void bt_app_task_start_up(void);
+void bt_app_task_shut_down(void);
+
 bool bt_app_work_dispatch(bt_app_cb_t p_cback, uint16_t event, void *p_params, int param_len,
                           bt_app_copy_cb_t p_copy_cback, bt_app_free_cb_t p_free_cback);
-
-/**
- * @brief    start up the application task
- */
-void bt_app_task_start_up(void);
-
-/**
- * @brief    shut down the application task
- */
-void bt_app_task_shut_down(void);
 
 #endif /* __BT_APP_CORE_H__ */

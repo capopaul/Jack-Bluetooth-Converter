@@ -4,6 +4,10 @@
 #include "i2s.h"
 #include "audio_codec.h"
 #include "driver/i2s_std.h"
+#include "esp_log.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include <stdlib.h>
 
 #define BUFF_SIZE 512
 
@@ -44,23 +48,46 @@ i2s_std_gpio_config_t gpio_cfg = {
 
 static void task__i2s_read(void *arg)
 {
-    uint32_t samples[BUFF_SIZE];
-    size_t bytes_read = 0;
+    // Keep capture and conversion buffers off the task's 4096-byte stack.
+    uint32_t *samples = malloc(BUFF_SIZE * sizeof(*samples));
+    int16_t *pcm = malloc(BUFF_SIZE * sizeof(*pcm));
+    if (samples == NULL || pcm == NULL)
+    {
+        ESP_LOGE("I2S", "Failed to allocate capture buffers");
+        free(samples);
+        free(pcm);
+        vTaskDelete(NULL);
+        return;
+    }
 
     while (1)
     {
+        size_t bytes_read = 0;
         esp_err_t err = i2s_channel_read(
             rx_chan,
             samples,
-            sizeof(samples),
+            BUFF_SIZE * sizeof(*samples),
             &bytes_read,
             1000 // Timeout in milliseconds
         );
 
-        if (err == ESP_OK)
+        // A timeout may still return valid partial data.
+        if (err == ESP_OK || err == ESP_ERR_TIMEOUT)
         {
             size_t sample_count = bytes_read / sizeof(samples[0]);
-            // Process sample_count received 32-bit words.
+            for (size_t i = 0; i < sample_count; ++i)
+            {
+                // Codec sends 16-bit samples in the upper half of each
+                // 32-bit I2S word. Preserve interleaved L, R ordering.
+                pcm[i] = (int16_t)(samples[i] >> 16);
+            }
+            // pcm[0..sample_count-1] is ready for the future PCM buffer.
+            // No Bluetooth handoff yet; this block is overwritten next read.
+        }
+        else
+        {
+            ESP_LOGE("I2S", "Read failed: %s", esp_err_to_name(err));
+            vTaskDelay(pdMS_TO_TICKS(10));
         }
     }
 

@@ -37,11 +37,13 @@ static TaskHandle_t s_bt_app_task_handle = NULL;
 
 static bool bt_app_send_msg(bt_app_msg_t *msg)
 {
-    if (msg == NULL || s_bt_app_task_queue == NULL) {
+    if (msg == NULL || s_bt_app_task_queue == NULL)
+    {
         return false;
     }
 
-    if (pdTRUE != xQueueSend(s_bt_app_task_queue, msg, 10 / portTICK_PERIOD_MS)) {
+    if (pdTRUE != xQueueSend(s_bt_app_task_queue, msg, 10 / portTICK_PERIOD_MS))
+    {
         ESP_LOGE(BT_APP_CORE_TAG, "%s xQueue send failed", __func__);
         return false;
     }
@@ -51,7 +53,8 @@ static bool bt_app_send_msg(bt_app_msg_t *msg)
 
 static void bt_app_work_dispatched(bt_app_msg_t *msg)
 {
-    if (msg->cb) {
+    if (msg->cb)
+    {
         msg->cb(msg->event, msg->param);
     }
 }
@@ -60,12 +63,15 @@ static void bt_app_task_handler(void *arg)
 {
     bt_app_msg_t msg;
 
-    for (;;) {
+    for (;;)
+    {
         /* receive message from work queue and handle it */
-        if (pdTRUE == xQueueReceive(s_bt_app_task_queue, &msg, (TickType_t)portMAX_DELAY)) {
+        if (pdTRUE == xQueueReceive(s_bt_app_task_queue, &msg, (TickType_t)portMAX_DELAY))
+        {
             ESP_LOGD(BT_APP_CORE_TAG, "%s, signal: 0x%x, event: 0x%x", __func__, msg.sig, msg.event);
 
-            switch (msg.sig) {
+            switch (msg.sig)
+            {
             case BT_APP_SIG_WORK_DISPATCH:
                 bt_app_work_dispatched(&msg);
                 break;
@@ -74,8 +80,10 @@ static void bt_app_task_handler(void *arg)
                 break;
             }
 
-            if (msg.param) {
-                if (msg.free_cb) {
+            if (msg.param)
+            {
+                if (msg.free_cb)
+                {
                     msg.free_cb(msg.param);
                 }
                 free(msg.param);
@@ -101,17 +109,24 @@ bool bt_app_work_dispatch(bt_app_cb_t p_cback, uint16_t event, void *p_params, i
     msg.cb = p_cback;
     msg.free_cb = p_free_cback;
 
-    if (param_len == 0) {
+    if (param_len == 0)
+    {
         return bt_app_send_msg(&msg);
-    } else if (p_params && param_len > 0) {
-        if ((msg.param = malloc(param_len)) != NULL) {
+    }
+    else if (p_params && param_len > 0)
+    {
+        if ((msg.param = malloc(param_len)) != NULL)
+        {
             memcpy(msg.param, p_params, param_len);
             /* check if caller has provided a copy callback to do the deep copy */
-            if (p_copy_cback) {
+            if (p_copy_cback)
+            {
                 p_copy_cback(msg.param, p_params, param_len);
             }
-            if (!bt_app_send_msg(&msg)) {
-                if (p_free_cback) {
+            if (!bt_app_send_msg(&msg))
+            {
+                if (p_free_cback)
+                {
                     p_free_cback(msg.param);
                 }
                 free(msg.param);
@@ -132,15 +147,20 @@ void bt_app_task_start_up(void)
 
 void bt_app_task_shut_down(void)
 {
-    if (s_bt_app_task_handle) {
+    if (s_bt_app_task_handle)
+    {
         vTaskDelete(s_bt_app_task_handle);
         s_bt_app_task_handle = NULL;
     }
-    if (s_bt_app_task_queue) {
+    if (s_bt_app_task_queue)
+    {
         bt_app_msg_t msg;
-        while (xQueueReceive(s_bt_app_task_queue, &msg, 0) == pdTRUE) {
-            if (msg.param) {
-                if (msg.free_cb) {
+        while (xQueueReceive(s_bt_app_task_queue, &msg, 0) == pdTRUE)
+        {
+            if (msg.param)
+            {
+                if (msg.free_cb)
+                {
                     msg.free_cb(msg.param);
                 }
                 free(msg.param);

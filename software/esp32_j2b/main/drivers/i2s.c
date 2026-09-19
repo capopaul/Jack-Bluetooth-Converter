@@ -8,8 +8,11 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include <stdlib.h>
+#include "freertos/stream_buffer.h"
 
 #define BUFF_SIZE 512
+
+static StreamBufferHandle_t pcm_stream;
 
 i2s_chan_handle_t rx_chan = NULL;
 
@@ -83,6 +86,14 @@ static void task__i2s_read(void *arg)
             }
             // pcm[0..sample_count-1] is ready for the future PCM buffer.
             // No Bluetooth handoff yet; this block is overwritten next read.
+            size_t pcm_bytes = sample_count * sizeof(int16_t);
+
+            if (pcm_bytes > 0 &&
+                sample_count % 2 == 0 &&
+                xStreamBufferSpacesAvailable(pcm_stream) >= pcm_bytes)
+            {
+                xStreamBufferSend(pcm_stream, pcm, pcm_bytes, 0);
+            }
         }
         else
         {
@@ -112,6 +123,11 @@ void esp_i2s_driver_install(void)
     ESP_ERROR_CHECK(i2s_new_channel(&chan_cfg, NULL, &rx_chan));
     ESP_ERROR_CHECK(i2s_channel_init_std_mode(rx_chan, &std_cfg));
     ESP_ERROR_CHECK(i2s_channel_enable(rx_chan));
+
+    // Pulse-Code Modulate (PCM) stream buffer
+    pcm_stream = xStreamBufferCreate(8192, 1);
+    configASSERT(pcm_stream != NULL);
+
     xTaskCreate(task__i2s_read, "i2s_example_read_task", 4096, NULL, 5, NULL);
     // audio_codec_check_power_ready();
 }

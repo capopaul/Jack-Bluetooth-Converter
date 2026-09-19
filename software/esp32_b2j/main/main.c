@@ -37,9 +37,8 @@
 #include "nvs.h"
 #include "nvs_flash.h"
 
+// Include i2c
 #include "driver/i2c_master.h"
-
-// Include i2c tools example
 #include "./drivers/cmd_i2ctools.h"
 
 // Include audio codec

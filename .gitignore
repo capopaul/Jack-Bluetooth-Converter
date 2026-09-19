@@ -16,4 +16,6 @@ software/a2dp_source_aac/build/**
 software/a2dp_source_aac/managed_components/**
 software/a2dp_sink/
 
+doc/standards
+
 .DS_Store

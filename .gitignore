@@ -16,6 +16,7 @@ software/a2dp_source/build/**
 software/a2dp_source_aac/build/**
 software/a2dp_source_aac/managed_components/**
 software/a2dp_sink/
+software/empty/build/
 
 doc/standards
 

@@ -1,6 +1,8 @@
 // Author : Paul Capgras
 // Date   : Oct 10, 2025
 
+#include "driver/i2c_master.h"
+
 extern i2c_master_bus_handle_t tool_bus_handle;
 
 // Set an i2c register

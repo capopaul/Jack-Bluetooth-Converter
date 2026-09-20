@@ -44,6 +44,7 @@ static void interrupt_handler(void *arg)
 
 // This task is woken up the interrupt_handler
 // To perform I2C transactions to understand why the interrupt happens.
+// No deboucing has been done
 static void interrupt_task(void *arg)
 {
     for (;;)
@@ -61,36 +62,30 @@ static void interrupt_task(void *arg)
             uint8_t current_state = input_state;
 
             // These are sampled levels, not a history of every edge.
-            if (interrupt_flags & IO_EXPANDER_BUTTON_ENTER_MASK)
-            {
-                ESP_LOGI(IO_EXPANDER_TAG,
-                         "Button ENTER: %d -> %d",
-                         (previous_state & IO_EXPANDER_BUTTON_ENTER_MASK) != 0,
-                         (current_state & IO_EXPANDER_BUTTON_ENTER_MASK) != 0);
-            }
-
-            if (interrupt_flags & IO_EXPANDER_BUTTON_BACK_MASK)
-            {
-                ESP_LOGI(IO_EXPANDER_TAG,
-                         "Button BACK: %d -> %d",
-                         (previous_state & IO_EXPANDER_BUTTON_BACK_MASK) != 0,
-                         (current_state & IO_EXPANDER_BUTTON_BACK_MASK) != 0);
-            }
-
-            if (interrupt_flags & IO_EXPANDER_BUTTON_NEXT_MASK)
-            {
-                ESP_LOGI(IO_EXPANDER_TAG,
-                         "Button NEXT: %d -> %d",
-                         (previous_state & IO_EXPANDER_BUTTON_NEXT_MASK) != 0,
-                         (current_state & IO_EXPANDER_BUTTON_NEXT_MASK) != 0);
-            }
-
             if (interrupt_flags & IO_EXPANDER_BUTTON_DIRECTION_MASK)
             {
                 ESP_LOGI(IO_EXPANDER_TAG,
                          "Button DIRECTION: %d -> %d",
                          (previous_state & IO_EXPANDER_BUTTON_DIRECTION_MASK) != 0,
                          (current_state & IO_EXPANDER_BUTTON_DIRECTION_MASK) != 0);
+            }
+
+            uint8_t rising_edges = (uint8_t)~previous_state & interrupt_flags;
+
+            // For the following, only 0 -> 1 event is interesting.
+            if (rising_edges & IO_EXPANDER_BUTTON_ENTER_MASK)
+            {
+                ESP_LOGI(IO_EXPANDER_TAG, "Button ENTER pushed");
+            }
+
+            if (rising_edges & IO_EXPANDER_BUTTON_BACK_MASK)
+            {
+                ESP_LOGI(IO_EXPANDER_TAG, "Button BACK pushed");
+            }
+
+            if (rising_edges & IO_EXPANDER_BUTTON_NEXT_MASK)
+            {
+                ESP_LOGI(IO_EXPANDER_TAG, "Button NEXT pushed");
             }
 
             // If INT remains low, retry without continuously using CPU.

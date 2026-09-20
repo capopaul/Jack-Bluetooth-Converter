@@ -1,9 +1,10 @@
 // Author : Paul Capgras
 // Date   : Oct 10, 2025
 
-#include "driver/i2c_master.h"
+#define I2C_GPIO_SDA 21
+#define I2C_GPIO_SCL 19
 
-extern i2c_master_bus_handle_t tool_bus_handle;
+void i2c_init();
 
 // Set an i2c register
 int i2c_set(int chip_address, int register_address, uint8_t data);

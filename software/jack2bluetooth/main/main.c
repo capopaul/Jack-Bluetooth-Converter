@@ -33,9 +33,6 @@
 #define CODEC_ADDR 0x18
 #define CODEC_TAG "AUDIO_CODEC"
 
-static gpio_num_t i2c_gpio_sda = 21;
-static gpio_num_t i2c_gpio_scl = 19;
-
 /*******************************
  * STATIC FUNCTION DEFINITIONS
  ******************************/
@@ -56,26 +53,7 @@ void app_main(void)
 {
     printf("Hello world!\n");
 
-    ///////////////////////
-    //     Setup I2C     //
-    ///////////////////////
-
-    esp_console_repl_t *repl = NULL;
-    esp_console_repl_config_t repl_config = ESP_CONSOLE_REPL_CONFIG_DEFAULT();
-
-    esp_console_dev_uart_config_t uart_config = ESP_CONSOLE_DEV_UART_CONFIG_DEFAULT();
-    ESP_ERROR_CHECK(esp_console_new_repl_uart(&uart_config, &repl_config, &repl));
-
-    i2c_master_bus_config_t i2c_bus_config = {
-        .clk_source = I2C_CLK_SRC_DEFAULT,
-        .i2c_port = I2C_NUM_0,
-        .scl_io_num = i2c_gpio_scl,
-        .sda_io_num = i2c_gpio_sda,
-        .glitch_ignore_cnt = 7,
-        .flags.enable_internal_pullup = false,
-    };
-
-    ESP_ERROR_CHECK(i2c_new_master_bus(&i2c_bus_config, &tool_bus_handle));
+    i2c_init();
 
     ///////////////////////
     //    IO Expander    //
@@ -106,10 +84,6 @@ void app_main(void)
     audio_codec_power_up_adc();
 
     audio_codec_unmute_adc();
-
-    /*
-     * Status
-     */
 
     ///////////////////////
     //     Bluetooth     //

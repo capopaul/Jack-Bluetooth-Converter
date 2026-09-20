@@ -9,11 +9,31 @@
 #include "esp_log.h"
 #include "i2c.h"
 
-static const char *TAG = "i2c";
-
+#define I2C_TAG "I2C"
 #define I2C_TOOL_TIMEOUT_VALUE_MS (50)
+
 static uint32_t i2c_frequency = 100 * 1000;
-i2c_master_bus_handle_t tool_bus_handle;
+static i2c_master_bus_handle_t tool_bus_handle;
+
+void i2c_init()
+{
+    esp_console_repl_t *repl = NULL;
+    esp_console_repl_config_t repl_config = ESP_CONSOLE_REPL_CONFIG_DEFAULT();
+
+    esp_console_dev_uart_config_t uart_config = ESP_CONSOLE_DEV_UART_CONFIG_DEFAULT();
+    ESP_ERROR_CHECK(esp_console_new_repl_uart(&uart_config, &repl_config, &repl));
+
+    i2c_master_bus_config_t i2c_bus_config = {
+        .clk_source = I2C_CLK_SRC_DEFAULT,
+        .i2c_port = I2C_NUM_0,
+        .scl_io_num = I2C_GPIO_SCL,
+        .sda_io_num = I2C_GPIO_SDA,
+        .glitch_ignore_cnt = 7,
+        .flags.enable_internal_pullup = false,
+    };
+
+    ESP_ERROR_CHECK(i2c_new_master_bus(&i2c_bus_config, &tool_bus_handle));
+}
 
 int i2c_set(int chip_address, int register_address, uint8_t data)
 {
@@ -35,15 +55,15 @@ int i2c_set(int chip_address, int register_address, uint8_t data)
     esp_err_t ret = i2c_master_transmit(dev_handle, i2c_data, data_len + 1, I2C_TOOL_TIMEOUT_VALUE_MS);
     if (ret == ESP_OK)
     {
-        ESP_LOGI(TAG, "Write OK");
+        ESP_LOGI(I2C_TAG, "Write OK");
     }
     else if (ret == ESP_ERR_TIMEOUT)
     {
-        ESP_LOGW(TAG, "Bus is busy");
+        ESP_LOGW(I2C_TAG, "Bus is busy");
     }
     else
     {
-        ESP_LOGW(TAG, "Write Failed");
+        ESP_LOGW(I2C_TAG, "Write Failed");
     }
 
     free(i2c_data);
@@ -66,7 +86,7 @@ uint8_t i2c_get(int chip_address, int register_address)
 
     if (i2c_master_bus_add_device(tool_bus_handle, &i2c_dev_conf, &dev_handle) != ESP_OK)
     {
-        ESP_LOGE(TAG, "Failed to add I2C device");
+        ESP_LOGE(I2C_TAG, "Failed to add I2C device");
         return -1; // indicate error
     }
 
@@ -78,7 +98,7 @@ uint8_t i2c_get(int chip_address, int register_address)
 
     if (ret != ESP_OK)
     {
-        ESP_LOGW(TAG, "I2C read failed: %s", esp_err_to_name(ret));
+        ESP_LOGW(I2C_TAG, "I2C read failed: %s", esp_err_to_name(ret));
         i2c_master_bus_rm_device(dev_handle);
         return -1;
     }
@@ -87,7 +107,7 @@ uint8_t i2c_get(int chip_address, int register_address)
 
     if (i2c_master_bus_rm_device(dev_handle) != ESP_OK)
     {
-        ESP_LOGE(TAG, "Failed to remove I2C device");
+        ESP_LOGE(I2C_TAG, "Failed to remove I2C device");
         return -1;
     }
 
@@ -141,7 +161,7 @@ int i2c_dump(int chip_addr, int size)
     // check read size is correct
     if (size != 1 && size != 2 && size != 4)
     {
-        ESP_LOGE(TAG, "Wrong read size. Only support 1,2,4");
+        ESP_LOGE(I2C_TAG, "Wrong read size. Only support 1,2,4");
         return 1;
     }
 

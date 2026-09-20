@@ -1,39 +1,24 @@
 {
-    "files.associations": {
-        "cmd_i2ctools.h": "c",
-        "esp_console.h": "c",
-        "gpio.h": "c",
-        "stdio.h": "c",
-        "esp_vfs_fat.h": "c",
-        "freertos.h": "c",
-        "i2c_master.h": "c",
-        "string.h": "c",
-        "sdkconfig.h": "c",
-        "cmd_system.h": "c",
-        "argtable3.h": "c",
-        "esp_system.h": "c",
-        "esp_bt.h": "c",
-        "bt_app_core.h": "c",
-        "esp_a2dp_api.h": "c",
-        "esp_avrc_api.h": "c",
-        "esp_bt_main.h": "c",
-        "esp_gap_bt_api.h": "c",
-        "stdint.h": "c",
-        "task.h": "c",
-        "i2s_std.h": "c",
-        "ringbuf.h": "c",
-        "semphr.h": "c",
-        "bt_app_a2dp.h": "c",
-        "array": "c",
-        "string": "c",
-        "string_view": "c",
-        "ranges": "c",
-        "span": "c",
-        "esp_log.h": "c"
+  "C_Cpp.intelliSenseEngine": "default",
+  "idf.extensionActivationMode": "always",
+  "cmake.configureOnOpen": false,
+  "cmake.configureOnEdit": false,
+  "cmake.automaticReconfigure": false,
+  "cmake.autoSelectActiveFolder": false,
+  "cmake.options.advanced": {
+    "build": {
+      "statusBarVisibility": "inherit",
+      "inheritDefault": "hidden"
     },
-    "idf.espIdfPath": "/home/paul/esp/esp-idf",
-    "idf.toolsPath": "/home/paul/.espressif",
-    "idf.pythonInstallPath": "/home/paul/anaconda3/bin/python",
-    "editor.formatOnSave": true,
-    "json.schemas": []
+    "launch": {
+      "statusBarVisibility": "inherit",
+      "inheritDefault": "hidden"
+    },
+    "debug": {
+      "statusBarVisibility": "inherit",
+      "inheritDefault": "hidden"
+    }
+  },
+  "editor.formatOnSave": true,
+  "idf.currentSetup": "/Users/Paul/.espressif/v6.1/esp-idf",
 }

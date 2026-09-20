@@ -1,15 +1,6 @@
 // Author : Paul Capgras
 // Date   : Oct 10, 2025
 
-static struct
-{
-    struct arg_int *port;
-    struct arg_int *freq;
-    struct arg_int *sda;
-    struct arg_int *scl;
-    struct arg_end *end;
-} i2c_config_args;
-
 extern i2c_master_bus_handle_t tool_bus_handle;
 
 // Set an i2c register

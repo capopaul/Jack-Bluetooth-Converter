@@ -2,6 +2,10 @@
 
 #include "esp_err.h"
 
+/********************************
+ * EXTERNAL FUNCTION DECLARATIONS
+ *******************************/
+
 /**
  * @brief Start the A2DP source application after Bluedroid is enabled.
  *

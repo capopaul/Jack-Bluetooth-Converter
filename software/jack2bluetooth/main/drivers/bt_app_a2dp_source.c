@@ -30,9 +30,6 @@
 #define BT_AV_TAG "BT_AV"
 #define BT_RC_CT_TAG "RC_CT"
 
-/* device name */
-#define LOCAL_DEVICE_NAME "Jack2Bluetooth"
-
 /* AVRCP used transaction label */
 #define APP_RC_CT_TL_GET_CAPS (0)
 #define APP_RC_CT_TL_RN_VOLUME_CHANGE (1)
@@ -43,39 +40,15 @@ enum
     BT_APP_HEART_BEAT_EVT = 0xff00, /* event for heart beat */
 };
 
-/* A2DP global states */
-enum
-{
-    APP_AV_STATE_IDLE,
-    APP_AV_STATE_DISCOVERING,
-    APP_AV_STATE_DISCOVERED,
-    APP_AV_STATE_UNCONNECTED,
-    APP_AV_STATE_CONNECTING,
-    APP_AV_STATE_CONNECTED,
-    APP_AV_STATE_DISCONNECTING,
-};
-
-/* sub states of APP_AV_STATE_CONNECTED */
-enum
-{
-    APP_AV_MEDIA_STATE_IDLE,
-    APP_AV_MEDIA_STATE_STARTING,
-    APP_AV_MEDIA_STATE_STARTED,
-    APP_AV_MEDIA_STATE_STOPPING,
-};
-
 /*********************************
  * STATIC FUNCTION DECLARATIONS
  ********************************/
 
 /* handler for bluetooth stack enabled events */
-static void bt_app_register_callback_function(uint16_t event, void *p_param);
+static void register_a2dp_source_callback_function(uint16_t event, void *p_param);
 
 /* avrc controller event handler */
 static void bt_av_hdl_avrc_ct_evt(uint16_t event, void *p_param);
-
-/* GAP callback function */
-static void bt_app_gap_cb(esp_bt_gap_cb_event_t event, esp_bt_gap_cb_param_t *param);
 
 /* callback function for A2DP source */
 static void bt_app_a2d_cb(esp_a2d_cb_event_t event, esp_a2d_cb_param_t *param);
@@ -89,9 +62,6 @@ static void bt_app_a2d_heart_beat(TimerHandle_t arg);
 /* A2DP application state machine */
 static void bt_app_av_sm_hdlr(uint16_t event, void *param);
 
-/* utils for transfer BLuetooth Deveice Address into string form */
-static char *bda2str(esp_bd_addr_t bda, char *str, size_t size);
-
 /* A2DP application state machine handler for each state */
 static void bt_app_av_state_unconnected_hdlr(uint16_t event, void *param);
 static void bt_app_av_state_connecting_hdlr(uint16_t event, void *param);
@@ -102,128 +72,20 @@ static void bt_app_av_state_disconnecting_hdlr(uint16_t event, void *param);
  * STATIC VARIABLE DEFINITIONS
  ********************************/
 
-static esp_bd_addr_t s_peer_bda = {0};                       /* Bluetooth Device Address of peer device*/
-static uint8_t s_peer_bdname[ESP_BT_GAP_MAX_BDNAME_LEN + 1]; /* Bluetooth Device Name of peer device*/
-static int s_a2d_state = APP_AV_STATE_IDLE;                  /* A2DP global state */
-static int s_media_state = APP_AV_MEDIA_STATE_IDLE;          /* sub states of APP_AV_STATE_CONNECTED */
-static int s_intv_cnt = 0;                                   /* count of heart beat intervals */
-static int s_connecting_intv = 0;                            /* count of heart beat intervals for connecting */
-static uint32_t s_pkt_cnt = 0;                               /* count of packets */
-static esp_avrc_rn_evt_cap_mask_t s_avrc_peer_rn_cap;        /* AVRC target notification event capability bit mask */
-static TimerHandle_t s_tmr;                                  /* handle of heart beat timer */
+static esp_bd_addr_t s_peer_bda = {0};                      /* Selected peer for connection and reconnection. */
+static bt_app_a2dp_state_t s_a2d_state = APP_AV_STATE_IDLE; /* A2DP global state */
+static int s_media_state = APP_AV_MEDIA_STATE_IDLE;         /* sub states of APP_AV_STATE_CONNECTED */
+static int s_intv_cnt = 0;                                  /* count of heart beat intervals */
+static int s_connecting_intv = 0;                           /* count of heart beat intervals for connecting */
+static uint32_t s_pkt_cnt = 0;                              /* count of packets */
+static esp_avrc_rn_evt_cap_mask_t s_avrc_peer_rn_cap;       /* AVRC target notification event capability bit mask */
+static TimerHandle_t s_tmr;                                 /* handle of heart beat timer */
 static esp_a2d_conn_hdl_t s_a2d_conn_hndl = 0;
 static uint16_t s_a2d_audio_mtu;
-
-static const char remote_device_name[] = "Bose-Paul-2";
 
 /*********************************
  * STATIC FUNCTION DEFINITIONS
  ********************************/
-
-static char *bda2str(esp_bd_addr_t bda, char *str, size_t size)
-{
-    if (bda == NULL || str == NULL || size < 18)
-    {
-        return NULL;
-    }
-
-    sprintf(str, "%02x:%02x:%02x:%02x:%02x:%02x",
-            bda[0], bda[1], bda[2], bda[3], bda[4], bda[5]);
-    return str;
-}
-
-static bool get_name_from_eir(uint8_t *eir, uint8_t *bdname, uint8_t *bdname_len)
-{
-    uint8_t *rmt_bdname = NULL;
-    uint8_t rmt_bdname_len = 0;
-
-    if (!eir)
-    {
-        return false;
-    }
-
-    /* get complete or short local name from eir data */
-    rmt_bdname = esp_bt_gap_resolve_eir_data(eir, ESP_BT_EIR_TYPE_CMPL_LOCAL_NAME, &rmt_bdname_len);
-    if (!rmt_bdname)
-    {
-        rmt_bdname = esp_bt_gap_resolve_eir_data(eir, ESP_BT_EIR_TYPE_SHORT_LOCAL_NAME, &rmt_bdname_len);
-    }
-
-    if (rmt_bdname)
-    {
-        if (rmt_bdname_len > ESP_BT_GAP_MAX_BDNAME_LEN)
-        {
-            rmt_bdname_len = ESP_BT_GAP_MAX_BDNAME_LEN;
-        }
-
-        if (bdname)
-        {
-            memcpy(bdname, rmt_bdname, rmt_bdname_len);
-            bdname[rmt_bdname_len] = '\0';
-        }
-        if (bdname_len)
-        {
-            *bdname_len = rmt_bdname_len;
-        }
-        return true;
-    }
-
-    return false;
-}
-
-static void filter_inquiry_scan_result(esp_bt_gap_cb_param_t *param)
-{
-    char bda_str[18];
-    uint32_t cod = 0;    /* class of device */
-    int32_t rssi = -129; /* invalid value */
-    uint8_t *eir = NULL;
-    esp_bt_gap_dev_prop_t *p;
-
-    /* handle the discovery results */
-    ESP_LOGI(BT_AV_TAG, "Scanned device: %s", bda2str(param->disc_res.bda, bda_str, 18));
-    for (int i = 0; i < param->disc_res.num_prop; i++)
-    {
-        p = param->disc_res.prop + i;
-        switch (p->type)
-        {
-        case ESP_BT_GAP_DEV_PROP_COD:
-            cod = *(uint32_t *)(p->val);
-            ESP_LOGI(BT_AV_TAG, "--Class of Device: 0x%" PRIx32, cod);
-            break;
-        case ESP_BT_GAP_DEV_PROP_RSSI:
-            rssi = *(int8_t *)(p->val);
-            ESP_LOGI(BT_AV_TAG, "--RSSI: %" PRId32, rssi);
-            break;
-        case ESP_BT_GAP_DEV_PROP_EIR:
-            eir = (uint8_t *)(p->val);
-            break;
-        case ESP_BT_GAP_DEV_PROP_BDNAME:
-        default:
-            break;
-        }
-    }
-
-    /* search for device with MAJOR service class as "rendering" in COD */
-    if (!esp_bt_gap_is_valid_cod(cod) ||
-        !(esp_bt_gap_get_cod_srvc(cod) & ESP_BT_COD_SRVC_RENDERING))
-    {
-        return;
-    }
-
-    /* search for target device in its Extended Inqury Response */
-    if (eir)
-    {
-        get_name_from_eir(eir, s_peer_bdname, NULL);
-        if (strcmp((char *)s_peer_bdname, remote_device_name) == 0)
-        {
-            ESP_LOGI(BT_AV_TAG, "Found a target device, address %s, name %s", bda_str, s_peer_bdname);
-            s_a2d_state = APP_AV_STATE_DISCOVERED;
-            memcpy(s_peer_bda, param->disc_res.bda, ESP_BD_ADDR_LEN);
-            ESP_LOGI(BT_AV_TAG, "Cancel device discovery ...");
-            esp_bt_gap_cancel_discovery();
-        }
-    }
-}
 
 static void bt_app_encode_stream_stop(void)
 {
@@ -232,151 +94,6 @@ static void bt_app_encode_stream_stop(void)
         ESP_LOGI(BT_AV_TAG, "stopping encode stream task");
         encode_task_stop();
     }
-}
-
-static void bt_app_gap_cb(esp_bt_gap_cb_event_t event, esp_bt_gap_cb_param_t *param)
-{
-    switch (event)
-    {
-    /* when device discovered a result, this event comes */
-    case ESP_BT_GAP_DISC_RES_EVT:
-    {
-        if (s_a2d_state == APP_AV_STATE_DISCOVERING)
-        {
-            filter_inquiry_scan_result(param);
-        }
-        break;
-    }
-    /* when discovery state changed, this event comes */
-    case ESP_BT_GAP_DISC_STATE_CHANGED_EVT:
-    {
-        if (param->disc_st_chg.state == ESP_BT_GAP_DISCOVERY_STOPPED)
-        {
-            if (s_a2d_state == APP_AV_STATE_DISCOVERED)
-            {
-                s_a2d_state = APP_AV_STATE_CONNECTING;
-                ESP_LOGI(BT_AV_TAG, "Device discovery stopped.");
-                ESP_LOGI(BT_AV_TAG, "a2dp connecting to peer: %s", s_peer_bdname);
-                /* connect source to peer device specified by Bluetooth Device Address */
-                esp_a2d_source_connect(s_peer_bda);
-            }
-            else
-            {
-                /* not discovered, continue to discover */
-                ESP_LOGI(BT_AV_TAG, "Device discovery failed, continue to discover...");
-                esp_bt_gap_start_discovery(ESP_BT_INQ_MODE_GENERAL_INQUIRY, 10, 0);
-            }
-        }
-        else if (param->disc_st_chg.state == ESP_BT_GAP_DISCOVERY_STARTED)
-        {
-            ESP_LOGI(BT_AV_TAG, "Discovery started.");
-        }
-        break;
-    }
-    /* when authentication completed, this event comes */
-    case ESP_BT_GAP_AUTH_CMPL_EVT:
-    {
-        if (param->auth_cmpl.stat == ESP_BT_STATUS_SUCCESS)
-        {
-            ESP_LOGI(BT_AV_TAG, "authentication success: %s", param->auth_cmpl.device_name);
-            ESP_LOG_BUFFER_HEX(BT_AV_TAG, param->auth_cmpl.bda, ESP_BD_ADDR_LEN);
-        }
-        else
-        {
-            ESP_LOGE(BT_AV_TAG, "authentication failed, status: %d", param->auth_cmpl.stat);
-        }
-        break;
-    }
-    /* when Legacy Pairing pin code requested, this event comes */
-    case ESP_BT_GAP_PIN_REQ_EVT:
-    {
-        ESP_LOGI(BT_AV_TAG, "ESP_BT_GAP_PIN_REQ_EVT min_16_digit: %d", param->pin_req.min_16_digit);
-        if (param->pin_req.min_16_digit)
-        {
-            ESP_LOGI(BT_AV_TAG, "Input pin code: 0000 0000 0000 0000");
-            esp_bt_pin_code_t pin_code = {0};
-            esp_bt_gap_pin_reply(param->pin_req.bda, true, 16, pin_code);
-        }
-        else
-        {
-            ESP_LOGI(BT_AV_TAG, "Input pin code: 1234");
-            esp_bt_pin_code_t pin_code;
-            pin_code[0] = '1';
-            pin_code[1] = '2';
-            pin_code[2] = '3';
-            pin_code[3] = '4';
-            esp_bt_gap_pin_reply(param->pin_req.bda, true, 4, pin_code);
-        }
-        break;
-    }
-    /* when Security Simple Pairing user confirmation requested, this event comes */
-    case ESP_BT_GAP_CFM_REQ_EVT:
-    {
-        ESP_LOGI(BT_AV_TAG, "ESP_BT_GAP_CFM_REQ_EVT Please compare the numeric value: %06" PRIu32, param->cfm_req.num_val);
-        esp_bt_gap_ssp_confirm_reply(param->cfm_req.bda, true);
-        break;
-    }
-    /* when Security Simple Pairing passkey notified, this event comes */
-    case ESP_BT_GAP_KEY_NOTIF_EVT:
-    {
-        ESP_LOGI(BT_AV_TAG, "ESP_BT_GAP_KEY_NOTIF_EVT passkey: %06" PRIu32, param->key_notif.passkey);
-        break;
-    }
-    /* when Security Simple Pairing passkey requested, this event comes */
-    case ESP_BT_GAP_KEY_REQ_EVT:
-    {
-        ESP_LOGI(BT_AV_TAG, "ESP_BT_GAP_KEY_REQ_EVT Please enter passkey!");
-        break;
-    }
-    /* when GAP mode changed, this event comes */
-    case ESP_BT_GAP_MODE_CHG_EVT:
-    {
-        ESP_LOGI(BT_AV_TAG, "ESP_BT_GAP_MODE_CHG_EVT mode: %d", param->mode_chg.mode);
-        break;
-    }
-    case ESP_BT_GAP_GET_DEV_NAME_CMPL_EVT:
-    {
-        if (param->get_dev_name_cmpl.status == ESP_BT_STATUS_SUCCESS)
-        {
-            ESP_LOGI(BT_AV_TAG, "ESP_BT_GAP_GET_DEV_NAME_CMPL_EVT device name: %s", param->get_dev_name_cmpl.name);
-        }
-        else
-        {
-            ESP_LOGI(BT_AV_TAG, "ESP_BT_GAP_GET_DEV_NAME_CMPL_EVT failed, state: %d", param->get_dev_name_cmpl.status);
-        }
-        break;
-    }
-    case ESP_BT_GAP_ENC_CHG_EVT:
-    {
-        char *str_enc[3] = {"OFF", "E0", "AES"};
-        uint8_t *bda = (uint8_t *)param->enc_chg.bda;
-        ESP_LOGI(BT_APP_CORE_TAG, "Encryption mode to [%02x:%02x:%02x:%02x:%02x:%02x] changed to %s",
-                 bda[0], bda[1], bda[2], bda[3], bda[4], bda[5], str_enc[param->enc_chg.enc_mode]);
-        break;
-    }
-    /* when ACL connection completed, this event comes */
-    case ESP_BT_GAP_ACL_CONN_CMPL_STAT_EVT:
-    {
-        uint8_t *bda = (uint8_t *)param->acl_conn_cmpl_stat.bda;
-        ESP_LOGI(BT_APP_CORE_TAG, "ESP_BT_GAP_ACL_CONN_CMPL_STAT_EVT Connected to [%02x:%02x:%02x:%02x:%02x:%02x], status: 0x%x",
-                 bda[0], bda[1], bda[2], bda[3], bda[4], bda[5], param->acl_conn_cmpl_stat.stat);
-        break;
-    }
-    /* when ACL disconnection completed, this event comes */
-    case ESP_BT_GAP_ACL_DISCONN_CMPL_STAT_EVT:
-    {
-        uint8_t *bda = (uint8_t *)param->acl_disconn_cmpl_stat.bda;
-        ESP_LOGI(BT_APP_CORE_TAG, "ESP_BT_GAP_ACL_DISC_CMPL_STAT_EVT Disconnected from [%02x:%02x:%02x:%02x:%02x:%02x], reason: 0x%x",
-                 bda[0], bda[1], bda[2], bda[3], bda[4], bda[5], param->acl_disconn_cmpl_stat.reason);
-        break;
-    }
-    default:
-    {
-        ESP_LOGI(BT_AV_TAG, "event: %d", event);
-        break;
-    }
-    }
-    return;
 }
 
 static void bt_app_register_a2dp_src_seps(void)
@@ -444,37 +161,25 @@ static void bt_app_register_a2dp_src_seps(void)
     }
 }
 
-static void bt_app_register_callback_function(uint16_t event, void *p_param)
+static void register_a2dp_source_callback_function(uint16_t event, void *p_param)
 {
     // both parameters : event and p_param are ignored.
 
-    // Set the local device name
-    esp_err_t err;
-    err = esp_bt_gap_set_device_name(LOCAL_DEVICE_NAME);
-    if (err != ESP_OK)
-    {
-        ESP_LOGE(BT_AV_TAG, "esp_bt_gap_set_device_name failed with code %x", err);
-    }
+    // err = esp_avrc_ct_init();
+    // if (err != ESP_OK)
+    // {
+    //     ESP_LOGE(BT_AV_TAG, "esp_avrc_ct_init failed with code %x", err);
+    // }
+    // err = esp_avrc_ct_register_callback(bt_app_rc_ct_cb);
+    // if (err != ESP_OK)
+    // {
+    //     ESP_LOGE(BT_AV_TAG, "esp_avrc_ct_register_callback failed with code %x", err);
+    // }
 
-    // Register the GAP (Generic Access Profile) callback function (handles authentication, encryption, etc.)
-    err = esp_bt_gap_register_callback(bt_app_gap_cb);
-    if (err != ESP_OK)
-    {
-        ESP_LOGE(BT_AV_TAG, "esp_bt_gap_register_callback failed with code %x", err);
-    }
-
-    err = esp_avrc_ct_init();
-    if (err != ESP_OK)
-    {
-        ESP_LOGE(BT_AV_TAG, "esp_avrc_ct_init failed with code %x", err);
-    }
-    err = esp_avrc_ct_register_callback(bt_app_rc_ct_cb);
-    if (err != ESP_OK)
-    {
-        ESP_LOGE(BT_AV_TAG, "esp_avrc_ct_register_callback failed with code %x", err);
-    }
-
-    err = esp_a2d_source_init();
+    //=========================================
+    // This is dependant if we are in a SOURCE
+    //=========================================
+    esp_err_t err = esp_a2d_source_init();
     if (err != ESP_OK)
     {
         ESP_LOGE(BT_AV_TAG, "esp_a2d_source_init failed with code %x", err);
@@ -489,12 +194,7 @@ static void bt_app_register_callback_function(uint16_t event, void *p_param)
     err = esp_bt_gap_set_scan_mode(ESP_BT_NON_CONNECTABLE, ESP_BT_NON_DISCOVERABLE);
     if (err != ESP_OK)
     {
-        ESP_LOGE(BT_AV_TAG, "esp_a2d_register_callback failed with code %x", err);
-    }
-    err = esp_bt_gap_get_device_name();
-    if (err != ESP_OK)
-    {
-        ESP_LOGE(BT_AV_TAG, "esp_a2d_register_callback failed with code %x", err);
+        ESP_LOGE(BT_AV_TAG, "esp_bt_gap_set_scan_mode failed with code %x", err);
     }
 
     ESP_LOGI(BT_AV_TAG, "Starting device discovery...");
@@ -502,7 +202,7 @@ static void bt_app_register_callback_function(uint16_t event, void *p_param)
     err = esp_bt_gap_start_discovery(ESP_BT_INQ_MODE_GENERAL_INQUIRY, 10, 0);
     if (err != ESP_OK)
     {
-        ESP_LOGE(BT_AV_TAG, "esp_a2d_register_callback failed with code %x", err);
+        ESP_LOGE(BT_AV_TAG, "esp_bt_gap_start_discovery failed with code %x", err);
     }
 
     /* create and start heart beat timer */
@@ -515,57 +215,11 @@ static void bt_app_register_callback_function(uint16_t event, void *p_param)
     } while (0);
 }
 
+// When the HW call this cb function because a new a2dp event is available,
+// This task create a message in my own bluetooth queue.
+// The processing is not done here to keep it fast.
 static void bt_app_a2d_cb(esp_a2d_cb_event_t event, esp_a2d_cb_param_t *param)
 {
-    if (event == ESP_A2D_REPORT_SNK_ALL_CODEC_CAPS_EVT)
-    {
-        uint8_t n =
-            param->a2d_report_snk_all_codec_caps_stat.sep_num;
-
-        esp_a2d_sep_mcc_t *seps =
-            param->a2d_report_snk_all_codec_caps_stat.sep_mcc;
-
-        ESP_LOGI(BT_AV_TAG,
-                 "All sink capabilities: conn_hdl=%u sep_num=%u",
-                 (unsigned)param
-                     ->a2d_report_snk_all_codec_caps_stat.conn_hdl,
-                 (unsigned)n);
-
-        for (uint8_t i = 0; i < n; i++)
-        {
-            ESP_LOGI(BT_AV_TAG,
-                     "Sink SEP[%u]: seid=%u codec=%u",
-                     (unsigned)i,
-                     (unsigned)seps[i].seid,
-                     (unsigned)seps[i].mcc.type);
-        }
-    }
-
-    if (event == ESP_A2D_SEP_REG_STATE_EVT)
-    {
-        ESP_LOGW(
-            BT_AV_TAG,
-            "LOCAL SEP REGISTRATION: seid=%u state=%u",
-            (unsigned)param->a2d_sep_reg_stat.seid,
-            (unsigned)param->a2d_sep_reg_stat.reg_state);
-    }
-
-    if (event == ESP_A2D_PROF_STATE_EVT)
-    {
-        ESP_LOGI(BT_AV_TAG,
-                 "A2DP profile state: %u",
-                 (unsigned)param->a2d_prof_stat.init_state);
-
-        if (param->a2d_prof_stat.init_state ==
-            ESP_A2D_INIT_SUCCESS)
-        {
-            ESP_LOGI(BT_AV_TAG,
-                     "A2DP initialized; registering endpoints");
-
-            bt_app_register_a2dp_src_seps();
-        }
-    }
-
     bt_app_work_dispatch(bt_app_av_sm_hdlr, event, param, sizeof(esp_a2d_cb_param_t), NULL, NULL);
 }
 
@@ -1144,7 +798,7 @@ static void bt_av_hdl_avrc_ct_evt(uint16_t event, void *p_param)
 
 esp_err_t bt_app_a2dp_source_start(void)
 {
-    if (!bt_app_work_dispatch(bt_app_register_callback_function, 0, NULL, 0, NULL, NULL))
+    if (!bt_app_work_dispatch(register_a2dp_source_callback_function, 0, NULL, 0, NULL, NULL))
     {
         ESP_LOGE(BT_AV_TAG, "failed to dispatch Bluetooth stack initialization");
         bt_app_task_shut_down();
@@ -1152,4 +806,20 @@ esp_err_t bt_app_a2dp_source_start(void)
     }
 
     return ESP_OK;
+}
+
+void bt_app_a2dp_source_connect(const uint8_t *address)
+{
+    memcpy(s_peer_bda, address, sizeof(s_peer_bda));
+    esp_a2d_source_connect(s_peer_bda);
+}
+
+bt_app_a2dp_state_t bt_app_a2dp_source_get_state()
+{
+    return s_a2d_state;
+}
+
+void bt_app_a2dp_source_set_state(bt_app_a2dp_state_t new_state)
+{
+    s_a2d_state = new_state;
 }

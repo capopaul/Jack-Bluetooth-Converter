@@ -13,6 +13,7 @@
 // Bluetooth
 #include "bt_app_core.h"
 #include "bt_app_a2dp_source.h"
+#include "bt_app_gap.h"
 
 // Include i2c
 #include "driver/i2c_master.h"
@@ -79,5 +80,6 @@ void app_main(void)
 
     bt_app_init();
 
+    ESP_ERROR_CHECK(bt_app_gap_start());
     ESP_ERROR_CHECK(bt_app_a2dp_source_start());
 }

@@ -82,9 +82,6 @@ static void bluedroid_host_init()
 {
     /* initialize Bluedroid Host */
     esp_bluedroid_config_t bluedroid_cfg = BT_BLUEDROID_INIT_CONFIG_DEFAULT();
-#if (CONFIG_EXAMPLE_SSP_ENABLED == false)
-    bluedroid_cfg.ssp_en = false;
-#endif
     esp_err_t err = esp_bluedroid_init_with_cfg(&bluedroid_cfg);
     if (err != ESP_OK)
     {
@@ -200,12 +197,10 @@ void bt_app_init(void)
     bluedroid_host_init();
     bluedroid_host_enable();
 
-#if (CONFIG_EXAMPLE_SSP_ENABLED == true)
     /* set default parameters for Secure Simple Pairing */
     esp_bt_sp_param_t param_type = ESP_BT_SP_IOCAP_MODE;
     esp_bt_io_cap_t iocap = ESP_BT_IO_CAP_IO;
     esp_bt_gap_set_security_param(param_type, &iocap, sizeof(uint8_t));
-#endif
 
     set_bluetooth_pairing_parameters();
 }

@@ -797,19 +797,6 @@ static void bt_app_av_media_proc(uint16_t event, void *param)
     }
     case APP_AV_MEDIA_STATE_STARTED:
     {
-        if (event == BT_APP_HEART_BEAT_EVT)
-        {
-            /* stop media after 10 heart beat intervals */
-            if (++s_intv_cnt >= 10)
-            {
-                ESP_LOGI(BT_AV_TAG, "a2dp media suspending...");
-                bt_app_encode_stream_stop();
-                esp_a2d_media_ctrl(ESP_A2D_MEDIA_CTRL_SUSPEND);
-                s_media_state = APP_AV_MEDIA_STATE_STOPPING;
-                s_intv_cnt = 0;
-            }
-        }
-        break;
     }
     case APP_AV_MEDIA_STATE_STOPPING:
     {

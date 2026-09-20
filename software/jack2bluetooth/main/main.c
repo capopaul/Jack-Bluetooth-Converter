@@ -30,9 +30,6 @@
 // Include IO expander
 #include "./drivers/io_expander.h"
 
-#define CODEC_ADDR 0x18
-#define CODEC_TAG "AUDIO_CODEC"
-
 /*******************************
  * STATIC FUNCTION DEFINITIONS
  ******************************/

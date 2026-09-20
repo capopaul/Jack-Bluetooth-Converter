@@ -17,6 +17,7 @@
 #include "esp_audio_enc.h"
 #include "esp_aac_enc.h"
 #include "decode_task.h"
+#include "i2s.h"
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -258,49 +259,6 @@ static void encode_task_build_aac_config(esp_aac_enc_config_t *aac_cfg)
              aac_cfg->sample_rate, aac_cfg->channel, aac_cfg->bitrate, vbr);
 }
 
-static uint64_t encode_task_frame_us(int sample_rate_hz, uint32_t samples_per_frame)
-{
-    if (sample_rate_hz <= 0 || samples_per_frame == 0)
-    {
-        return 23000ULL;
-    }
-
-    return ((uint64_t)samples_per_frame * 1000000ULL) / (uint64_t)sample_rate_hz;
-}
-
-static void encode_task_wait_ms(uint32_t wait_ms)
-{
-    if (wait_ms == 0)
-    {
-        return;
-    }
-
-    (void)ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(wait_ms));
-}
-
-static void encode_task_pace_frame(aac_stream_ctx_t *ctx)
-{
-    int64_t now_us = esp_timer_get_time();
-
-    if (ctx->next_frame_us <= 0)
-    {
-        ctx->next_frame_us = now_us + (int64_t)ctx->frame_us;
-        return;
-    }
-
-    if (now_us < ctx->next_frame_us)
-    {
-        uint32_t wait_ms = (uint32_t)((ctx->next_frame_us - now_us + 999) / 1000);
-        encode_task_wait_ms(wait_ms);
-    }
-    else if ((uint64_t)(now_us - ctx->next_frame_us) > ctx->frame_us)
-    {
-        ctx->next_frame_us = esp_timer_get_time();
-    }
-
-    ctx->next_frame_us += (int64_t)ctx->frame_us;
-}
-
 static uint16_t encode_task_max_encoded_bytes(uint16_t mtu)
 {
     if (mtu <= A2DP_SRC_AAC_MTU_OVERHEAD_BYTES)
@@ -337,31 +295,6 @@ static esp_err_t encode_task_send_audio_frame(esp_a2d_conn_hdl_t conn_hdl, esp_a
     }
 
     return ESP_FAIL;
-}
-
-static void encode_task_fill_pcm_sine(aac_stream_ctx_t *ctx, uint8_t *pcm, int pcm_len)
-{
-    int16_t *samples = (int16_t *)pcm;
-    int ch = ctx->channel_count > 0 ? ctx->channel_count : 2;
-    int total = pcm_len / (int)sizeof(int16_t);
-    int frames = total / ch;
-    float phase_inc = (2.0f * (float)M_PI * A2DP_SRC_TONE_FREQ_HZ) / (float)ctx->sample_rate_hz;
-
-    for (int i = 0; i < frames; i++)
-    {
-        int16_t v = (int16_t)(A2DP_SRC_TONE_AMPLITUDE * sinf(ctx->tone_phase));
-
-        for (int c = 0; c < ch; c++)
-        {
-            samples[i * ch + c] = v;
-        }
-
-        ctx->tone_phase += phase_inc;
-        if (ctx->tone_phase >= 2.0f * (float)M_PI)
-        {
-            ctx->tone_phase -= 2.0f * (float)M_PI;
-        }
-    }
 }
 
 static bool encode_task_register_encoder(void)
@@ -435,9 +368,6 @@ static void encode_task_stream_task(void *arg)
         return;
     }
 
-    ctx.frame_us = encode_task_frame_us(ctx.sample_rate_hz, ctx.samples_per_frame);
-    ctx.next_frame_us = 0;
-
     ESP_LOGI(ENCODE_TASK_TAG, "stream: %" PRIu64 " us/frame, %d Hz, %" PRIu32 " samples",
              ctx.frame_us, ctx.sample_rate_hz, ctx.samples_per_frame);
     ESP_LOGI(ENCODE_TASK_TAG, "A2DP MTU %u, max AAC payload %u", s_audio_mtu,
@@ -453,13 +383,24 @@ static void encode_task_stream_task(void *arg)
 
     while (s_stream_run)
     {
-        encode_task_pace_frame(&ctx);
         if (!s_stream_run)
         {
             break;
         }
 
-        encode_task_fill_pcm_sine(&ctx, ctx.pcm, ctx.inbuf_sz);
+        size_t filled = 0;
+
+        while (s_stream_run && filled < (size_t)ctx.inbuf_sz)
+        {
+            filled += audio_i2s_read_pcm(
+                ctx.pcm + filled,
+                (size_t)ctx.inbuf_sz - filled);
+        }
+
+        if (!s_stream_run)
+        {
+            break;
+        }
 
         esp_audio_enc_in_frame_t in_frame = {
             .buffer = ctx.pcm,

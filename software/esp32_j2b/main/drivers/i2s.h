@@ -4,6 +4,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <stddef.h>
 
 // | pin name       | esp32 |
 // | codec_i2s_mclk | TXD0  | (it was supposed to be IO0... PCB error...)
@@ -23,3 +24,6 @@
 
 void esp_i2s_driver_install(void);
 void esp_i2s_driver_uninstall(void);
+
+// Returns the number of PCM bytes received; may be less than requested.
+size_t audio_i2s_read_pcm(void *buffer, size_t bytes);

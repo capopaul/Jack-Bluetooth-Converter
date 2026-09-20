@@ -138,3 +138,12 @@ void esp_i2s_driver_uninstall(void)
     ESP_ERROR_CHECK(i2s_del_channel(rx_chan));
     rx_chan = NULL;
 }
+
+size_t audio_i2s_read_pcm(void *buffer, size_t bytes)
+{
+    return xStreamBufferReceive(
+        pcm_stream,
+        buffer,
+        bytes,
+        pdMS_TO_TICKS(100));
+}

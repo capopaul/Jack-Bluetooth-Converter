@@ -1,9 +1,7 @@
 # Author : Paul Capgras
 # Date   : Jun 14, 2025
 
-Components/**
 Order/**
-build/**
 sdkconfig
 
 kicad/jack2bluetooth/jack2bluetooth-backups

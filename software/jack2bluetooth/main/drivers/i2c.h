@@ -1,5 +1,6 @@
 // Author : Paul Capgras
 // Date   : Oct 10, 2025
+#pragma once
 
 #define I2C_GPIO_SDA 21
 #define I2C_GPIO_SCL 19

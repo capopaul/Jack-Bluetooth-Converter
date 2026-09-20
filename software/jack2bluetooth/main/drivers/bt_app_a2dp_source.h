@@ -1,5 +1,4 @@
-#ifndef BT_APP_A2DP_SOURCE_H
-#define BT_APP_A2DP_SOURCE_H
+#pragma once
 
 #include "esp_err.h"
 
@@ -10,5 +9,3 @@
  * GAP discovery, AVRCP, A2DP, stream endpoints, and the media state machine.
  */
 esp_err_t bt_app_a2dp_source_start(void);
-
-#endif /* BT_APP_A2DP_SOURCE_H */

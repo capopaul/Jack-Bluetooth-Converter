@@ -1,5 +1,6 @@
 // Author : Paul Capgras
 // Date   : Oct 6, 2025
+#pragma once
 
 #include "io_expander.h"
 

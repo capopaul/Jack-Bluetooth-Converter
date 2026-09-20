@@ -20,5 +20,9 @@
     }
   },
   "editor.formatOnSave": true,
+  "editor.rulers": [
+    80,
+    100
+  ],
   "idf.currentSetup": "/Users/Paul/.espressif/v6.1/esp-idf",
 }

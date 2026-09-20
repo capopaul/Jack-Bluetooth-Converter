@@ -1,11 +1,19 @@
 #include "io_expander.h"
 #include "driver/gpio.h"
 
-#include "driver/i2c_master.h"
+// To print
 #include "esp_log.h"
+
+// For task
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+
+// For I2C
 #include "i2c.h"
+#include "driver/i2c_master.h"
+
+// Buttons functions
+#include "button.h"
 
 static TaskHandle_t interrupt_task_handle = NULL;
 
@@ -64,10 +72,7 @@ static void interrupt_task(void *arg)
             // These are sampled levels, not a history of every edge.
             if (interrupt_flags & IO_EXPANDER_BUTTON_DIRECTION_MASK)
             {
-                ESP_LOGI(IO_EXPANDER_TAG,
-                         "Button DIRECTION: %d -> %d",
-                         (previous_state & IO_EXPANDER_BUTTON_DIRECTION_MASK) != 0,
-                         (current_state & IO_EXPANDER_BUTTON_DIRECTION_MASK) != 0);
+                on_direction_changed((current_state & IO_EXPANDER_BUTTON_DIRECTION_MASK) != 0);
             }
 
             uint8_t rising_edges = (uint8_t)~previous_state & interrupt_flags;
@@ -75,17 +80,17 @@ static void interrupt_task(void *arg)
             // For the following, only 0 -> 1 event is interesting.
             if (rising_edges & IO_EXPANDER_BUTTON_ENTER_MASK)
             {
-                ESP_LOGI(IO_EXPANDER_TAG, "Button ENTER pushed");
+                on_enter_pressed();
             }
 
             if (rising_edges & IO_EXPANDER_BUTTON_BACK_MASK)
             {
-                ESP_LOGI(IO_EXPANDER_TAG, "Button BACK pushed");
+                on_back_pressed();
             }
 
             if (rising_edges & IO_EXPANDER_BUTTON_NEXT_MASK)
             {
-                ESP_LOGI(IO_EXPANDER_TAG, "Button NEXT pushed");
+                on_next_pressed();
             }
 
             // If INT remains low, retry without continuously using CPU.

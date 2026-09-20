@@ -180,7 +180,7 @@ void app_main(void)
     // D0   - 0
     // 1000 1010
     i2c_set(CODEC_ADDR, 7, 0b10001010);
-    // // read again
+    // read again
     is_expected(CODEC_TAG, 7, i2c_get(CODEC_ADDR, 7), 0b10001010);
 
     /*
@@ -300,9 +300,9 @@ void app_main(void)
     // // Read register 97 - Real-Time Interrupt Flags Register
     // is_expected(CODEC_TAG, 97, i2c_get(CODEC_ADDR, 97), 0b00000011);
 
-    // ///////////////////////
-    // //     Bluetooth     //
-    // ///////////////////////
+    ///////////////////////
+    //     Bluetooth     //
+    ///////////////////////
 
     init_non_volatile_storage();
 

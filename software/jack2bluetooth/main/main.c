@@ -4,9 +4,6 @@
  * SPDX-License-Identifier: Unlicense OR CC0-1.0
  */
 
-// Non volatile storage drivers
-#include "nvs_flash.h"
-
 #include <string.h>
 #include "sdkconfig.h"
 #include "esp_log.h"
@@ -34,17 +31,9 @@
  * STATIC FUNCTION DEFINITIONS
  ******************************/
 
-static void init_non_volatile_storage()
-{
-    /* initialize NVS (Non-volatile storage) — it is used to store PHY calibration data */
-    esp_err_t err = nvs_flash_init();
-    if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND)
-    {
-        ESP_ERROR_CHECK(nvs_flash_erase());
-        err = nvs_flash_init();
-    }
-    ESP_ERROR_CHECK(err);
-};
+/*******************************
+ * Main function
+ ******************************/
 
 void app_main(void)
 {
@@ -72,6 +61,8 @@ void app_main(void)
     audio_codec_configure_pll();
 
     // Init I2S
+    // This should be moved after bluetooth initialized.
+    // Because i2s should be set according to bluetooth
     esp_i2s_driver_install();
     audio_codec_configure_i2s_settings();
 
@@ -85,8 +76,6 @@ void app_main(void)
     ///////////////////////
     //     Bluetooth     //
     ///////////////////////
-
-    init_non_volatile_storage();
 
     bt_app_init();
 

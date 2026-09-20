@@ -1,0 +1,2 @@
+
+void nvs_init();

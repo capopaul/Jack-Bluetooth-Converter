@@ -22,16 +22,19 @@
 #include "esp_gap_bt_api.h"
 #include "esp_a2dp_api.h"
 
+// Include Non Volatile Storage
+#include "./drivers/nvs.h"
+
 #include "bt_app_core.h"
 
 /*********************************
  * STATIC FUNCTION DECLARATIONS
  ********************************/
 
-static void init_bluetooth_controller();
-static void enable_bluetooth_controller();
-static void init_bluedroid_host();
-static void enable_bluedroid_host();
+static void bluetooth_controller_init();
+static void bluetooth_controller_enable();
+static void bluedroid_host_init();
+static void bluedroid_host_enable();
 static void set_bluetooth_pairing_parameters();
 static void task__bt_msg_handler(void *arg);
 static bool bt_app_send_msg(bt_app_msg_t *msg);
@@ -48,7 +51,7 @@ static TaskHandle_t s_bt_app_task_handle = NULL;
  * STATIC FUNCTION DEFINITIONS
  ********************************/
 
-static void init_bluetooth_controller()
+static void bluetooth_controller_init()
 {
     // We only uses the functions of Classical Bluetooth.
     // So release the controller memory for Bluetooth Low Energy.
@@ -64,7 +67,7 @@ static void init_bluetooth_controller()
     }
 };
 
-static void enable_bluetooth_controller()
+static void bluetooth_controller_enable()
 {
     /* enable Bluetooth Controller in Classic Bluetooth mode */
     esp_err_t err = esp_bt_controller_enable(ESP_BT_MODE_CLASSIC_BT);
@@ -75,7 +78,7 @@ static void enable_bluetooth_controller()
     }
 };
 
-static void init_bluedroid_host()
+static void bluedroid_host_init()
 {
     /* initialize Bluedroid Host */
     esp_bluedroid_config_t bluedroid_cfg = BT_BLUEDROID_INIT_CONFIG_DEFAULT();
@@ -90,7 +93,7 @@ static void init_bluedroid_host()
     }
 };
 
-static void enable_bluedroid_host()
+static void bluedroid_host_enable()
 {
     /* enable Bluedroid Host */
     esp_err_t err = esp_bluedroid_enable();
@@ -189,11 +192,13 @@ static void task__bt_msg_handler(void *arg)
 
 void bt_app_init(void)
 {
-    init_bluetooth_controller();
-    enable_bluetooth_controller();
+    nvs_init();
 
-    init_bluedroid_host();
-    enable_bluedroid_host();
+    bluetooth_controller_init();
+    bluetooth_controller_enable();
+
+    bluedroid_host_init();
+    bluedroid_host_enable();
 
 #if (CONFIG_EXAMPLE_SSP_ENABLED == true)
     /* set default parameters for Secure Simple Pairing */

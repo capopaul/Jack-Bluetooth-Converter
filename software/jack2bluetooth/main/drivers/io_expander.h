@@ -40,3 +40,5 @@ void io_expander_set(uint8_t mask);
 
 // Set 0 to the mask. Mask should be an output.
 void io_expander_clear(uint8_t mask);
+
+int io_expander_read(uint8_t mask);

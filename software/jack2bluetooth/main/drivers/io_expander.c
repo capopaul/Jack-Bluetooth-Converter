@@ -7,10 +7,15 @@
 #include "freertos/task.h"
 #include "i2c.h"
 
+static TaskHandle_t interrupt_task_handle = NULL;
+
 static uint8_t output_state = 0x00;
 static uint8_t input_state;
 
 static void update_input_state(void);
+static void interrupt_handler(void *arg);
+static void interrupt_task(void *arg);
+static void create_interrupt_task(void);
 
 /********************************
  * INTERNAL FUNCTION DECLARATIONS
@@ -20,6 +25,114 @@ static void update_input_state(void)
 {
     // Register GPIO - GENERAL PURPOSE I/O PORT REGISTER
     input_state = i2c_get(IO_EXPANDER_ADDR, 0x09) & IO_EXPANDER_IODIR;
+}
+
+// Small function the ESP32 automatically calls when the expander’s INT pin goes low.
+// Its only job is to wake up the task
+static void interrupt_handler(void *arg)
+{
+    BaseType_t higher_priority_task_woken = pdFALSE;
+
+    vTaskNotifyGiveFromISR(interrupt_task_handle,
+                           &higher_priority_task_woken);
+
+    if (higher_priority_task_woken)
+    {
+        portYIELD_FROM_ISR();
+    }
+}
+
+// This task is woken up the interrupt_handler
+// To perform I2C transactions to understand why the interrupt happens.
+static void interrupt_task(void *arg)
+{
+    for (;;)
+    {
+        // Sleep until the GPIO interrupt handler notifies us.
+        ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+
+        do
+        {
+            uint8_t previous_state = input_state;
+
+            // Read INTF before GPIO: GPIO clears the interrupt flags.
+            uint8_t interrupt_flags = i2c_get(IO_EXPANDER_ADDR, 0x07) & IO_EXPANDER_IODIR;
+            update_input_state();
+            uint8_t current_state = input_state;
+
+            // These are sampled levels, not a history of every edge.
+            if (interrupt_flags & IO_EXPANDER_BUTTON_ENTER_MASK)
+            {
+                ESP_LOGI(IO_EXPANDER_TAG,
+                         "Button ENTER: %d -> %d",
+                         (previous_state & IO_EXPANDER_BUTTON_ENTER_MASK) != 0,
+                         (current_state & IO_EXPANDER_BUTTON_ENTER_MASK) != 0);
+            }
+
+            if (interrupt_flags & IO_EXPANDER_BUTTON_BACK_MASK)
+            {
+                ESP_LOGI(IO_EXPANDER_TAG,
+                         "Button BACK: %d -> %d",
+                         (previous_state & IO_EXPANDER_BUTTON_BACK_MASK) != 0,
+                         (current_state & IO_EXPANDER_BUTTON_BACK_MASK) != 0);
+            }
+
+            if (interrupt_flags & IO_EXPANDER_BUTTON_NEXT_MASK)
+            {
+                ESP_LOGI(IO_EXPANDER_TAG,
+                         "Button NEXT: %d -> %d",
+                         (previous_state & IO_EXPANDER_BUTTON_NEXT_MASK) != 0,
+                         (current_state & IO_EXPANDER_BUTTON_NEXT_MASK) != 0);
+            }
+
+            if (interrupt_flags & IO_EXPANDER_BUTTON_DIRECTION_MASK)
+            {
+                ESP_LOGI(IO_EXPANDER_TAG,
+                         "Button DIRECTION: %d -> %d",
+                         (previous_state & IO_EXPANDER_BUTTON_DIRECTION_MASK) != 0,
+                         (current_state & IO_EXPANDER_BUTTON_DIRECTION_MASK) != 0);
+            }
+
+            // If INT remains low, retry without continuously using CPU.
+            if (gpio_get_level(IO_EXPANDER_INT_GPIO) == 0)
+            {
+                vTaskDelay(1);
+            }
+        } while (gpio_get_level(IO_EXPANDER_INT_GPIO) == 0);
+    }
+}
+
+static void create_interrupt_task(void)
+{
+    const gpio_config_t config = {
+        .pin_bit_mask = 1ULL << IO_EXPANDER_INT_GPIO,
+        .mode = GPIO_MODE_INPUT,
+        .pull_up_en = GPIO_PULLUP_DISABLE,
+        .pull_down_en = GPIO_PULLDOWN_DISABLE,
+        .intr_type = GPIO_INTR_NEGEDGE,
+    };
+    ESP_ERROR_CHECK(gpio_config(&config));
+
+    BaseType_t result = xTaskCreate(
+        interrupt_task,
+        "io_expander_irq",
+        3072,
+        NULL,
+        tskIDLE_PRIORITY + 1,
+        &interrupt_task_handle);
+    ESP_ERROR_CHECK(result == pdPASS ? ESP_OK : ESP_ERR_NO_MEM);
+
+    // The ISR service may already have been installed elsewhere.
+    esp_err_t error = gpio_install_isr_service(0);
+    if (error != ESP_ERR_INVALID_STATE)
+    {
+        ESP_ERROR_CHECK(error);
+    }
+
+    ESP_ERROR_CHECK(gpio_isr_handler_add(
+        IO_EXPANDER_INT_GPIO,
+        interrupt_handler,
+        NULL));
 }
 
 /********************************
@@ -58,10 +171,7 @@ void io_expander_init(void)
     update_input_state();
 
     // Create a task to monitor IO expander interrupt
-    // TBD later
-    // the task will read INTF to know the cause of the IRQ
-    // it can also read
-    // to clear the interrupt read INTCAP or GPIO
+    create_interrupt_task();
 
     // Enable interrupts
     // Register INTCON is ok

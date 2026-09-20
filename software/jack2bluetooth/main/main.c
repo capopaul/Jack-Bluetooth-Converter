@@ -95,7 +95,7 @@ void app_main(void)
     ///////////////////////
 
     // Codec reset uses I2C through the initialized IO expander.
-    reset_audio_codec();
+    audio_codec_reset();
     i2c_detect();
 
     // Register 1 - SW reset

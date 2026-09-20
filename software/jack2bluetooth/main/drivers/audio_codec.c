@@ -13,7 +13,7 @@
 // Provide functions for task management and delays
 #include "freertos/task.h"
 
-void reset_audio_codec(void)
+void audio_codec_reset(void)
 {
     io_expander_clear(IO_EXPANDER_CODEC_RESET_L_MASK);
     vTaskDelay(pdMS_TO_TICKS(10));

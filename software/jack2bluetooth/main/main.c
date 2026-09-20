@@ -83,7 +83,6 @@ void app_main(void)
     ///////////////////////
 
     io_expander_reset();
-    i2c_detect();
 
     io_expander_init();
 
@@ -94,9 +93,7 @@ void app_main(void)
     //    Audio Codec    //
     ///////////////////////
 
-    // Codec reset uses I2C through the initialized IO expander.
     audio_codec_reset();
-    i2c_detect();
 
     // Register 1 - SW reset
     i2c_set(CODEC_ADDR, 1, 0x80);

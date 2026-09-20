@@ -7,9 +7,9 @@
 #include "driver/i2c_master.h"
 #include "esp_console.h"
 #include "esp_log.h"
-#include "cmd_i2ctools.h"
+#include "i2c.h"
 
-static const char *TAG = "cmd_i2ctools";
+static const char *TAG = "i2c";
 
 #define I2C_TOOL_TIMEOUT_VALUE_MS (50)
 static uint32_t i2c_frequency = 100 * 1000;
@@ -263,6 +263,16 @@ int i2c_dump(int chip_addr, int size)
     }
     if (i2c_master_bus_rm_device(dev_handle) != ESP_OK)
     {
+        return 1;
+    }
+    return 0;
+}
+
+int is_expected(const char *tag, int register_address, uint8_t read_value, uint8_t expected_value)
+{
+    if (read_value != expected_value)
+    {
+        ESP_LOGE(tag, "Reg [%d] Read : 0x%02x vs Expected 0x%02x", register_address, read_value, expected_value);
         return 1;
     }
     return 0;

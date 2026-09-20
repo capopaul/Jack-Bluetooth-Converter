@@ -1,12 +1,11 @@
 #include "io_expander.h"
-#include "utils.h"
 #include "driver/gpio.h"
 
 #include "driver/i2c_master.h"
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "cmd_i2ctools.h"
+#include "i2c.h"
 
 static uint8_t io_expander_gpio = 0x00;
 

@@ -139,17 +139,9 @@ static bool bt_app_send_msg(bt_app_msg_t *msg)
     return true;
 }
 
-// Usefull function for task__bt_msg_handler
-// call the callback function associated with the message
-static void bt_app_work_dispatched(bt_app_msg_t *msg)
-{
-    if (msg->cb)
-    {
-        msg->cb(msg->event, msg->param);
-    }
-}
-
-// The bluetooth dispatch function is in charge of calling the callback function associated with the message.
+// Each bluetooth messages contains a callback function
+// The bluetooth dispatch function is in charge of calling this callback function
+// associated with any new messages.
 static void task__bt_msg_handler(void *arg)
 {
     bt_app_msg_t msg;
@@ -164,7 +156,10 @@ static void task__bt_msg_handler(void *arg)
             switch (msg.sig)
             {
             case BT_APP_SIG_WORK_DISPATCH:
-                bt_app_work_dispatched(&msg);
+                if (msg.cb)
+                {
+                    msg.cb(msg.event, msg.param);
+                }
                 break;
             default:
                 ESP_LOGW(BT_APP_CORE_TAG, "%s, unhandled signal: %d", __func__, msg.sig);
@@ -203,11 +198,11 @@ void bt_app_init(void)
     esp_bt_gap_set_security_param(param_type, &iocap, sizeof(uint8_t));
 
     set_bluetooth_pairing_parameters();
-}
 
-void bt_app_task_start_up(void)
-{
+    // Create the Bluetooth queue
     s_bt_app_task_queue = xQueueCreate(10, sizeof(bt_app_msg_t));
+
+    // Create the Queue handler task
     xTaskCreate(task__bt_msg_handler, "BtAppTask", 4096, NULL, 10, &s_bt_app_task_handle);
 }
 

@@ -79,7 +79,5 @@ void app_main(void)
 
     bt_app_init();
 
-    bt_app_task_start_up();
-
     ESP_ERROR_CHECK(bt_app_a2dp_source_start());
 }

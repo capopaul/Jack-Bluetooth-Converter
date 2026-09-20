@@ -3,7 +3,6 @@
 #include <stdint.h>
 
 #define IO_EXPANDER_ADDR 0x20
-#define IO_EXPANDER_TAG "IO_EXPANDER"
 
 #define IO_EXPANDER_INT_GPIO GPIO_NUM_39
 

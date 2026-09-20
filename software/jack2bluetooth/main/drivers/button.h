@@ -1,6 +1,4 @@
 
-#define BUTTON_TAG "BUTTON"
-
 /********************************
  * EXTERNAL FUNCTION DECLARATIONS
  *******************************/

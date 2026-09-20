@@ -4,6 +4,8 @@
 // For print
 #include "esp_log.h"
 
+#define BUTTON_TAG "BUTTON"
+
 /********************************
  * EXTERNAL FUNCTION DECLARATIONS
  *******************************/

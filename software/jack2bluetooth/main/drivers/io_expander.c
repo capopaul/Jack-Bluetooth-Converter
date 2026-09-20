@@ -15,6 +15,8 @@
 // Buttons functions
 #include "button.h"
 
+#define IO_EXPANDER_TAG "IO_EXPANDER"
+
 static TaskHandle_t interrupt_task_handle = NULL;
 
 static uint8_t output_state = 0x00;

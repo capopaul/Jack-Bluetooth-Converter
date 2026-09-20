@@ -10,7 +10,7 @@
 
 static uint8_t io_expander_gpio = 0x00;
 
-void reset_io_expander(void)
+void io_expander_reset(void)
 {
     const gpio_config_t config = {
         .pin_bit_mask = 1ULL << GPIO_NUM_32,
@@ -50,13 +50,13 @@ void io_expander_init(void)
     // i2c_get(IO_EXPANDER_ADDR, 0x0A);
 }
 
-void set_io_expander(uint8_t mask)
+void io_expander_set(uint8_t mask)
 {
     io_expander_gpio |= mask;
     i2c_set(IO_EXPANDER_ADDR, 0x09, io_expander_gpio);
 }
 
-void clear_io_expander(uint8_t mask)
+void io_expander_clear(uint8_t mask)
 {
     io_expander_gpio &= ~mask;
     i2c_set(IO_EXPANDER_ADDR, 0x09, io_expander_gpio);

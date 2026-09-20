@@ -82,13 +82,13 @@ void app_main(void)
     //    IO Expander    //
     ///////////////////////
 
-    reset_io_expander();
+    io_expander_reset();
     i2c_detect();
 
     io_expander_init();
 
-    set_io_expander(IO_EXPANDER_LED_ADC_MASK);
-    set_io_expander(IO_EXPANDER_LED_DAC_MASK);
+    io_expander_set(IO_EXPANDER_LED_ADC_MASK);
+    io_expander_set(IO_EXPANDER_LED_DAC_MASK);
 
     ///////////////////////
     //    Audio Codec    //

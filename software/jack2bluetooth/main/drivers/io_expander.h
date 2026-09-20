@@ -25,9 +25,18 @@
 #define IO_EXPANDER_BUTTON_BACK_MASK (1 << 1)
 #define IO_EXPANDER_BUTTON_ENTER_MASK (1 << 0)
 
+/********************************
+ * EXTERNAL FUNCTION DECLARATIONS
+ *******************************/
+
+// Hardware reset through ESP32 GPIO32; does not require I2C.
+void io_expander_reset(void);
+
 // Call after initializing the shared I2C bus.
 void io_expander_init(void);
-// Hardware reset through ESP32 GPIO32; does not require I2C.
-void reset_io_expander(void);
-void set_io_expander(uint8_t mask);
-void clear_io_expander(uint8_t mask);
+
+// Set 1 to the mask. Mask should be an output.
+void io_expander_set(uint8_t mask);
+
+// Set 0 to the mask. Mask should be an output.
+void io_expander_clear(uint8_t mask);

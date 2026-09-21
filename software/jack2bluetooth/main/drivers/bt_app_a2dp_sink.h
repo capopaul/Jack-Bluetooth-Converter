@@ -1,10 +1,8 @@
 // Author : Paul Capgras
-// Date   : Sept 19, 2026
-
-#pragma once
+// Date   : Oct 10, 2025
 
 #include <stdint.h>
-#include <stddef.h>
+#include "esp_a2dp_api.h"
 
 // | pin name       | esp32 |
 // | codec_i2s_mclk | TXD0  | (it was supposed to be IO0... PCB error...)
@@ -18,20 +16,8 @@
 #define I2S_GPIO_DIN GPIO_NUM_18
 #define I2S_GPIO_DOUT GPIO_NUM_4
 
-typedef enum
-{
-    I2S_MODE_TX,
-    I2S_MODE_RX
-} is2_mode_t;
-
 /********************************
  * EXTERNAL FUNCTION DECLARATIONS
  *******************************/
 
-void i2s_driver_install(is2_mode_t mode);
-void i2s_driver_uninstall(void);
-
-// Returns the number of PCM bytes received; may be less than requested.
-size_t audio_i2s_read_pcm(void *buffer, size_t bytes);
-
-size_t audio_i2s_write_ringbuf(const uint8_t *data, size_t size);
+esp_err_t bt_app_a2dp_sink_start(void);

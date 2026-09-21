@@ -27,7 +27,7 @@
 #include "bt_app_a2dp_source.h"
 
 /* log tags */
-#define BT_AV_TAG "BT_AV"
+#define BT_A2DP "BT_A2DP_SOURCE"
 #define BT_RC_CT_TAG "RC_CT"
 
 /* AVRCP used transaction label */
@@ -91,7 +91,7 @@ static void bt_app_encode_stream_stop(void)
 {
     if (encode_task_is_running())
     {
-        ESP_LOGI(BT_AV_TAG, "stopping encode stream task");
+        ESP_LOGI(BT_A2DP, "stopping encode stream task");
         encode_task_stop();
     }
 }
@@ -125,11 +125,11 @@ static void bt_app_register_a2dp_src_seps(void)
     esp_err_t err = esp_a2d_source_register_stream_endpoint(0, &mcc_aac);
     if (err != ESP_OK)
     {
-        ESP_LOGE(BT_AV_TAG, "esp_a2d_source_register_stream_endpoint_aac failed with code %x", err);
+        ESP_LOGE(BT_A2DP, "esp_a2d_source_register_stream_endpoint_aac failed with code %x", err);
     }
     else
     {
-        ESP_LOGI(BT_AV_TAG, "esp_a2d_source_register_stream_endpoint_aac completed successfully.");
+        ESP_LOGI(BT_A2DP, "esp_a2d_source_register_stream_endpoint_aac completed successfully.");
     }
 
     esp_a2d_mcc_t mcc_sbc = {0};
@@ -153,11 +153,11 @@ static void bt_app_register_a2dp_src_seps(void)
     err = esp_a2d_source_register_stream_endpoint(1, &mcc_sbc);
     if (err != ESP_OK)
     {
-        ESP_LOGE(BT_AV_TAG, "esp_a2d_source_register_stream_endpoint_sbc failed with code %x", err);
+        ESP_LOGE(BT_A2DP, "esp_a2d_source_register_stream_endpoint_sbc failed with code %x", err);
     }
     else
     {
-        ESP_LOGI(BT_AV_TAG, "esp_a2d_source_register_stream_endpoint_sbc completed successfully.");
+        ESP_LOGI(BT_A2DP, "esp_a2d_source_register_stream_endpoint_sbc completed successfully.");
     }
 }
 
@@ -168,38 +168,38 @@ static void register_a2dp_source_callback_function(uint16_t event, void *p_param
     esp_err_t err = esp_avrc_ct_init();
     if (err != ESP_OK)
     {
-        ESP_LOGE(BT_AV_TAG, "esp_avrc_ct_init failed with code %x", err);
+        ESP_LOGE(BT_A2DP, "esp_avrc_ct_init failed with code %x", err);
     }
     err = esp_avrc_ct_register_callback(bt_app_rc_ct_cb);
     if (err != ESP_OK)
     {
-        ESP_LOGE(BT_AV_TAG, "esp_avrc_ct_register_callback failed with code %x", err);
+        ESP_LOGE(BT_A2DP, "esp_avrc_ct_register_callback failed with code %x", err);
     }
 
     err = esp_a2d_source_init();
     if (err != ESP_OK)
     {
-        ESP_LOGE(BT_AV_TAG, "esp_a2d_source_init failed with code %x", err);
+        ESP_LOGE(BT_A2DP, "esp_a2d_source_init failed with code %x", err);
     }
     err = esp_a2d_register_callback(&bt_app_a2d_cb);
     if (err != ESP_OK)
     {
-        ESP_LOGE(BT_AV_TAG, "esp_a2d_register_callback failed with code %x", err);
+        ESP_LOGE(BT_A2DP, "esp_a2d_register_callback failed with code %x", err);
     }
 
     /* Avoid the state error of s_a2d_state caused by the connection initiated by the peer device. */
     err = esp_bt_gap_set_scan_mode(ESP_BT_NON_CONNECTABLE, ESP_BT_NON_DISCOVERABLE);
     if (err != ESP_OK)
     {
-        ESP_LOGE(BT_AV_TAG, "esp_bt_gap_set_scan_mode failed with code %x", err);
+        ESP_LOGE(BT_A2DP, "esp_bt_gap_set_scan_mode failed with code %x", err);
     }
 
-    ESP_LOGI(BT_AV_TAG, "Starting device discovery...");
+    ESP_LOGI(BT_A2DP, "Starting device discovery...");
     s_a2d_state = APP_AV_STATE_DISCOVERING;
     err = esp_bt_gap_start_discovery(ESP_BT_INQ_MODE_GENERAL_INQUIRY, 10, 0);
     if (err != ESP_OK)
     {
-        ESP_LOGE(BT_AV_TAG, "esp_bt_gap_start_discovery failed with code %x", err);
+        ESP_LOGE(BT_A2DP, "esp_bt_gap_start_discovery failed with code %x", err);
     }
 
     /* create and start heart beat timer */
@@ -219,14 +219,14 @@ static void bt_app_a2d_cb(esp_a2d_cb_event_t event, esp_a2d_cb_param_t *param)
 {
     if (event == ESP_A2D_PROF_STATE_EVT)
     {
-        ESP_LOGI(BT_AV_TAG,
+        ESP_LOGI(BT_A2DP,
                  "A2DP profile state: %u",
                  (unsigned)param->a2d_prof_stat.init_state);
 
         if (param->a2d_prof_stat.init_state ==
             ESP_A2D_INIT_SUCCESS)
         {
-            ESP_LOGI(BT_AV_TAG,
+            ESP_LOGI(BT_A2DP,
                      "A2DP initialized; registering endpoints");
 
             bt_app_register_a2dp_src_seps();
@@ -242,7 +242,7 @@ static void bt_app_a2d_heart_beat(TimerHandle_t arg)
 
 static void bt_app_av_sm_hdlr(uint16_t event, void *param)
 {
-    ESP_LOGI(BT_AV_TAG, "%s state: %d, event: 0x%x", __func__, s_a2d_state, event);
+    ESP_LOGI(BT_A2DP, "%s state: %d, event: 0x%x", __func__, s_a2d_state, event);
 
     /* select handler according to different states */
     switch (s_a2d_state)
@@ -251,22 +251,22 @@ static void bt_app_av_sm_hdlr(uint16_t event, void *param)
     case APP_AV_STATE_DISCOVERED:
         break;
     case APP_AV_STATE_UNCONNECTED:
-        ESP_LOGW(BT_AV_TAG, "APP_AV_STATE_UNCONNECTED");
+        ESP_LOGW(BT_A2DP, "APP_AV_STATE_UNCONNECTED");
         bt_app_av_state_unconnected_hdlr(event, param);
         break;
     case APP_AV_STATE_CONNECTING:
-        ESP_LOGW(BT_AV_TAG, "CONNECTING");
+        ESP_LOGW(BT_A2DP, "CONNECTING");
         bt_app_av_state_connecting_hdlr(event, param);
         break;
     case APP_AV_STATE_CONNECTED:
-        ESP_LOGW(BT_AV_TAG, "CONNECTED");
+        ESP_LOGW(BT_A2DP, "CONNECTED");
         bt_app_av_state_connected_hdlr(event, param);
         break;
     case APP_AV_STATE_DISCONNECTING:
         bt_app_av_state_disconnecting_hdlr(event, param);
         break;
     default:
-        ESP_LOGE(BT_AV_TAG, "%s invalid state: %d", __func__, s_a2d_state);
+        ESP_LOGE(BT_A2DP, "%s invalid state: %d", __func__, s_a2d_state);
         break;
     }
 }
@@ -285,7 +285,7 @@ static void bt_app_av_state_unconnected_hdlr(uint16_t event, void *param)
     case BT_APP_HEART_BEAT_EVT:
     {
         uint8_t *bda = s_peer_bda;
-        ESP_LOGI(BT_AV_TAG, "a2dp connecting to peer: %02x:%02x:%02x:%02x:%02x:%02x",
+        ESP_LOGI(BT_A2DP, "a2dp connecting to peer: %02x:%02x:%02x:%02x:%02x:%02x",
                  bda[0], bda[1], bda[2], bda[3], bda[4], bda[5]);
         esp_a2d_source_connect(s_peer_bda);
         s_a2d_state = APP_AV_STATE_CONNECTING;
@@ -295,12 +295,12 @@ static void bt_app_av_state_unconnected_hdlr(uint16_t event, void *param)
     case ESP_A2D_REPORT_SNK_DELAY_VALUE_EVT:
     {
         a2d = (esp_a2d_cb_param_t *)(param);
-        ESP_LOGI(BT_AV_TAG, "%s, delay value: %u * 1/10 ms", __func__, a2d->a2d_report_delay_value_stat.delay_value);
+        ESP_LOGI(BT_A2DP, "%s, delay value: %u * 1/10 ms", __func__, a2d->a2d_report_delay_value_stat.delay_value);
         break;
     }
     default:
     {
-        ESP_LOGE(BT_AV_TAG, "%s unhandled event: %d", __func__, event);
+        ESP_LOGE(BT_A2DP, "%s unhandled event: %d", __func__, event);
         break;
     }
     }
@@ -315,11 +315,11 @@ static void bt_app_av_state_connecting_hdlr(uint16_t event, void *param)
     {
     case ESP_A2D_CONNECTION_STATE_EVT:
     {
-        ESP_LOGW(BT_AV_TAG, "ESP_A2D_CONNECTION_STATE_EVT");
+        ESP_LOGW(BT_A2DP, "ESP_A2D_CONNECTION_STATE_EVT");
         a2d = (esp_a2d_cb_param_t *)(param);
         if (a2d->conn_stat.state == ESP_A2D_CONNECTION_STATE_CONNECTED)
         {
-            ESP_LOGI(BT_AV_TAG, "a2dp connected");
+            ESP_LOGI(BT_A2DP, "a2dp connected");
             s_a2d_state = APP_AV_STATE_CONNECTED;
             s_media_state = APP_AV_MEDIA_STATE_IDLE;
             s_a2d_conn_hndl = a2d->conn_stat.conn_hdl;
@@ -327,7 +327,7 @@ static void bt_app_av_state_connecting_hdlr(uint16_t event, void *param)
         }
         else if (a2d->conn_stat.state == ESP_A2D_CONNECTION_STATE_DISCONNECTED)
         {
-            ESP_LOGI(BT_AV_TAG, "a2dp disconnected");
+            ESP_LOGI(BT_A2DP, "a2dp disconnected");
             bt_app_encode_stream_stop();
             s_media_state = APP_AV_MEDIA_STATE_IDLE;
             s_intv_cnt = 0;
@@ -336,22 +336,22 @@ static void bt_app_av_state_connecting_hdlr(uint16_t event, void *param)
         break;
     }
     case ESP_A2D_AUDIO_STATE_EVT:
-        ESP_LOGW(BT_AV_TAG, "ESP_A2D_AUDIO_STATE_EVT");
+        ESP_LOGW(BT_A2DP, "ESP_A2D_AUDIO_STATE_EVT");
         break;
     case ESP_A2D_AUDIO_CFG_EVT:
     {
-        ESP_LOGW(BT_AV_TAG, "ESP_A2D_AUDIO_CFG_EVT");
+        ESP_LOGW(BT_A2DP, "ESP_A2D_AUDIO_CFG_EVT");
         a2d = (esp_a2d_cb_param_t *)(param);
         esp_a2d_mcc_t *p_mcc = &a2d->audio_cfg.mcc;
         if (p_mcc == NULL)
         {
-            ESP_LOGE(BT_AV_TAG, "p_mcc null");
+            ESP_LOGE(BT_A2DP, "p_mcc null");
             break;
         }
-        ESP_LOGI(BT_AV_TAG, "A2DP audio stream configuration, codec type: %d", p_mcc->type);
+        ESP_LOGI(BT_A2DP, "A2DP audio stream configuration, codec type: %d", p_mcc->type);
         if (p_mcc->type == ESP_A2D_MCT_M24)
         {
-            ESP_LOGI(BT_AV_TAG, "Configure audio player: 0x%x-0x%x-0x%x-0x%x-0x%x-0x%x-0x%x-0x%x-0x%x",
+            ESP_LOGI(BT_A2DP, "Configure audio player: 0x%x-0x%x-0x%x-0x%x-0x%x-0x%x-0x%x-0x%x-0x%x",
                      p_mcc->cie.m24_info.drc,
                      p_mcc->cie.m24_info.obj_type,
                      p_mcc->cie.m24_info.samp_freq1,
@@ -366,14 +366,14 @@ static void bt_app_av_state_connecting_hdlr(uint16_t event, void *param)
         break;
     }
     case ESP_A2D_MEDIA_CTRL_ACK_EVT:
-        ESP_LOGW(BT_AV_TAG, "ESP_A2D_MEDIA_CTRL_ACK_EVT");
+        ESP_LOGW(BT_A2DP, "ESP_A2D_MEDIA_CTRL_ACK_EVT");
         break;
     case BT_APP_HEART_BEAT_EVT:
         /**
          * Switch state to APP_AV_STATE_UNCONNECTED
          * when connecting lasts more than 2 heart beat intervals.
          */
-        ESP_LOGW(BT_AV_TAG, "BT_APP_HEART_BEAT_EVT");
+        ESP_LOGW(BT_A2DP, "BT_APP_HEART_BEAT_EVT");
         if (++s_connecting_intv >= 2)
         {
             s_a2d_state = APP_AV_STATE_UNCONNECTED;
@@ -382,19 +382,19 @@ static void bt_app_av_state_connecting_hdlr(uint16_t event, void *param)
         break;
     case ESP_A2D_REPORT_SNK_DELAY_VALUE_EVT:
     {
-        ESP_LOGW(BT_AV_TAG, "ESP_A2D_REPORT_SNK_DELAY_VALUE_EVT");
+        ESP_LOGW(BT_A2DP, "ESP_A2D_REPORT_SNK_DELAY_VALUE_EVT");
         a2d = (esp_a2d_cb_param_t *)(param);
-        ESP_LOGI(BT_AV_TAG, "%s, delay value: %u * 1/10 ms", __func__, a2d->a2d_report_delay_value_stat.delay_value);
+        ESP_LOGI(BT_A2DP, "%s, delay value: %u * 1/10 ms", __func__, a2d->a2d_report_delay_value_stat.delay_value);
         break;
     }
     case ESP_A2D_REPORT_SNK_ALL_CODEC_CAPS_EVT:
     {
         // This event means:
         // “ESP-IDF has finished reading the codec capabilities of the remote device’s usable A2DP sink endpoints.”
-        ESP_LOGW(BT_AV_TAG, "ESP_A2D_REPORT_SNK_ALL_CODEC_CAPS_EVT");
+        ESP_LOGW(BT_A2DP, "ESP_A2D_REPORT_SNK_ALL_CODEC_CAPS_EVT");
         a2d = (esp_a2d_cb_param_t *)(param);
         uint8_t n = a2d->a2d_report_snk_all_codec_caps_stat.sep_num;
-        ESP_LOGI(BT_AV_TAG, "%s all sink caps conn_hdl=%u sep_num=%u", __func__,
+        ESP_LOGI(BT_A2DP, "%s all sink caps conn_hdl=%u sep_num=%u", __func__,
                  (unsigned)a2d->a2d_report_snk_all_codec_caps_stat.conn_hdl, (unsigned)n);
         // it is not possible to print the codec here because the memory from a2d.a2d_report_snk_all_codec_caps_stat.sep_mcc has been erased.
         // but it was possible to print it inside bt_app_a2d_cb
@@ -416,7 +416,7 @@ static void bt_app_av_state_connecting_hdlr(uint16_t event, void *param)
         break;
     }
     default:
-        ESP_LOGE(BT_AV_TAG, "%s unhandled event: %d", __func__, event);
+        ESP_LOGE(BT_A2DP, "%s unhandled event: %d", __func__, event);
         break;
     }
 }
@@ -431,7 +431,7 @@ static void bt_app_av_media_proc(uint16_t event, void *param)
     {
         if (event == BT_APP_HEART_BEAT_EVT)
         {
-            ESP_LOGI(BT_AV_TAG, "a2dp media ready checking ...");
+            ESP_LOGI(BT_A2DP, "a2dp media ready checking ...");
             esp_a2d_media_ctrl(ESP_A2D_MEDIA_CTRL_CHECK_SRC_RDY);
         }
         else if (event == ESP_A2D_MEDIA_CTRL_ACK_EVT)
@@ -440,7 +440,7 @@ static void bt_app_av_media_proc(uint16_t event, void *param)
             if (a2d->media_ctrl_stat.cmd == ESP_A2D_MEDIA_CTRL_CHECK_SRC_RDY &&
                 a2d->media_ctrl_stat.status == ESP_A2D_MEDIA_CTRL_ACK_SUCCESS)
             {
-                ESP_LOGI(BT_AV_TAG, "a2dp media ready, starting ...");
+                ESP_LOGI(BT_A2DP, "a2dp media ready, starting ...");
                 esp_a2d_media_ctrl(ESP_A2D_MEDIA_CTRL_START);
                 s_media_state = APP_AV_MEDIA_STATE_STARTING;
             }
@@ -455,23 +455,23 @@ static void bt_app_av_media_proc(uint16_t event, void *param)
             if (a2d->media_ctrl_stat.cmd == ESP_A2D_MEDIA_CTRL_START &&
                 a2d->media_ctrl_stat.status == ESP_A2D_MEDIA_CTRL_ACK_SUCCESS)
             {
-                ESP_LOGI(BT_AV_TAG, "a2dp media start successfully.");
+                ESP_LOGI(BT_A2DP, "a2dp media start successfully.");
                 s_intv_cnt = 0;
                 s_media_state = APP_AV_MEDIA_STATE_STARTED;
                 encode_task_set_a2dp_link(s_a2d_conn_hndl, s_a2d_audio_mtu);
                 if (!encode_task_has_stream_config())
                 {
-                    ESP_LOGE(BT_AV_TAG, "No negotiated AAC (M24) config, skip encode launch");
+                    ESP_LOGE(BT_A2DP, "No negotiated AAC (M24) config, skip encode launch");
                 }
                 else if (encode_task_launch() != ESP_OK)
                 {
-                    ESP_LOGE(BT_AV_TAG, "encode_task_launch failed");
+                    ESP_LOGE(BT_A2DP, "encode_task_launch failed");
                 }
             }
             else
             {
                 /* not started successfully, transfer to idle state */
-                ESP_LOGI(BT_AV_TAG, "a2dp media start failed.");
+                ESP_LOGI(BT_A2DP, "a2dp media start failed.");
                 s_media_state = APP_AV_MEDIA_STATE_IDLE;
             }
         }
@@ -488,7 +488,7 @@ static void bt_app_av_media_proc(uint16_t event, void *param)
             if (a2d->media_ctrl_stat.cmd == ESP_A2D_MEDIA_CTRL_SUSPEND &&
                 a2d->media_ctrl_stat.status == ESP_A2D_MEDIA_CTRL_ACK_SUCCESS)
             {
-                ESP_LOGI(BT_AV_TAG, "a2dp media suspend successfully, disconnecting...");
+                ESP_LOGI(BT_A2DP, "a2dp media suspend successfully, disconnecting...");
                 bt_app_encode_stream_stop();
                 s_media_state = APP_AV_MEDIA_STATE_IDLE;
                 esp_a2d_source_disconnect(s_peer_bda);
@@ -496,7 +496,7 @@ static void bt_app_av_media_proc(uint16_t event, void *param)
             }
             else
             {
-                ESP_LOGI(BT_AV_TAG, "a2dp media suspending...");
+                ESP_LOGI(BT_A2DP, "a2dp media suspending...");
                 esp_a2d_media_ctrl(ESP_A2D_MEDIA_CTRL_SUSPEND);
             }
         }
@@ -521,7 +521,7 @@ static void bt_app_av_state_connected_hdlr(uint16_t event, void *param)
         a2d = (esp_a2d_cb_param_t *)(param);
         if (a2d->conn_stat.state == ESP_A2D_CONNECTION_STATE_DISCONNECTED)
         {
-            ESP_LOGI(BT_AV_TAG, "a2dp disconnected");
+            ESP_LOGI(BT_A2DP, "a2dp disconnected");
             bt_app_encode_stream_stop();
             s_media_state = APP_AV_MEDIA_STATE_IDLE;
             s_intv_cnt = 0;
@@ -538,7 +538,7 @@ static void bt_app_av_state_connected_hdlr(uint16_t event, void *param)
         }
         else if (ESP_A2D_AUDIO_STATE_SUSPEND == a2d->audio_stat.state)
         {
-            ESP_LOGI(BT_AV_TAG, "a2dp audio suspended");
+            ESP_LOGI(BT_A2DP, "a2dp audio suspended");
             bt_app_encode_stream_stop();
             if (s_media_state == APP_AV_MEDIA_STATE_STARTED ||
                 s_media_state == APP_AV_MEDIA_STATE_STOPPING)
@@ -555,13 +555,13 @@ static void bt_app_av_state_connected_hdlr(uint16_t event, void *param)
         esp_a2d_mcc_t *p_mcc = &a2d->audio_cfg.mcc;
         if (p_mcc == NULL)
         {
-            ESP_LOGE(BT_AV_TAG, "p_mcc null");
+            ESP_LOGE(BT_A2DP, "p_mcc null");
             break;
         }
-        ESP_LOGI(BT_AV_TAG, "A2DP audio stream configuration, codec type: %d", p_mcc->type);
+        ESP_LOGI(BT_A2DP, "A2DP audio stream configuration, codec type: %d", p_mcc->type);
         if (p_mcc->type == ESP_A2D_MCT_M24)
         {
-            ESP_LOGI(BT_AV_TAG, "Configure audio player: 0x%x-0x%x-0x%x-0x%x-0x%x-0x%x-0x%x-0x%x-0x%x",
+            ESP_LOGI(BT_A2DP, "Configure audio player: 0x%x-0x%x-0x%x-0x%x-0x%x-0x%x-0x%x-0x%x-0x%x",
                      p_mcc->cie.m24_info.drc,
                      p_mcc->cie.m24_info.obj_type,
                      p_mcc->cie.m24_info.samp_freq1,
@@ -584,17 +584,17 @@ static void bt_app_av_state_connected_hdlr(uint16_t event, void *param)
     case ESP_A2D_REPORT_SNK_DELAY_VALUE_EVT:
     {
         a2d = (esp_a2d_cb_param_t *)(param);
-        ESP_LOGI(BT_AV_TAG, "%s, delay value: %u * 1/10 ms", __func__, a2d->a2d_report_delay_value_stat.delay_value);
+        ESP_LOGI(BT_A2DP, "%s, delay value: %u * 1/10 ms", __func__, a2d->a2d_report_delay_value_stat.delay_value);
         break;
     }
     case ESP_A2D_REPORT_SNK_CODEC_CAPS_EVT:
     {
         a2d = (esp_a2d_cb_param_t *)(param);
         esp_a2d_mcc_t *sink_mcc = &a2d->a2d_report_snk_codec_caps_stat.mcc;
-        ESP_LOGI(BT_AV_TAG, "sink codec type: %d", sink_mcc->type);
+        ESP_LOGI(BT_A2DP, "sink codec type: %d", sink_mcc->type);
         if (sink_mcc->type == ESP_A2D_MCT_SBC)
         {
-            ESP_LOGI(BT_AV_TAG, "sink codec capabilities: 0x%x-0x%x-0x%x-0x%x-0x%x-%d-%d",
+            ESP_LOGI(BT_A2DP, "sink codec capabilities: 0x%x-0x%x-0x%x-0x%x-0x%x-%d-%d",
                      sink_mcc->cie.sbc_info.samp_freq,
                      sink_mcc->cie.sbc_info.ch_mode,
                      sink_mcc->cie.sbc_info.block_len,
@@ -605,7 +605,7 @@ static void bt_app_av_state_connected_hdlr(uint16_t event, void *param)
         }
         else if (sink_mcc->type == ESP_A2D_MCT_M24)
         {
-            ESP_LOGI(BT_AV_TAG, "sink codec capabilities: 0x%x-0x%x-0x%x-0x%x-0x%x-0x%x-0x%x-0x%x-0x%x",
+            ESP_LOGI(BT_A2DP, "sink codec capabilities: 0x%x-0x%x-0x%x-0x%x-0x%x-0x%x-0x%x-0x%x-0x%x",
                      sink_mcc->cie.m24_info.obj_type,
                      sink_mcc->cie.m24_info.drc,
                      sink_mcc->cie.m24_info.samp_freq1,
@@ -620,7 +620,7 @@ static void bt_app_av_state_connected_hdlr(uint16_t event, void *param)
     }
     default:
     {
-        ESP_LOGE(BT_AV_TAG, "%s unhandled event: %d", __func__, event);
+        ESP_LOGE(BT_A2DP, "%s unhandled event: %d", __func__, event);
         break;
     }
     }
@@ -638,7 +638,7 @@ static void bt_app_av_state_disconnecting_hdlr(uint16_t event, void *param)
         a2d = (esp_a2d_cb_param_t *)(param);
         if (a2d->conn_stat.state == ESP_A2D_CONNECTION_STATE_DISCONNECTED)
         {
-            ESP_LOGI(BT_AV_TAG, "a2dp disconnected");
+            ESP_LOGI(BT_A2DP, "a2dp disconnected");
             bt_app_encode_stream_stop();
             s_media_state = APP_AV_MEDIA_STATE_IDLE;
             s_intv_cnt = 0;
@@ -654,12 +654,12 @@ static void bt_app_av_state_disconnecting_hdlr(uint16_t event, void *param)
     case ESP_A2D_REPORT_SNK_DELAY_VALUE_EVT:
     {
         a2d = (esp_a2d_cb_param_t *)(param);
-        ESP_LOGI(BT_AV_TAG, "%s, delay value: 0x%u * 1/10 ms", __func__, a2d->a2d_report_delay_value_stat.delay_value);
+        ESP_LOGI(BT_A2DP, "%s, delay value: 0x%u * 1/10 ms", __func__, a2d->a2d_report_delay_value_stat.delay_value);
         break;
     }
     default:
     {
-        ESP_LOGE(BT_AV_TAG, "%s unhandled event: %d", __func__, event);
+        ESP_LOGE(BT_A2DP, "%s unhandled event: %d", __func__, event);
         break;
     }
     }
@@ -812,7 +812,7 @@ esp_err_t bt_app_a2dp_source_start(void)
 {
     if (!bt_app_work_dispatch(register_a2dp_source_callback_function, 0, NULL, 0, NULL, NULL))
     {
-        ESP_LOGE(BT_AV_TAG, "failed to dispatch Bluetooth stack initialization");
+        ESP_LOGE(BT_A2DP, "failed to dispatch Bluetooth stack initialization");
         bt_app_task_shut_down();
         return ESP_FAIL;
     }

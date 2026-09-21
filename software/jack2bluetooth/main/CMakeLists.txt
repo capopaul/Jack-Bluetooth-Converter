@@ -11,7 +11,8 @@ idf_component_register(SRCS "main.c"
         "./drivers/decode_task.c"
         "./drivers/i2c.c"
         "./drivers/i2s.c"
+        "./drivers/sbc_sink.c"
         "./drivers/io_expander.c"
         "./drivers/nvs.c"
-        PRIV_REQUIRES bt nvs_flash esp_driver_i2c esp_driver_gpio esp_driver_i2s console esp_ringbuf
+        PRIV_REQUIRES bt nvs_flash esp_driver_i2c esp_driver_gpio esp_driver_i2s console esp_ringbuf espressif__esp_audio_codec
         INCLUDE_DIRS "." "./drivers/")

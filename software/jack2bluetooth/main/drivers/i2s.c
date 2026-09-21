@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include "freertos/stream_buffer.h"
 #include "freertos/ringbuf.h"
+#include "freertos/semphr.h"
 
 #define BUFF_SIZE 512
 #define I2S_PCM_CHUNK_BYTES (240 * 6)
@@ -55,6 +56,7 @@ static StreamBufferHandle_t pcm_stream;
 static TaskHandle_t s_bt_i2s_task_handle = NULL; /* handle of I2S task */
 static RingbufHandle_t s_ringbuf_i2s = NULL;     /* handle of ringbuffer for I2S */
 static SemaphoreHandle_t s_i2s_write_semaphore = NULL;
+static SemaphoreHandle_t tx_mutex;
 static uint16_t ringbuffer_mode = RINGBUFFER_MODE_PROCESSING;
 
 static is2_mode_t mode;
@@ -172,17 +174,26 @@ static void task__i2s_tx(void *arg)
         {
             for (;;)
             {
+                xSemaphoreTake(tx_mutex, portMAX_DELAY);
+                if (ringbuffer_mode == RINGBUFFER_MODE_PREFETCHING)
+                {
+                    pcm_state = (pcm_conversion_state_t){0};
+                    xSemaphoreGive(tx_mutex);
+                    break;
+                }
                 item_size = 0;
                 /* receive data from ringbuffer and write it to I2S DMA transmit buffer */
-                data = (uint8_t *)xRingbufferReceiveUpTo(s_ringbuf_i2s, &item_size, (TickType_t)pdMS_TO_TICKS(20), item_size_upto);
+                data = (uint8_t *)xRingbufferReceiveUpTo(s_ringbuf_i2s, &item_size, 0, item_size_upto);
                 if (item_size == 0)
                 {
                     ESP_LOGI(I2S_TAG, "ringbuffer underflowed! mode changed: RINGBUFFER_MODE_PREFETCHING");
                     ringbuffer_mode = RINGBUFFER_MODE_PREFETCHING;
+                    xSemaphoreGive(tx_mutex);
                     break;
                 }
                 write_pcm16_to_i2s(data, item_size, &pcm_state);
                 vRingbufferReturnItem(s_ringbuf_i2s, (void *)data);
+                xSemaphoreGive(tx_mutex);
             }
         }
     }
@@ -211,7 +222,9 @@ static void i2s_tx_task_start_up(void)
         ESP_LOGE(I2S_TAG, "%s, ringbuffer create failed", __func__);
         return;
     }
-    // This task handle the new data added to the ring.
+    tx_mutex = xSemaphoreCreateMutex();
+    configASSERT(tx_mutex != NULL);
+    // This task handles the new data added to the ring.
     xTaskCreate(task__i2s_tx, "i2s_tx_task", 8192, NULL, configMAX_PRIORITIES - 3, &s_bt_i2s_task_handle);
 }
 
@@ -371,7 +384,7 @@ size_t audio_i2s_read_pcm(void *buffer, size_t bytes)
         pdMS_TO_TICKS(100));
 }
 
-size_t audio_i2s_write_ringbuf(const uint8_t *data, size_t size)
+static size_t write_ringbuf_locked(const uint8_t *data, size_t size)
 {
     size_t item_size = 0;
     BaseType_t done = pdFALSE;
@@ -411,4 +424,28 @@ size_t audio_i2s_write_ringbuf(const uint8_t *data, size_t size)
     }
 
     return done ? size : 0;
+}
+
+size_t audio_i2s_write_ringbuf(const uint8_t *data, size_t size)
+{
+    if (!tx_mutex || !s_ringbuf_i2s || !data || size == 0) return 0;
+    xSemaphoreTake(tx_mutex, portMAX_DELAY);
+    size_t written = write_ringbuf_locked(data, size);
+    xSemaphoreGive(tx_mutex);
+    return written;
+}
+
+void audio_i2s_flush_tx(void)
+{
+    if (!tx_mutex) return;
+    xSemaphoreTake(tx_mutex, portMAX_DELAY);
+    size_t size;
+    void *data;
+    while ((data = xRingbufferReceive(s_ringbuf_i2s, &size, 0)) != NULL)
+    {
+        vRingbufferReturnItem(s_ringbuf_i2s, data);
+    }
+    xSemaphoreTake(s_i2s_write_semaphore, 0);
+    ringbuffer_mode = RINGBUFFER_MODE_PREFETCHING;
+    xSemaphoreGive(tx_mutex);
 }

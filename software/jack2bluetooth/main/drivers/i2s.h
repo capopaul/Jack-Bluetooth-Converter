@@ -35,3 +35,6 @@ void i2s_driver_uninstall(void);
 size_t audio_i2s_read_pcm(void *buffer, size_t bytes);
 
 size_t audio_i2s_write_ringbuf(const uint8_t *data, size_t size);
+
+// Discard queued TX audio on stream changes; I2S stays installed.
+void audio_i2s_flush_tx(void);

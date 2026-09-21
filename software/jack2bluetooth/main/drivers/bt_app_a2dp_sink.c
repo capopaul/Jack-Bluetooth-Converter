@@ -29,6 +29,7 @@
 #include "driver/i2s_std.h"
 
 #include "i2s.h"
+#include "sbc_sink.h"
 
 #include "sys/lock.h"
 
@@ -42,14 +43,14 @@
 
 static void register_a2dp_sink_callback_function(uint16_t event, void *p_param);
 static void bt_app_a2dp_cb(esp_a2d_cb_event_t event, esp_a2d_cb_param_t *param);
-static void bt_app_a2dp_data_cb(const uint8_t *data, uint32_t len);
+
 static void handle_a2dp_event(uint16_t event, void *p_param);
 
 /*******************************
  * STATIC VARIABLE DEFINITIONS
  ******************************/
 
-static uint32_t s_pkt_cnt = 0; /* count for audio packet */
+static bool s_sbc_configured;
 static esp_a2d_audio_state_t s_audio_state = ESP_A2D_AUDIO_STATE_SUSPEND;
 /* audio stream datapath state */
 static const char *s_a2d_conn_state_str[] = {"Disconnected", "Connecting", "Connected", "Disconnecting"};
@@ -62,49 +63,35 @@ static const char *s_a2d_audio_state_str[] = {"Suspended", "Started"};
 
 static void register_a2dp_sink_callback_function(uint16_t event, void *p_param)
 {
-    // both parameters : event and p_param are ignored.
+    (void)event;
+    (void)p_param;
+    ESP_ERROR_CHECK(esp_a2d_register_callback(bt_app_a2dp_cb));
+    ESP_ERROR_CHECK(esp_a2d_sink_register_audio_data_callback(sbc_sink_receive));
+    ESP_ERROR_CHECK(esp_a2d_sink_init());
+    // Endpoint registration follows ESP_A2D_INIT_SUCCESS below.
+}
 
-    // Initialize and register the A2DP Sink profile (Advanced Audio Distribution Profile)
-    esp_err_t err = esp_a2d_sink_init();
-    if (err != ESP_OK)
-    {
-        ESP_LOGE(BT_A2DP, "esp_a2d_sink_init failed with code %x", err);
-    }
-
-    // Register callback for handling A2DP connection events (e.g., connection state, codec configuration)
-    err = esp_a2d_register_callback(&bt_app_a2dp_cb);
-    if (err != ESP_OK)
-    {
-        ESP_LOGE(BT_A2DP, "esp_a2d_register_callback failed with code %x", err);
-    }
-
-    // Register callback for receiving audio data streamed over A2DP and processing it (e.g., forwarding to I2S)
-    err = esp_a2d_sink_register_data_callback(bt_app_a2dp_data_cb);
-    if (err != ESP_OK)
-    {
-        ESP_LOGE(BT_A2DP, "esp_a2d_sink_register_data_callback failed with code %x", err);
-    }
-
-    /* Get the default value of the delay value */
-    err = esp_a2d_sink_get_delay_value();
-    if (err != ESP_OK)
-    {
-        ESP_LOGE(BT_A2DP, "esp_a2d_sink_get_delay_value failed with code %x", err);
-    }
-
-    /* Get local device name */
-    err = esp_bt_gap_get_device_name();
-    if (err != ESP_OK)
-    {
-        ESP_LOGE(BT_A2DP, "esp_bt_gap_get_device_name failed with code %x", err);
-    }
-
-    /* set discoverable and connectable mode, wait to be connected */
-    err = esp_bt_gap_set_scan_mode(ESP_BT_CONNECTABLE, ESP_BT_GENERAL_DISCOVERABLE);
-    if (err != ESP_OK)
-    {
-        ESP_LOGE(BT_A2DP, "esp_bt_gap_set_scan_mode failed with code %x", err);
-    }
+static void register_sbc_endpoint(void)
+{
+    // Based on IDF v6.1 a2dp_sink_stream's external-codec example.
+    // Advertise only formats supported by the current 44.1 kHz stereo DAC path.
+    esp_a2d_mcc_t mcc = {0};
+    mcc.type = ESP_A2D_MCT_SBC;
+    mcc.cie.sbc_info.samp_freq = ESP_A2D_SBC_CIE_SF_44K;
+    mcc.cie.sbc_info.ch_mode = ESP_A2D_SBC_CIE_CH_MODE_DUAL_CHANNEL |
+                               ESP_A2D_SBC_CIE_CH_MODE_STEREO |
+                               ESP_A2D_SBC_CIE_CH_MODE_JOINT_STEREO;
+    mcc.cie.sbc_info.block_len = ESP_A2D_SBC_CIE_BLOCK_LEN_4 |
+                                 ESP_A2D_SBC_CIE_BLOCK_LEN_8 |
+                                 ESP_A2D_SBC_CIE_BLOCK_LEN_12 |
+                                 ESP_A2D_SBC_CIE_BLOCK_LEN_16;
+    mcc.cie.sbc_info.num_subbands = ESP_A2D_SBC_CIE_NUM_SUBBANDS_4 |
+                                    ESP_A2D_SBC_CIE_NUM_SUBBANDS_8;
+    mcc.cie.sbc_info.alloc_mthd = ESP_A2D_SBC_CIE_ALLOC_MTHD_SNR |
+                                  ESP_A2D_SBC_CIE_ALLOC_MTHD_LOUDNESS;
+    mcc.cie.sbc_info.min_bitpool = 2;
+    mcc.cie.sbc_info.max_bitpool = 53;
+    ESP_ERROR_CHECK(esp_a2d_sink_register_stream_endpoint(0, &mcc));
 }
 
 // Callback function for bluetooth HW events - A2DP events
@@ -131,19 +118,6 @@ static void bt_app_a2dp_cb(esp_a2d_cb_event_t event, esp_a2d_cb_param_t *param)
     }
 }
 
-// Callback function for bluetooth HW events - A2DP data events
-// Write data to ring buffer
-static void bt_app_a2dp_data_cb(const uint8_t *data, uint32_t len)
-{
-    audio_i2s_write_ringbuf(data, len);
-
-    /* log the number every 100 packets */
-    if (++s_pkt_cnt % 100 == 0)
-    {
-        ESP_LOGI(BT_A2DP, "Audio packet count: %" PRIu32, s_pkt_cnt);
-    }
-}
-
 static void handle_a2dp_event(uint16_t event, void *p_param)
 {
     ESP_LOGD(BT_A2DP, "%s event: %d", __func__, event);
@@ -162,7 +136,10 @@ static void handle_a2dp_event(uint16_t event, void *p_param)
         if (a2d->conn_stat.state == ESP_A2D_CONNECTION_STATE_DISCONNECTED)
         {
             esp_bt_gap_set_scan_mode(ESP_BT_CONNECTABLE, ESP_BT_GENERAL_DISCOVERABLE);
-            i2s_driver_uninstall();
+            s_audio_state = ESP_A2D_AUDIO_STATE_SUSPEND;
+            s_sbc_configured = false;
+            sbc_sink_set_playing(false);
+            // I2S is installed once by main; keep it available for reconnection.
         }
         else if (a2d->conn_stat.state == ESP_A2D_CONNECTION_STATE_CONNECTED)
         {
@@ -180,9 +157,13 @@ static void handle_a2dp_event(uint16_t event, void *p_param)
         a2d = (esp_a2d_cb_param_t *)(p_param);
         ESP_LOGI(BT_A2DP, "A2DP audio state: %s", s_a2d_audio_state_str[a2d->audio_stat.state]);
         s_audio_state = a2d->audio_stat.state;
+        if (s_audio_state != ESP_A2D_AUDIO_STATE_STARTED)
+        {
+            sbc_sink_set_playing(false);
+        }
         if (ESP_A2D_AUDIO_STATE_STARTED == a2d->audio_stat.state)
         {
-            s_pkt_cnt = 0;
+            sbc_sink_set_playing(s_sbc_configured);
         }
         break;
     }
@@ -192,46 +173,19 @@ static void handle_a2dp_event(uint16_t event, void *p_param)
         a2d = (esp_a2d_cb_param_t *)(p_param);
         esp_a2d_mcc_t *p_mcc = &a2d->audio_cfg.mcc;
         ESP_LOGI(BT_A2DP, "A2DP audio stream configuration, codec type: %d", p_mcc->type);
-        /* for now only SBC stream is supported */
-        if (p_mcc->type == ESP_A2D_MCT_SBC)
+        s_sbc_configured = p_mcc->type == ESP_A2D_MCT_SBC &&
+            p_mcc->cie.sbc_info.samp_freq == ESP_A2D_SBC_CIE_SF_44K &&
+            (p_mcc->cie.sbc_info.ch_mode == ESP_A2D_SBC_CIE_CH_MODE_DUAL_CHANNEL ||
+             p_mcc->cie.sbc_info.ch_mode == ESP_A2D_SBC_CIE_CH_MODE_STEREO ||
+             p_mcc->cie.sbc_info.ch_mode == ESP_A2D_SBC_CIE_CH_MODE_JOINT_STEREO);
+        sbc_sink_set_playing(s_sbc_configured && s_audio_state == ESP_A2D_AUDIO_STATE_STARTED);
+        if (!s_sbc_configured)
         {
-            int sample_rate = 16000;
-            int ch_count = 2;
-            if (p_mcc->cie.sbc_info.samp_freq & ESP_A2D_SBC_CIE_SF_32K)
-            {
-                sample_rate = 32000;
-            }
-            else if (p_mcc->cie.sbc_info.samp_freq & ESP_A2D_SBC_CIE_SF_44K)
-            {
-                sample_rate = 44100;
-            }
-            else if (p_mcc->cie.sbc_info.samp_freq & ESP_A2D_SBC_CIE_SF_48K)
-            {
-                sample_rate = 48000;
-            }
-
-            if (p_mcc->cie.sbc_info.ch_mode & ESP_A2D_SBC_CIE_CH_MODE_MONO)
-            {
-                ch_count = 1;
-            }
-
-            // TBD Support i2s reconfiguration
-            ESP_LOGW(BT_A2DP, "Reconfiguration of I2S not supported yet.");
-
-            // i2s_channel_disable(tx_chan);
-            // i2s_channel_reconfig_std_clock(tx_chan, &clk_cfg);
-            // i2s_channel_reconfig_std_slot(tx_chan, &slot_cfg);
-            // i2s_channel_enable(tx_chan);
-
-            // ESP_LOGI(BT_A2DP, "Configure audio player: 0x%x-0x%x-0x%x-0x%x-0x%x-%d-%d",
-            //          p_mcc->cie.sbc_info.samp_freq,
-            //          p_mcc->cie.sbc_info.ch_mode,
-            //          p_mcc->cie.sbc_info.block_len,
-            //          p_mcc->cie.sbc_info.num_subbands,
-            //          p_mcc->cie.sbc_info.alloc_mthd,
-            //          p_mcc->cie.sbc_info.min_bitpool,
-            //          p_mcc->cie.sbc_info.max_bitpool);
-            // ESP_LOGI(BT_A2DP, "Audio player configured, sample rate: %d", sample_rate);
+            ESP_LOGE(BT_A2DP, "Unsupported sink configuration: expected SBC 44100 Hz stereo");
+        }
+        else
+        {
+            ESP_LOGI(BT_A2DP, "SBC decoder configured: 44100 Hz stereo -> 16-bit PCM");
         }
         break;
     }
@@ -242,10 +196,15 @@ static void handle_a2dp_event(uint16_t event, void *p_param)
         if (ESP_A2D_INIT_SUCCESS == a2d->a2d_prof_stat.init_state)
         {
             ESP_LOGI(BT_A2DP, "A2DP PROF STATE: Init Complete");
+            register_sbc_endpoint();
+            ESP_ERROR_CHECK(esp_a2d_sink_get_delay_value());
         }
         else
         {
             ESP_LOGI(BT_A2DP, "A2DP PROF STATE: Deinit Complete");
+            s_audio_state = ESP_A2D_AUDIO_STATE_SUSPEND;
+            s_sbc_configured = false;
+            sbc_sink_set_playing(false);
         }
         break;
     }
@@ -256,6 +215,7 @@ static void handle_a2dp_event(uint16_t event, void *p_param)
         if (a2d->a2d_sep_reg_stat.reg_state == ESP_A2D_SEP_REG_SUCCESS)
         {
             ESP_LOGI(BT_A2DP, "A2DP register SEP success, seid: %d", a2d->a2d_sep_reg_stat.seid);
+            ESP_ERROR_CHECK(esp_bt_gap_set_scan_mode(ESP_BT_CONNECTABLE, ESP_BT_GENERAL_DISCOVERABLE));
         }
         else
         {
@@ -314,6 +274,8 @@ static void handle_a2dp_event(uint16_t event, void *p_param)
 
 esp_err_t bt_app_a2dp_sink_start(void)
 {
+    esp_err_t err = sbc_sink_init();
+    if (err != ESP_OK) return err;
     if (!bt_app_work_dispatch(register_a2dp_sink_callback_function, 0, NULL, 0, NULL, NULL))
     {
         ESP_LOGE(BT_A2DP, "failed to dispatch Bluetooth stack initialization");

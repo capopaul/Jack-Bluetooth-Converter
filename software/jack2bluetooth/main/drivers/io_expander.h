@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdbool.h>
 #include <stdint.h>
 
 #define IO_EXPANDER_ADDR 0x20
@@ -43,3 +44,6 @@ void io_expander_set(uint8_t mask);
 void io_expander_clear(uint8_t mask);
 
 int io_expander_read(uint8_t mask);
+
+bool is_direction_j2b();
+bool is_direction_b2j();

@@ -61,19 +61,6 @@ void app_main(void)
 
     audio_codec_configure_pll();
 
-    // Init I2S
-    // This should be moved after bluetooth initialized.
-    // Because i2s should be set according to bluetooth
-    esp_i2s_driver_install();
-    audio_codec_configure_i2s_settings();
-
-    // Configure Routing
-    audio_codec_connect_line2_to_adc();
-
-    audio_codec_power_up_adc();
-
-    audio_codec_unmute_adc();
-
     ///////////////////////
     //     Bluetooth     //
     ///////////////////////
@@ -81,5 +68,28 @@ void app_main(void)
     bt_app_init();
 
     ESP_ERROR_CHECK(bt_app_gap_start());
-    ESP_ERROR_CHECK(bt_app_a2dp_source_start());
+
+    // check switch status.
+    // during this phase, switch must not change state
+    if (is_direction_b2j())
+    {
+        // Init I2S
+        // This should be moved after bluetooth initialized.
+        // Because i2s should be set according to bluetooth
+        esp_i2s_driver_install();
+        audio_codec_configure_i2s_settings();
+
+        // Configure Routing
+        audio_codec_connect_line2_to_adc();
+
+        audio_codec_power_up_adc();
+
+        audio_codec_unmute_adc();
+
+        ESP_ERROR_CHECK(bt_app_a2dp_source_start());
+    }
+    else
+    {
+        printf("not supported yet");
+    }
 }

@@ -165,21 +165,18 @@ static void register_a2dp_source_callback_function(uint16_t event, void *p_param
 {
     // both parameters : event and p_param are ignored.
 
-    // err = esp_avrc_ct_init();
-    // if (err != ESP_OK)
-    // {
-    //     ESP_LOGE(BT_AV_TAG, "esp_avrc_ct_init failed with code %x", err);
-    // }
-    // err = esp_avrc_ct_register_callback(bt_app_rc_ct_cb);
-    // if (err != ESP_OK)
-    // {
-    //     ESP_LOGE(BT_AV_TAG, "esp_avrc_ct_register_callback failed with code %x", err);
-    // }
+    esp_err_t err = esp_avrc_ct_init();
+    if (err != ESP_OK)
+    {
+        ESP_LOGE(BT_AV_TAG, "esp_avrc_ct_init failed with code %x", err);
+    }
+    err = esp_avrc_ct_register_callback(bt_app_rc_ct_cb);
+    if (err != ESP_OK)
+    {
+        ESP_LOGE(BT_AV_TAG, "esp_avrc_ct_register_callback failed with code %x", err);
+    }
 
-    //=========================================
-    // This is dependant if we are in a SOURCE
-    //=========================================
-    esp_err_t err = esp_a2d_source_init();
+    err = esp_a2d_source_init();
     if (err != ESP_OK)
     {
         ESP_LOGE(BT_AV_TAG, "esp_a2d_source_init failed with code %x", err);
@@ -220,6 +217,21 @@ static void register_a2dp_source_callback_function(uint16_t event, void *p_param
 // The processing is not done here to keep it fast.
 static void bt_app_a2d_cb(esp_a2d_cb_event_t event, esp_a2d_cb_param_t *param)
 {
+    if (event == ESP_A2D_PROF_STATE_EVT)
+    {
+        ESP_LOGI(BT_AV_TAG,
+                 "A2DP profile state: %u",
+                 (unsigned)param->a2d_prof_stat.init_state);
+
+        if (param->a2d_prof_stat.init_state ==
+            ESP_A2D_INIT_SUCCESS)
+        {
+            ESP_LOGI(BT_AV_TAG,
+                     "A2DP initialized; registering endpoints");
+
+            bt_app_register_a2dp_src_seps();
+        }
+    }
     bt_app_work_dispatch(bt_app_av_sm_hdlr, event, param, sizeof(esp_a2d_cb_param_t), NULL, NULL);
 }
 

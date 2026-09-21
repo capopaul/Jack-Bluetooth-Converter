@@ -1,3 +1,5 @@
+
+#include <stdbool.h>
 #include "io_expander.h"
 #include "driver/gpio.h"
 
@@ -203,4 +205,14 @@ int io_expander_read(uint8_t mask)
     uint8_t outputs = output_state & (uint8_t)~IO_EXPANDER_IODIR;
     uint8_t pins = (inputs | outputs) & mask;
     return pins != 0;
+}
+
+bool is_direction_j2b()
+{
+    return io_expander_read(IO_EXPANDER_BUTTON_DIRECTION_MASK) == 0;
+}
+
+bool is_direction_b2j()
+{
+    return !is_direction_j2b();
 }

@@ -491,8 +491,6 @@ bool encode_task_is_running(void)
 
 esp_err_t encode_task_stop(void)
 {
-    disable_launch();
-
     // if app is not launching I can take control of the mutex and edit the variable.
     xSemaphoreTake(source_mutex, portMAX_DELAY);
 

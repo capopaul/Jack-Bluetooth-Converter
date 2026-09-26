@@ -18,6 +18,8 @@
 #include "esp_aac_enc.h"
 #include "decode_task.h"
 #include "i2s.h"
+#include "freertos/semphr.h"
+#include <stdatomic.h>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -60,8 +62,12 @@ static uint16_t s_audio_mtu;
 static esp_a2d_mcc_t s_stream_mcc;
 static bool s_stream_mcc_valid;
 static TaskHandle_t s_stream_task_hdl;
-static volatile bool s_stream_run;
+static atomic_bool s_stream_run = false;
 static bool s_enc_registered;
+
+static SemaphoreHandle_t stop_acknowledge = NULL; // to tell when the task ended
+static SemaphoreHandle_t source_mutex;            // to prevent launching the task while stopping it.
+static bool source_stopping = false;
 
 void encode_task_set_a2dp_link(esp_a2d_conn_hdl_t conn_hdl, uint16_t audio_mtu)
 {
@@ -364,8 +370,7 @@ static void encode_task_stream_task(void *arg)
 
     if (!encode_task_open_encoder(&ctx))
     {
-        vTaskDelete(NULL);
-        return;
+        goto cleanup;
     }
 
     ESP_LOGI(ENCODE_TASK_TAG, "stream: %" PRIu64 " us/frame, %d Hz, %" PRIu32 " samples",
@@ -458,6 +463,11 @@ static void encode_task_stream_task(void *arg)
     ESP_LOGI(ENCODE_TASK_TAG, "stream task exiting");
 
 cleanup:
+    xSemaphoreTake(source_mutex, portMAX_DELAY);
+    source_stopping = true;
+    // release mutex, now it will be impossible to start the app
+    xSemaphoreGive(source_mutex);
+
     free(ctx.pcm);
     free(ctx.aac);
     if (ctx.enc_hdl != NULL)
@@ -465,8 +475,23 @@ cleanup:
         esp_audio_enc_close(ctx.enc_hdl);
     }
     s_stream_task_hdl = NULL;
-    s_stream_run = false;
+    atomic_store(&s_stream_run, false);
+    xSemaphoreGive(stop_acknowledge);
     vTaskDelete(NULL);
+}
+
+/********************************
+ * EXTERNAL FUNCTION DECLARATIONS
+ *******************************/
+
+void encode_task_init()
+{
+    source_mutex = xSemaphoreCreateMutex();
+
+    if (source_mutex == NULL)
+    {
+        ESP_LOGE(ENCODE_TASK_TAG, "xSemaphoreCreateMutex() failed");
+    }
 }
 
 bool encode_task_is_running(void)
@@ -476,63 +501,90 @@ bool encode_task_is_running(void)
 
 void encode_task_stop(void)
 {
+    // if app is not launching I can take control of the mutex and edit the variable.
+    xSemaphoreTake(source_mutex, portMAX_DELAY);
+    source_stopping = true;
+    // release mutex, now it will be impossible to start the app
+    xSemaphoreGive(source_mutex);
+
     TaskHandle_t task = s_stream_task_hdl;
 
-    if (task == NULL)
+    if (task != NULL)
     {
-        return;
-    }
+        // send signal to stop
+        atomic_store(&s_stream_run, false);
 
-    s_stream_run = false;
-    xTaskNotifyGive(task);
-
-    for (unsigned waited_ms = 0; waited_ms < A2DP_SRC_STREAM_STOP_WAIT_MS; waited_ms += 10)
-    {
-        if (s_stream_task_hdl == NULL)
+        // check we received acknowledge
+        if (xSemaphoreTake(stop_acknowledge, pdMS_TO_TICKS(3000)) != pdTRUE)
         {
-            ESP_LOGI(ENCODE_TASK_TAG, "stream task stopped");
+            // Task may still be using its resources. Leave them intact.
+            ESP_LOGE(ENCODE_TASK_TAG, "encode_task_stop timed out");
+        }
+        else
+        {
+            vSemaphoreDelete(stop_acknowledge);
+            stop_acknowledge = NULL;
+
             s_conn_hdl = 0;
             s_audio_mtu = 0;
-            return;
         }
-        vTaskDelay(pdMS_TO_TICKS(10));
     }
 
-    if (s_stream_task_hdl != NULL)
-    {
-        ESP_LOGW(ENCODE_TASK_TAG, "stream task stop timeout, delete task");
-        vTaskDelete(s_stream_task_hdl);
-        s_stream_task_hdl = NULL;
-        s_stream_run = false;
-    }
-
-    s_conn_hdl = 0;
-    s_audio_mtu = 0;
+    xSemaphoreTake(source_mutex, portMAX_DELAY);
+    source_stopping = false;
+    xSemaphoreGive(source_mutex);
 }
 
 esp_err_t encode_task_launch(void)
 {
-    if (s_stream_task_hdl != NULL)
+    // Take mutex (to avoid stopping at the same time as starting)
+    xSemaphoreTake(source_mutex, portMAX_DELAY);
+
+    esp_err_t err;
+
+    if (source_stopping)
+    {
+        err = ESP_ERR_INVALID_STATE;
+    }
+    else if (s_stream_task_hdl != NULL)
     {
         ESP_LOGW(ENCODE_TASK_TAG, "stream task already running");
-        return ESP_ERR_INVALID_STATE;
+        err = ESP_ERR_INVALID_STATE;
     }
 
-    if (!s_stream_mcc_valid)
+    else if (!s_stream_mcc_valid)
     {
         ESP_LOGE(ENCODE_TASK_TAG, "No M24 stream config");
-        return ESP_ERR_INVALID_STATE;
+        err = ESP_ERR_INVALID_STATE;
     }
-
-    s_stream_run = true;
-    if (xTaskCreate(encode_task_stream_task, "a2dp_aac", A2DP_SRC_STREAM_TASK_STACK, NULL,
-                    A2DP_SRC_STREAM_TASK_PRIO, &s_stream_task_hdl) != pdPASS)
+    else
     {
-        ESP_LOGE(ENCODE_TASK_TAG, "stream task create failed");
-        s_stream_run = false;
-        s_stream_task_hdl = NULL;
-        return ESP_FAIL;
-    }
+        atomic_store(&s_stream_run, true);
 
-    return ESP_OK;
+        // init stop_acknowledge
+        stop_acknowledge = xSemaphoreCreateBinary();
+        configASSERT(stop_acknowledge != NULL);
+
+        if (xTaskCreate(encode_task_stream_task, "a2dp_aac", A2DP_SRC_STREAM_TASK_STACK, NULL,
+                        A2DP_SRC_STREAM_TASK_PRIO, &s_stream_task_hdl) != pdPASS)
+        {
+            ESP_LOGE(ENCODE_TASK_TAG, "stream task create failed");
+            atomic_store(&s_stream_run, false);
+            s_stream_task_hdl = NULL;
+
+            vSemaphoreDelete(stop_acknowledge);
+            stop_acknowledge = NULL;
+
+            err = ESP_FAIL;
+        }
+        else
+        {
+
+            err = ESP_OK;
+        }
+    }
+    // release mutex - to allow stopping the task
+    xSemaphoreGive(source_mutex);
+
+    return err;
 }

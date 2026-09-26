@@ -16,6 +16,8 @@ extern "C"
 {
 #endif
 
+    void encode_task_init();
+
     /**
      * @brief Set A2DP connection handle and audio MTU used for sending.
      *

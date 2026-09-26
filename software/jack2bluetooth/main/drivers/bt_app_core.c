@@ -36,7 +36,7 @@ static void bluetooth_controller_enable();
 static void bluedroid_host_init();
 static void bluedroid_host_enable();
 static void set_bluetooth_pairing_parameters();
-static void task__bt_msg_handler(void *arg);
+static void bt_app_task(void *arg);
 static bool bt_app_send_msg(bt_app_msg_t *msg);
 static void bt_app_work_dispatched(bt_app_msg_t *msg);
 
@@ -44,8 +44,8 @@ static void bt_app_work_dispatched(bt_app_msg_t *msg);
  * STATIC VARIABLE DEFINITIONS
  ********************************/
 
-static QueueHandle_t s_bt_app_task_queue = NULL;
-static TaskHandle_t s_bt_app_task_handle = NULL;
+static QueueHandle_t bt_app_task_queue = NULL;
+static TaskHandle_t bt_app_task_handle = NULL;
 
 /*********************************
  * STATIC FUNCTION DEFINITIONS
@@ -125,12 +125,12 @@ static void set_bluetooth_pairing_parameters()
 // Add a bluetooth message to the bluetooth message queue
 static bool bt_app_send_msg(bt_app_msg_t *msg)
 {
-    if (msg == NULL || s_bt_app_task_queue == NULL)
+    if (msg == NULL || bt_app_task_queue == NULL)
     {
         return false;
     }
 
-    if (pdTRUE != xQueueSend(s_bt_app_task_queue, msg, 10 / portTICK_PERIOD_MS))
+    if (pdTRUE != xQueueSend(bt_app_task_queue, msg, 10 / portTICK_PERIOD_MS))
     {
         ESP_LOGE(BT_APP_CORE_TAG, "%s xQueue send failed", __func__);
         return false;
@@ -142,14 +142,14 @@ static bool bt_app_send_msg(bt_app_msg_t *msg)
 // Each bluetooth messages contains a callback function
 // The bluetooth dispatch function is in charge of calling this callback function
 // associated with any new messages.
-static void task__bt_msg_handler(void *arg)
+static void bt_app_task(void *arg)
 {
     bt_app_msg_t msg;
 
     for (;;)
     {
         /* receive message from work queue and handle it */
-        if (pdTRUE == xQueueReceive(s_bt_app_task_queue, &msg, (TickType_t)portMAX_DELAY))
+        if (pdTRUE == xQueueReceive(bt_app_task_queue, &msg, (TickType_t)portMAX_DELAY))
         {
             ESP_LOGD(BT_APP_CORE_TAG, "%s, signal: 0x%x, event: 0x%x", __func__, msg.sig, msg.event);
 
@@ -200,23 +200,23 @@ void bt_app_init(void)
     set_bluetooth_pairing_parameters();
 
     // Create the Bluetooth queue
-    s_bt_app_task_queue = xQueueCreate(10, sizeof(bt_app_msg_t));
+    bt_app_task_queue = xQueueCreate(10, sizeof(bt_app_msg_t));
 
     // Create the Queue handler task
-    xTaskCreate(task__bt_msg_handler, "BtAppTask", 4096, NULL, 10, &s_bt_app_task_handle);
+    xTaskCreate(bt_app_task, "bt_app", 4096, NULL, 10, &bt_app_task_handle);
 }
 
 void bt_app_task_shut_down(void)
 {
-    if (s_bt_app_task_handle)
+    if (bt_app_task_handle)
     {
-        vTaskDelete(s_bt_app_task_handle);
-        s_bt_app_task_handle = NULL;
+        vTaskDelete(bt_app_task_handle);
+        bt_app_task_handle = NULL;
     }
-    if (s_bt_app_task_queue)
+    if (bt_app_task_queue)
     {
         bt_app_msg_t msg;
-        while (xQueueReceive(s_bt_app_task_queue, &msg, 0) == pdTRUE)
+        while (xQueueReceive(bt_app_task_queue, &msg, 0) == pdTRUE)
         {
             if (msg.param)
             {
@@ -227,8 +227,8 @@ void bt_app_task_shut_down(void)
                 free(msg.param);
             }
         }
-        vQueueDelete(s_bt_app_task_queue);
-        s_bt_app_task_queue = NULL;
+        vQueueDelete(bt_app_task_queue);
+        bt_app_task_queue = NULL;
     }
 }
 

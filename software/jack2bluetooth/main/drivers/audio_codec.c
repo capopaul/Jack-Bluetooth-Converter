@@ -17,6 +17,15 @@
 // Provide functions for task management and delays
 #include "freertos/task.h"
 
+#define REG7_DAC_MASK 0b00011110
+#define REG7_FS_MASK 0x80
+
+static uint8_t reg7_value = 0x00;
+
+/********************************
+ * EXTERNAL FUNCTION DECLARATIONS
+ *******************************/
+
 void audio_codec_reset(void)
 {
     io_expander_clear(IO_EXPANDER_CODEC_RESET_L_MASK);
@@ -75,22 +84,47 @@ void audio_codec_configure_pll(void)
     is_expected(CODEC_TAG, 102, i2c_get(CODEC_ADDR, 102), 0b00100010);
 }
 
-void audio_codec_configure_i2s_settings(void)
+void audio_codec_configure_i2s_settings(codec_fs_t fs)
 {
     // Register 2 - default is good
     // Register 8 - default is good
     // Register 9 - default is good
     // Register 10 - default is good
 
+    switch (fs)
+    {
+    case FS_44_1HZ:
+
+        // Register 7 - Codec Data-Path Setup Register
+        // D7   - 1  - Set fs=44.1kHz
+        reg7_value = reg7_value | REG7_FS_MASK;
+
+        i2c_set(CODEC_ADDR, 7, reg7_value);
+        is_expected(CODEC_TAG, 7, i2c_get(CODEC_ADDR, 7), reg7_value);
+        break;
+
+    default:
+        ESP_LOGE(CODEC_TAG, "Unsupported fs");
+        break;
+    }
+}
+
+void audio_codec_connect_input_to_dac()
+{
+
     // Register 7 - Codec Data-Path Setup Register
-    // D7   - 1  - Set fs=44.1kHz
-    // D6-5 - 00
-    // D4-3 - 00
-    // D2-1 - 00
-    // D0   - 0
-    // 1000 0000
-    i2c_set(CODEC_ADDR, 7, 0b10000000);
-    is_expected(CODEC_TAG, 7, i2c_get(CODEC_ADDR, 7), 0b10000000);
+    // D4-3 - 01 - Left DAC plays left input data
+    // D2-1 - 01 - Right DAC plays right input data
+    reg7_value = (reg7_value & ~REG7_DAC_MASK) | 0b00001010;
+    i2c_set(CODEC_ADDR, 7, reg7_value);
+    is_expected(CODEC_TAG, 7, i2c_get(CODEC_ADDR, 7), reg7_value);
+
+    // Register 41 - DAC Output Switching Control Register
+    // D7-6 - 10 - Left DAC output selects DAC-L2 path to left high power output drivers
+    // D5-4 - 10 - Right DAC output selects DAC-R2 path to right high power output drivers
+    // D3-0 - 0000
+    i2c_set(CODEC_ADDR, 41, 0b10100000);
+    is_expected(CODEC_TAG, 41, i2c_get(CODEC_ADDR, 41), 0b10100000);
 }
 
 void audio_codec_connect_line2_to_adc()
@@ -108,6 +142,25 @@ void audio_codec_connect_line2_to_adc()
     // 1111 0000
     i2c_set(CODEC_ADDR, 18, 0b11110000);
     is_expected(CODEC_TAG, 18, i2c_get(CODEC_ADDR, 18), 0b11110000);
+}
+
+void audio_codec_configure_sink_topology()
+{
+    // Register 14 - Headset/Button Press Detection Register B
+    // D7   - 1 - Programs HPout for AC-coupled
+    // D6-0 -   - ignore
+    i2c_set(CODEC_ADDR, 14, 0b10000000);
+
+    // Register 40 - default is good
+    // Register 42 - default is good
+
+    // Register 38 - Headset/Button Press Detection Register B
+    // D7-6 - 00   - reserved
+    // D5-3 - 010  - HPRCOM is configured as independent single-ended output
+    // D2-1 - 00   - ignored
+    // D0   - 0    - reserved
+    i2c_set(CODEC_ADDR, 38, 0b00010000);
+    is_expected(CODEC_TAG, 38, i2c_get(CODEC_ADDR, 38), 0b00010000);
 }
 
 void audio_codec_power_up_adc(void)
@@ -131,6 +184,36 @@ void audio_codec_power_up_adc(void)
     is_expected(CODEC_TAG, 22, i2c_get(CODEC_ADDR, 22), 0b01111100);
 }
 
+void audio_codec_power_up_dac(void)
+{
+    // Register 37 - DAC Power and Output Driver Control Register
+    // D7   - 1 - Left DAC is powered up
+    // D6   - 1 - Right DAC is powered up
+    // D5-0 - 0
+    // Write 1100 0000
+    i2c_set(CODEC_ADDR, 37, 0b11000000);
+    is_expected(CODEC_TAG, 37, i2c_get(CODEC_ADDR, 37), 0b11000000);
+}
+
+void audio_codec_power_up_headphone(void)
+{
+    // Register 51 - HPLout output level control register
+    // D7-4 - 0000
+    // D3   - 0 - mute
+    // D2   - 1
+    // D1   - 1
+    // D0   - 1 - Power up
+    i2c_set(CODEC_ADDR, 51, 0b00000111);
+
+    // Register 65 - HPRout output level control register
+    // D7-4 - 0000
+    // D3   - 0 - mute
+    // D2   - 1
+    // D1   - 1
+    // D0   - 1 - Power up
+    i2c_set(CODEC_ADDR, 65, 0b00000111);
+}
+
 void audio_codec_unmute_adc()
 {
     // Register 15 - Left-ADC PGA Gain Control Register
@@ -144,6 +227,40 @@ void audio_codec_unmute_adc()
     // D6-0 - 0
     i2c_set(CODEC_ADDR, 16, 0b00000000);
     is_expected(CODEC_TAG, 16, i2c_get(CODEC_ADDR, 16), 0b00000000);
+}
+
+void audio_codec_unmute_dac(void)
+{
+    // Register 43 - Left-DAC Digital Volume Control Register
+    // D7   - 0 - Unmute left-DAC channel
+    // D6-0 - 0
+    i2c_set(CODEC_ADDR, 43, 0b00000000);
+    is_expected(CODEC_TAG, 43, i2c_get(CODEC_ADDR, 43), 0b00000000);
+
+    // Register 44 - Right-DAC Digital Volume Control Register
+    // D7   - 0 - Unmute right-DAC channel
+    // D6-0 - 0
+    i2c_set(CODEC_ADDR, 44, 0b00000000);
+    is_expected(CODEC_TAG, 44, i2c_get(CODEC_ADDR, 44), 0b00000000);
+}
+
+void audio_codec_unmute_headphone()
+{
+    // Register 51 - HPLout output level control register
+    // D7-4 - 0000
+    // D3   - 1 - Unmute
+    // D2   - 1
+    // D1   - 1
+    // D0   - 1 - Power up
+    i2c_set(CODEC_ADDR, 51, 0b00001111);
+
+    // Register 65 - HPRout output level control register
+    // D7-4 - 0000
+    // D3   - 1 - Unmute
+    // D2   - 1
+    // D1   - 1
+    // D0   - 1 - Power up
+    i2c_set(CODEC_ADDR, 65, 0b00001111);
 }
 
 void audio_codec_check_power_ready(void)

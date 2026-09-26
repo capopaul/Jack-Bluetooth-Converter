@@ -25,6 +25,7 @@
 #include "bt_app_core.h"
 #include "decode_task.h"
 #include "bt_app_a2dp_source.h"
+#include "freertos/semphr.h"
 
 /* log tags */
 #define BT_A2DP "BT_A2DP_SOURCE"
@@ -39,6 +40,36 @@ enum
     BT_APP_STACK_UP_EVT = 0x0000,   /* event for stack up */
     BT_APP_HEART_BEAT_EVT = 0xff00, /* event for heart beat */
 };
+
+// Shutdown requested
+//     |
+//     | Delete heartbeat timer
+//     | Request disconnection
+//     v
+// WAIT_LINK
+//     |
+//     | Receive DISCONNECTED
+//     | Request AVRCP deinitialization
+//     v
+// WAIT_AVRCP
+//     |
+//     | Receive AVRCP DEINIT_SUCCESS
+//     | Request A2DP deinitialization
+//     v
+// WAIT_A2DP
+//     |
+//     | Receive A2DP DEINIT_SUCCESS
+//     | Signal the waiting direction-change task
+//     v
+// DONE
+typedef enum
+{
+    SOURCE_STOP_NONE,
+    SOURCE_STOP_WAIT_LINK,
+    SOURCE_STOP_WAIT_AVRCP,
+    SOURCE_STOP_WAIT_A2DP,
+    SOURCE_STOP_DONE,
+} source_stop_state_t;
 
 /*********************************
  * STATIC FUNCTION DECLARATIONS
@@ -82,6 +113,8 @@ static esp_avrc_rn_evt_cap_mask_t s_avrc_peer_rn_cap;       /* AVRC target notif
 static TimerHandle_t s_tmr;                                 /* handle of heart beat timer */
 static esp_a2d_conn_hdl_t s_a2d_conn_hndl = 0;
 static uint16_t s_a2d_audio_mtu;
+static source_stop_state_t s_stop_state = SOURCE_STOP_NONE;
+static SemaphoreHandle_t s_source_stopped = NULL;
 
 /*********************************
  * STATIC FUNCTION DEFINITIONS
@@ -168,6 +201,8 @@ static void register_a2dp_source_callback_function(uint16_t event, void *p_param
 {
     // both parameters : event and p_param are ignored.
 
+    s_stop_state = SOURCE_STOP_NONE;
+
     esp_err_t err = esp_avrc_ct_init();
     if (err != ESP_OK)
     {
@@ -246,6 +281,33 @@ static void bt_app_a2d_heart_beat(TimerHandle_t arg)
 static void bt_app_av_sm_hdlr(uint16_t event, void *param)
 {
     ESP_LOGI(BT_A2DP, "%s state: %d, event: 0x%x", __func__, s_a2d_state, event);
+
+    /* Inside bt_app_av_sm_hdlr(), before the existing switch. */
+
+    if (s_stop_state != SOURCE_STOP_NONE)
+    {
+        esp_a2d_cb_param_t *a2d = param;
+
+        if (s_stop_state == SOURCE_STOP_WAIT_LINK &&
+            event == ESP_A2D_CONNECTION_STATE_EVT &&
+            a2d->conn_stat.state == ESP_A2D_CONNECTION_STATE_DISCONNECTED)
+        {
+            s_stop_state = SOURCE_STOP_WAIT_AVRCP;
+            ESP_ERROR_CHECK(esp_avrc_ct_deinit());
+        }
+        else if (s_stop_state == SOURCE_STOP_WAIT_A2DP &&
+                 event == ESP_A2D_PROF_STATE_EVT &&
+                 a2d->a2d_prof_stat.init_state == ESP_A2D_DEINIT_SUCCESS)
+        {
+            s_stop_state = SOURCE_STOP_DONE;
+
+            BaseType_t result = xSemaphoreGive(s_source_stopped);
+            configASSERT(result == pdTRUE);
+        }
+
+        // if shutdown is on the way, do not process incoming event
+        return;
+    }
 
     /* select handler according to different states */
     switch (s_a2d_state)
@@ -726,6 +788,13 @@ static void bt_av_hdl_avrc_ct_evt(uint16_t event, void *p_param)
     ESP_LOGD(BT_RC_CT_TAG, "%s evt %d", __func__, event);
     esp_avrc_ct_cb_param_t *rc = (esp_avrc_ct_cb_param_t *)(p_param);
 
+    if (s_stop_state != SOURCE_STOP_NONE &&
+        event != ESP_AVRC_CT_PROF_STATE_EVT)
+    {
+        // if shutdown is on the way, do not process new event
+        return;
+    }
+
     switch (event)
     {
     /* when connection state changed, this event comes */
@@ -791,6 +860,11 @@ static void bt_av_hdl_avrc_ct_evt(uint16_t event, void *p_param)
         else if (ESP_AVRC_DEINIT_SUCCESS == rc->avrc_ct_init_stat.state)
         {
             ESP_LOGI(BT_RC_CT_TAG, "AVRCP CT STATE: Deinit Complete");
+            if (s_stop_state == SOURCE_STOP_WAIT_AVRCP)
+            {
+                s_stop_state = SOURCE_STOP_WAIT_A2DP;
+                ESP_ERROR_CHECK(esp_a2d_source_deinit());
+            }
         }
         else
         {
@@ -807,12 +881,49 @@ static void bt_av_hdl_avrc_ct_evt(uint16_t event, void *p_param)
     }
 }
 
+static void delete_heartbeat_timer(void)
+{
+    if (s_tmr != NULL)
+    {
+        BaseType_t result = xTimerDelete(s_tmr, 0);
+        configASSERT(result == pdPASS);
+
+        s_tmr = NULL;
+    }
+}
+
+/* Connected-case shutdown handler. */
+static void request_source_shutdown(uint16_t event, void *param)
+{
+    configASSERT(s_stop_state == SOURCE_STOP_NONE);
+
+    s_stop_state = SOURCE_STOP_WAIT_LINK;
+    delete_heartbeat_timer();
+
+    ESP_ERROR_CHECK(esp_a2d_source_disconnect(s_peer_bda));
+
+    // esp_a2d_source_disconnect()
+    //     ↓ requests disconnection
+    // Bluetooth stack reports a connection-state event
+    //     ↓
+    // bt_app_a2d_cb()
+    //     ↓ queues the event
+    // bt_app_av_sm_hdlr()
+    //     ↓ selects a handler based on s_a2d_state
+}
+
 /********************************
  * EXTERNAL FUNCTION DECLARATIONS
  *******************************/
 
 esp_err_t bt_app_a2dp_source_start(void)
 {
+    if (s_source_stopped == NULL)
+    {
+        s_source_stopped = xSemaphoreCreateBinary();
+        configASSERT(s_source_stopped != NULL);
+    }
+
     if (!bt_app_work_dispatch(register_a2dp_source_callback_function, 0, NULL, 0, NULL, NULL))
     {
         ESP_LOGE(BT_A2DP, "failed to dispatch Bluetooth stack initialization");
@@ -827,6 +938,25 @@ void bt_app_a2dp_source_connect(const uint8_t *address)
 {
     memcpy(s_peer_bda, address, sizeof(s_peer_bda));
     esp_a2d_source_connect(s_peer_bda);
+}
+
+void bt_app_a2dp_source_disconnect(void)
+{
+    configASSERT(s_source_stopped != NULL);
+
+    bool queued = bt_app_work_dispatch(
+        request_source_shutdown,
+        0,
+        NULL,
+        0,
+        NULL,
+        NULL);
+
+    configASSERT(queued);
+
+    // Wait for completion
+    BaseType_t stopped = xSemaphoreTake(s_source_stopped, pdMS_TO_TICKS(5000));
+    configASSERT(stopped == pdTRUE);
 }
 
 bt_app_a2dp_state_t bt_app_a2dp_source_get_state()

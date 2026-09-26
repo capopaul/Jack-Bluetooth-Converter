@@ -37,6 +37,8 @@ esp_err_t bt_app_a2dp_source_start(void);
 
 void bt_app_a2dp_source_connect(const uint8_t *address);
 
+void bt_app_a2dp_source_disconnect(void);
+
 bt_app_a2dp_state_t bt_app_a2dp_source_get_state();
 
 void bt_app_a2dp_source_set_state(bt_app_a2dp_state_t new_state);

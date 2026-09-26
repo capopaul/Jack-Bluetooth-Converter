@@ -76,7 +76,8 @@ static void interrupt_task(void *arg)
             // These are sampled levels, not a history of every edge.
             if (interrupt_flags & IO_EXPANDER_BUTTON_DIRECTION_MASK)
             {
-                on_direction_changed((current_state & IO_EXPANDER_BUTTON_DIRECTION_MASK) != 0);
+                direction_state new_state = (current_state & IO_EXPANDER_BUTTON_DIRECTION_MASK) != 0 ? B2J : J2B;
+                on_direction_changed(new_state);
             }
 
             uint8_t rising_edges = (uint8_t)~previous_state & interrupt_flags;
@@ -209,7 +210,7 @@ int io_expander_read(uint8_t mask)
 
 bool is_direction_j2b()
 {
-    return io_expander_read(IO_EXPANDER_BUTTON_DIRECTION_MASK) == 0;
+    return io_expander_read(IO_EXPANDER_BUTTON_DIRECTION_MASK) == 1;
 }
 
 bool is_direction_b2j()

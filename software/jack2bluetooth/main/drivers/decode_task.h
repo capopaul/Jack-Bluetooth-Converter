@@ -57,10 +57,13 @@ extern "C"
      */
     esp_err_t encode_task_launch(void);
 
+    void encode_task_launch_enable(void);
+    void encode_task_launch_disable(void);
+
     /**
      * @brief Stop the AAC stream task and release encoder resources.
      */
-    void encode_task_stop(void);
+    esp_err_t encode_task_stop(void);
 
     /**
      * @brief Query whether the AAC stream task is active.

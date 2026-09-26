@@ -29,9 +29,8 @@
 // Include IO expander
 #include "./drivers/io_expander.h"
 
-/*******************************
- * STATIC FUNCTION DEFINITIONS
- ******************************/
+// Include decode_task
+#include "decode_task.h"
 
 /*******************************
  * Main function
@@ -66,13 +65,15 @@ void app_main(void)
     //     Bluetooth     //
     ///////////////////////
 
+    encode_task_init();
+
     bt_app_init();
 
     ESP_ERROR_CHECK(bt_app_gap_start());
 
     // check switch status.
     // during this phase, switch must not change state
-    if (is_direction_b2j())
+    if (is_direction_j2b())
     {
         printf("=====================\n");
         printf("Jack -----> Bluetooth\n");

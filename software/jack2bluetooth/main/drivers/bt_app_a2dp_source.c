@@ -89,10 +89,13 @@ static uint16_t s_a2d_audio_mtu;
 
 static void bt_app_encode_stream_stop(void)
 {
-    if (encode_task_is_running())
+    esp_err_t err = encode_task_stop();
+
+    if (err != ESP_OK)
     {
-        ESP_LOGI(BT_A2DP, "stopping encode stream task");
-        encode_task_stop();
+        ESP_LOGE(BT_A2DP, "AAC shutdown failed: %s",
+                 esp_err_to_name(err));
+        // Do not proceed with deleting resources AAC could still use.
     }
 }
 

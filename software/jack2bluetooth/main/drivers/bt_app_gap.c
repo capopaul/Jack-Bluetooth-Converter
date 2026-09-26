@@ -16,6 +16,10 @@ static const char remote_device_name[] = "Bose-Paul-2";
 static esp_bd_addr_t discovered_address = {0};               /* Bluetooth Device Address of peer device*/
 static uint8_t s_peer_bdname[ESP_BT_GAP_MAX_BDNAME_LEN + 1]; /* Bluetooth Device Name of peer device*/
 
+/********************************
+ * STATIC FUNCTION DECLARATIONS
+ *******************************/
+
 /* utils for transfer BLuetooth Deveice Address into string form */
 static char *bda2str(esp_bd_addr_t bda, char *str, size_t size)
 {
@@ -122,7 +126,8 @@ static void filter_inquiry_scan_result(esp_bt_gap_cb_param_t *param)
     }
 }
 
-static void bt_app_gap_cb(esp_bt_gap_cb_event_t event, esp_bt_gap_cb_param_t *param)
+// this function is executed by the task: "BTC_TASK"
+static void gap_cb(esp_bt_gap_cb_event_t event, esp_bt_gap_cb_param_t *param)
 {
     switch (event)
     {
@@ -261,16 +266,14 @@ static void bt_app_gap_cb(esp_bt_gap_cb_event_t event, esp_bt_gap_cb_param_t *pa
     }
     default:
     {
-        ESP_LOGI(GAP_TAG, "event: %d", event);
+        ESP_LOGW(GAP_TAG, "event: %d not handled", event);
         break;
     }
     }
     return;
 }
 
-/* GAP callback function */
-static void bt_app_gap_cb(esp_bt_gap_cb_event_t event, esp_bt_gap_cb_param_t *param);
-
+// this function is executed by the task: "bt_app"
 static void register_gap_callback_function(uint16_t event, void *p_param)
 {
     // both parameters : event and p_param are ignored.
@@ -283,7 +286,7 @@ static void register_gap_callback_function(uint16_t event, void *p_param)
     }
 
     // Register the GAP (Generic Access Profile) callback function (handles authentication, encryption, etc.)
-    err = esp_bt_gap_register_callback(bt_app_gap_cb);
+    err = esp_bt_gap_register_callback(gap_cb);
     if (err != ESP_OK)
     {
         ESP_LOGE(GAP_TAG, "esp_bt_gap_register_callback failed with code %x", err);
@@ -294,14 +297,13 @@ static void register_gap_callback_function(uint16_t event, void *p_param)
  * EXTERNAL FUNCTION DECLARATIONS
  *******************************/
 
-esp_err_t bt_app_gap_start(void)
+void bt_app_gap_start(void)
 {
-    if (!bt_app_work_dispatch(register_gap_callback_function, 0, NULL, 0, NULL, NULL))
+    if (!bt_app_work_dispatch(register_gap_callback_function,
+                              0, NULL, 0, NULL, NULL))
     {
-        ESP_LOGE(GAP_TAG, "failed to dispatch Bluetooth stack initialization");
+        ESP_LOGE(GAP_TAG, "Failed to dispatch GAP callback registration");
         bt_app_task_shut_down();
-        return ESP_FAIL;
+        abort();
     }
-
-    return ESP_OK;
 }

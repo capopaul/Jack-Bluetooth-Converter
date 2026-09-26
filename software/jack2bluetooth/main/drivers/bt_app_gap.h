@@ -1,3 +1,5 @@
 #pragma once
 
-esp_err_t bt_app_gap_start(void);
+// Generic Access Profile
+
+void bt_app_gap_start(void);

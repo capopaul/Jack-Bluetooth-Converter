@@ -249,17 +249,16 @@ static void i2s_rx_task_shut_down(void)
 {
     if (s_bt_i2s_rx_task_handle == NULL)
     {
-        return true;
+        return;
     }
 
     atomic_store(&rx_stop_requested, true);
 
-    if (xSemaphoreTake(rx_stop_acknowledge, pdMS_TO_TICKS(3000)) != pdTRUE)
-    {
-        // Task may still be using its resources. Leave them intact.
-        ESP_LOGE("I2S", "RX shutdown timed out");
-        return;
-    }
+    BaseType_t stopped = xSemaphoreTake(
+        rx_stop_acknowledge,
+        pdMS_TO_TICKS(3000));
+
+    configASSERT(stopped == pdTRUE);
 
     s_bt_i2s_rx_task_handle = NULL;
 
@@ -328,10 +327,17 @@ static void i2s_init_tx()
 
 static void i2s_deinit_rx()
 {
+    // Shutdown task
+    i2s_rx_task_shut_down();
+
+    // Disable channel
+    if (rx_chan == NULL)
+    {
+        return;
+    }
     ESP_ERROR_CHECK(i2s_channel_disable(rx_chan));
     ESP_ERROR_CHECK(i2s_del_channel(rx_chan));
     rx_chan = NULL;
-    i2s_rx_task_shut_down();
 }
 
 static void i2s_deinit_tx()

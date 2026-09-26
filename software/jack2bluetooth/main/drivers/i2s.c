@@ -11,6 +11,7 @@
 #include "freertos/stream_buffer.h"
 #include "freertos/ringbuf.h"
 #include "freertos/semphr.h"
+#include <stdatomic.h>
 
 #define BUFF_SIZE 512
 #define I2S_PCM_CHUNK_BYTES (240 * 6)
@@ -50,13 +51,20 @@ static void write_pcm16_to_i2s(const uint8_t *data, size_t size, pcm_conversion_
  * STATIC VARIABLE DEFINITIONS
  ******************************/
 
+static TaskHandle_t s_bt_i2s_rx_task_handle = NULL;
+static TaskHandle_t s_bt_i2s_tx_task_handle = NULL;
+
+static atomic_bool rx_stop_requested = false;
+static SemaphoreHandle_t rx_stop_acknowledge = NULL;
+
+static SemaphoreHandle_t s_i2s_write_semaphore = NULL;
+static SemaphoreHandle_t tx_mutex;
+
 // Stream for rx task
 static StreamBufferHandle_t pcm_stream;
 
-static TaskHandle_t s_bt_i2s_task_handle = NULL; /* handle of I2S task */
-static RingbufHandle_t s_ringbuf_i2s = NULL;     /* handle of ringbuffer for I2S */
-static SemaphoreHandle_t s_i2s_write_semaphore = NULL;
-static SemaphoreHandle_t tx_mutex;
+// Ring buffer for tx task
+static RingbufHandle_t s_ringbuf_i2s = NULL; /* handle of ringbuffer for I2S */
 static uint16_t ringbuffer_mode = RINGBUFFER_MODE_PROCESSING;
 
 static is2_mode_t mode;
@@ -107,14 +115,10 @@ static void task__i2s_rx(void *arg)
     int16_t *pcm = malloc(BUFF_SIZE * sizeof(*pcm));
     if (samples == NULL || pcm == NULL)
     {
-        ESP_LOGE("I2S", "Failed to allocate capture buffers");
-        free(samples);
-        free(pcm);
-        vTaskDelete(NULL);
-        return;
+        goto cleanup;
     }
 
-    while (1)
+    while (!atomic_load(&rx_stop_requested))
     {
         size_t bytes_read = 0;
         esp_err_t err = i2s_channel_read(
@@ -153,6 +157,12 @@ static void task__i2s_rx(void *arg)
         }
     }
 
+cleanup:
+    free(samples);
+    free(pcm);
+
+    // After this signal, never access I2S or pcm_stream again.
+    xSemaphoreGive(rx_stop_acknowledge);
     vTaskDelete(NULL);
 }
 
@@ -202,9 +212,16 @@ static void task__i2s_tx(void *arg)
 static void i2s_rx_task_start_up(void)
 { // Pulse-Code Modulate (PCM) stream buffer
     pcm_stream = xStreamBufferCreate(8192, 1);
-    configASSERT(pcm_stream != NULL);
+    rx_stop_acknowledge = xSemaphoreCreateBinary();
 
-    xTaskCreate(task__i2s_rx, "i2s_rx_task", 4096, NULL, 5, NULL);
+    // check memory allocation worked
+    configASSERT(pcm_stream != NULL);
+    configASSERT(rx_stop_acknowledge != NULL);
+
+    atomic_store(&rx_stop_requested, false);
+
+    BaseType_t result = xTaskCreate(task__i2s_rx, "i2s_rx_task", 4096, NULL, 5, &s_bt_i2s_rx_task_handle);
+    configASSERT(result == pdPASS);
 }
 
 // Create the data ring and the task to empty it
@@ -225,20 +242,41 @@ static void i2s_tx_task_start_up(void)
     tx_mutex = xSemaphoreCreateMutex();
     configASSERT(tx_mutex != NULL);
     // This task handles the new data added to the ring.
-    xTaskCreate(task__i2s_tx, "i2s_tx_task", 8192, NULL, configMAX_PRIORITIES - 3, &s_bt_i2s_task_handle);
+    xTaskCreate(task__i2s_tx, "i2s_tx_task", 8192, NULL, configMAX_PRIORITIES - 3, &s_bt_i2s_tx_task_handle);
 }
 
 static void i2s_rx_task_shut_down(void)
 {
-    // TBD end the rx task and the stream
+    if (s_bt_i2s_rx_task_handle == NULL)
+    {
+        return true;
+    }
+
+    atomic_store(&rx_stop_requested, true);
+
+    if (xSemaphoreTake(rx_stop_acknowledge, pdMS_TO_TICKS(3000)) != pdTRUE)
+    {
+        // Task may still be using its resources. Leave them intact.
+        ESP_LOGE("I2S", "RX shutdown timed out");
+        return;
+    }
+
+    s_bt_i2s_rx_task_handle = NULL;
+
+    vSemaphoreDelete(rx_stop_acknowledge);
+    rx_stop_acknowledge = NULL;
+
+    // Safe only once the AAC consumer has also stopped.
+    vStreamBufferDelete(pcm_stream);
+    pcm_stream = NULL;
 }
 
 static void i2s_tx_task_shut_down(void)
 {
-    if (s_bt_i2s_task_handle)
+    if (s_bt_i2s_tx_task_handle)
     {
-        vTaskDelete(s_bt_i2s_task_handle);
-        s_bt_i2s_task_handle = NULL;
+        vTaskDelete(s_bt_i2s_tx_task_handle);
+        s_bt_i2s_tx_task_handle = NULL;
     }
     if (s_ringbuf_i2s)
     {
@@ -428,7 +466,8 @@ static size_t write_ringbuf_locked(const uint8_t *data, size_t size)
 
 size_t audio_i2s_write_ringbuf(const uint8_t *data, size_t size)
 {
-    if (!tx_mutex || !s_ringbuf_i2s || !data || size == 0) return 0;
+    if (!tx_mutex || !s_ringbuf_i2s || !data || size == 0)
+        return 0;
     xSemaphoreTake(tx_mutex, portMAX_DELAY);
     size_t written = write_ringbuf_locked(data, size);
     xSemaphoreGive(tx_mutex);
@@ -437,7 +476,8 @@ size_t audio_i2s_write_ringbuf(const uint8_t *data, size_t size)
 
 void audio_i2s_flush_tx(void)
 {
-    if (!tx_mutex) return;
+    if (!tx_mutex)
+        return;
     xSemaphoreTake(tx_mutex, portMAX_DELAY);
     size_t size;
     void *data;

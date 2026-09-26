@@ -1,0 +1,686 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/28.0.6 Chrome/138.0.7204.100 Electron/37.2.3 Safari/537.36" version="28.0.6" pages="3">
+  <diagram id="1" name="1 | Task creation and resource ownership">
+    <mxGraphModel dx="4615" dy="1495" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1860" pageHeight="2400" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="2" value="1 | Task creation and resource ownership&#xa;Mode selection precedes I2S initialization. J2B is left; shared startup is center; B2J is right." style="rounded=1;whiteSpace=wrap;html=0;fontSize=15;spacing=10;fillColor=#e8effa;strokeColor=#6484ac;" parent="1" vertex="1">
+          <mxGeometry x="30" y="20" width="1790" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="3" value="J2B  |  Jack → Bluetooth" style="rounded=1;whiteSpace=wrap;html=0;fontSize=15;spacing=10;fillColor=#e8effa;strokeColor=#6484ac;verticalAlign=top;fontStyle=1;fillColor=#fafbfe;" parent="1" vertex="1">
+          <mxGeometry x="30" y="880" width="550" height="760" as="geometry" />
+        </mxCell>
+        <mxCell id="4" value="MAIN  |  Shared startup and tasks" style="rounded=1;whiteSpace=wrap;html=0;fontSize=15;spacing=10;fillColor=#e8effa;strokeColor=#6484ac;verticalAlign=top;fontStyle=1;fillColor=#fafbfe;" parent="1" vertex="1">
+          <mxGeometry x="650" y="135" width="550" height="995" as="geometry" />
+        </mxCell>
+        <mxCell id="5" value="B2J  |  Bluetooth → Jack" style="rounded=1;whiteSpace=wrap;html=0;fontSize=15;spacing=10;fillColor=#e8effa;strokeColor=#6484ac;verticalAlign=top;fontStyle=1;fillColor=#fafbfe;" parent="1" vertex="1">
+          <mxGeometry x="1270" y="880" width="550" height="590" as="geometry" />
+        </mxCell>
+        <mxCell id="6" value="app_main()&#xa;SDK main task: initialization then returns" style="rounded=1;whiteSpace=wrap;html=0;fontSize=15;spacing=10;fillColor=#e8effa;strokeColor=#6484ac;" parent="1" vertex="1">
+          <mxGeometry x="675" y="200" width="500" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="7" value="P 1" style="rounded=1;whiteSpace=wrap;html=0;fontSize=15;spacing=10;fillColor=#eee7f5;strokeColor=#9673a6;spacing=2;" parent="1" vertex="1">
+          <mxGeometry x="1075" y="205" width="90" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="8" value="i2c_init()&#xa;IO expander reset + io_expander_init()&#xa;create_interrupt_task()" style="rounded=1;whiteSpace=wrap;html=0;fontSize=15;spacing=10;fillColor=#e8effa;strokeColor=#6484ac;" parent="1" vertex="1">
+          <mxGeometry x="675" y="345" width="500" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="9" value="Audio codec reset&#xa;audio_codec_configure_pll()" style="rounded=1;whiteSpace=wrap;html=0;fontSize=15;spacing=10;fillColor=#e8effa;strokeColor=#6484ac;" parent="1" vertex="1">
+          <mxGeometry x="675" y="505" width="500" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="10" value="bt_app_init()&#xa;Controller + Bluedroid initialization&#xa;Create event queue and BtAppTask" style="rounded=1;whiteSpace=wrap;html=0;fontSize=15;spacing=10;fillColor=#e8effa;strokeColor=#6484ac;" parent="1" vertex="1">
+          <mxGeometry x="675" y="650" width="500" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="11" value="bt_app_gap_start()&#xa;Queue GAP registration / setup" style="rounded=1;whiteSpace=wrap;html=0;fontSize=15;spacing=10;fillColor=#e8effa;strokeColor=#6484ac;" parent="1" vertex="1">
+          <mxGeometry x="675" y="800" width="500" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="12" value="Select mode&#xa;is_direction_j2b()?" style="rounded=1;whiteSpace=wrap;html=0;fontSize=15;spacing=10;fillColor=#fff2cc;strokeColor=#c9a33b;shape=rhombus;" parent="1" vertex="1">
+          <mxGeometry x="745" y="950" width="360" height="135" as="geometry" />
+        </mxCell>
+        <mxCell id="13" value="" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;labelBackgroundColor=#ffffff;fontSize=13;" parent="1" source="6" target="8" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="14" value="" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;labelBackgroundColor=#ffffff;fontSize=13;" parent="1" source="8" target="9" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="15" value="" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;labelBackgroundColor=#ffffff;fontSize=13;" parent="1" source="9" target="10" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="16" value="" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;labelBackgroundColor=#ffffff;fontSize=13;" parent="1" source="10" target="11" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="17" value="" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;labelBackgroundColor=#ffffff;fontSize=13;" parent="1" source="11" target="12" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="18" value="J2B selected&#xa;i2s_driver_install(I2S_MODE_RX)&#xa;Create RX channel + pcm_stream (8192 B)" style="rounded=1;whiteSpace=wrap;html=0;fontSize=15;spacing=10;fillColor=#d5e8d4;strokeColor=#619766;" parent="1" vertex="1">
+          <mxGeometry x="55" y="955" width="500" height="125" as="geometry" />
+        </mxCell>
+        <mxCell id="6rSli4vtfrA97XrJgapH-74" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="19" target="31" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="19" value="B2J selected&#xa;i2s_driver_install(I2S_MODE_TX)&#xa;Create TX channel, 64 KiB ring buffer,&#xa;binary semaphore and tx_mutex" style="rounded=1;whiteSpace=wrap;html=0;fontSize=15;spacing=10;fillColor=#d5e8d4;strokeColor=#619766;" parent="1" vertex="1">
+          <mxGeometry x="1295" y="955" width="500" height="125" as="geometry" />
+        </mxCell>
+        <mxCell id="20" value="true → J2B" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;labelBackgroundColor=#ffffff;fontSize=13;" parent="1" source="12" target="18" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="21" value="false → B2J" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;labelBackgroundColor=#ffffff;fontSize=13;" parent="1" source="12" target="19" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="28" value="creates" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;labelBackgroundColor=#ffffff;fontSize=13;dashed=1;strokeColor=#4477bb;" parent="1" source="18" target="22" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="29" value="creates" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;labelBackgroundColor=#ffffff;fontSize=13;dashed=1;strokeColor=#4477bb;" parent="1" source="19" target="25" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="30" value="Continue J2B initialization in app_main&#xa;Codec I2S settings: 44.1 kHz&#xa;LINE2 → ADC; power up and unmute ADC" style="rounded=1;whiteSpace=wrap;html=0;fontSize=15;spacing=10;fillColor=#e8effa;strokeColor=#6484ac;" parent="1" vertex="1">
+          <mxGeometry x="55" y="1130" width="500" height="115" as="geometry" />
+        </mxCell>
+        <mxCell id="31" value="Continue B2J initialization in app_main&#xa;Codec I2S settings: 44.1 kHz; DAC routing&#xa;Power / unmute DAC + headphones; check status" style="rounded=1;whiteSpace=wrap;html=0;fontSize=15;spacing=10;fillColor=#e8effa;strokeColor=#6484ac;" parent="1" vertex="1">
+          <mxGeometry x="1295" y="1140" width="500" height="115" as="geometry" />
+        </mxCell>
+        <mxCell id="32" value="" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;labelBackgroundColor=#ffffff;fontSize=13;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="18" target="30" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="34" value="bt_app_a2dp_source_start()&#xa;Queue source setup to existing BtAppTask&#xa;Returns; no AAC task created yet" style="rounded=1;whiteSpace=wrap;html=0;fontSize=15;spacing=10;fillColor=#e8effa;strokeColor=#6484ac;" parent="1" vertex="1">
+          <mxGeometry x="55" y="1300" width="500" height="115" as="geometry" />
+        </mxCell>
+        <mxCell id="35" value="bt_app_a2dp_sink_start()&#xa;sbc_sink_init() → decoder + mutex + 24-packet queue&#xa;Create decoder task; queue sink setup to BtAppTask" style="rounded=1;whiteSpace=wrap;html=0;fontSize=15;spacing=10;fillColor=#e8effa;strokeColor=#6484ac;" parent="1" vertex="1">
+          <mxGeometry x="1295" y="1310" width="500" height="125" as="geometry" />
+        </mxCell>
+        <mxCell id="36" value="" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;labelBackgroundColor=#ffffff;fontSize=13;" parent="1" source="30" target="34" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="37" value="" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;labelBackgroundColor=#ffffff;fontSize=13;" parent="1" source="31" target="35" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="38" value="Later, in BtAppTask:&#xa;Source setup creates / starts connTmr&#xa;Connection + media START ACK + AAC config&#xa;→ encode_task_launch()" style="rounded=1;whiteSpace=wrap;html=0;fontSize=15;spacing=10;fillColor=#e8effa;strokeColor=#6484ac;" parent="1" vertex="1">
+          <mxGeometry x="55" y="1470" width="500" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="39" value="queued setup / later events" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;labelBackgroundColor=#ffffff;fontSize=13;" parent="1" source="34" target="38" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="46" value="creates conditionally" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;labelBackgroundColor=#ffffff;fontSize=13;dashed=1;strokeColor=#4477bb;" parent="1" source="38" target="40" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="305" y="1725" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="47" value="creates" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;labelBackgroundColor=#ffffff;fontSize=13;dashed=1;strokeColor=#4477bb;" parent="1" source="35" target="43" edge="1">
+          <mxGeometry x="0.2" y="-7" relative="1" as="geometry">
+            <mxPoint y="1" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="61" value="creates" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;labelBackgroundColor=#ffffff;fontSize=13;dashed=1;strokeColor=#4477bb;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="8" target="49" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1250" y="400" />
+              <mxPoint x="1250" y="395" />
+              <mxPoint x="1270" y="395" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="62" value="creates" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;labelBackgroundColor=#ffffff;fontSize=13;dashed=1;strokeColor=#4477bb;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="10" target="52" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1250" y="705" />
+              <mxPoint x="1250" y="705" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="63" value="Bluedroid creates" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;labelBackgroundColor=#ffffff;fontSize=13;dashed=1;strokeColor=#4477bb;entryX=-0.002;entryY=0.647;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="10" target="55" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1230" y="705" />
+              <mxPoint x="1230" y="815" />
+              <mxPoint x="1840" y="815" />
+              <mxPoint x="1840" y="760" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="64" value="timer callback runs here" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;labelBackgroundColor=#ffffff;fontSize=13;dashed=1;strokeColor=#4477bb;" parent="1" source="38" target="58" edge="1">
+          <mxGeometry x="-0.037" y="25" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="6rSli4vtfrA97XrJgapH-66" value="" style="group" parent="1" vertex="1" connectable="0">
+          <mxGeometry x="1320" y="315" width="500" height="170" as="geometry" />
+        </mxCell>
+        <mxCell id="49" value="io_expander_irq" style="rounded=1;whiteSpace=wrap;html=0;fontSize=15;spacing=10;fillColor=#eee7f5;strokeColor=#9673a6;verticalAlign=top;align=left;fontStyle=1;" parent="6rSli4vtfrA97XrJgapH-66" vertex="1">
+          <mxGeometry width="500" height="170" as="geometry" />
+        </mxCell>
+        <mxCell id="50" value="P 1" style="rounded=1;whiteSpace=wrap;html=0;fontSize=15;spacing=10;fillColor=#eee7f5;strokeColor=#9673a6;spacing=2;fontStyle=1;" parent="6rSli4vtfrA97XrJgapH-66" vertex="1">
+          <mxGeometry x="400" y="8" width="88" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="51" value="3072 B stack&#xa;GPIO notification → read expander → button handlers" style="rounded=1;whiteSpace=wrap;html=0;fontSize=15;spacing=10;fillColor=#e8effa;strokeColor=#6484ac;" parent="6rSli4vtfrA97XrJgapH-66" vertex="1">
+          <mxGeometry x="10" y="50" width="480" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="6rSli4vtfrA97XrJgapH-67" value="" style="group" parent="1" vertex="1" connectable="0">
+          <mxGeometry x="1320" y="620" width="500" height="170" as="geometry" />
+        </mxCell>
+        <mxCell id="52" value="BtAppTask" style="rounded=1;whiteSpace=wrap;html=0;fontSize=15;spacing=10;fillColor=#eee7f5;strokeColor=#9673a6;verticalAlign=top;align=left;fontStyle=1;" parent="6rSli4vtfrA97XrJgapH-67" vertex="1">
+          <mxGeometry width="500" height="170" as="geometry" />
+        </mxCell>
+        <mxCell id="53" value="P 10" style="rounded=1;whiteSpace=wrap;html=0;fontSize=15;spacing=10;fillColor=#eee7f5;strokeColor=#9673a6;spacing=2;fontStyle=1;" parent="6rSli4vtfrA97XrJgapH-67" vertex="1">
+          <mxGeometry x="400" y="8" width="88" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="54" value="4096 B stack&#xa;10-message queue → msg.cb() → free message → wait" style="rounded=1;whiteSpace=wrap;html=0;fontSize=15;spacing=10;fillColor=#e8effa;strokeColor=#6484ac;" parent="6rSli4vtfrA97XrJgapH-67" vertex="1">
+          <mxGeometry x="10" y="50" width="480" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="6rSli4vtfrA97XrJgapH-68" value="" style="group" parent="1" vertex="1" connectable="0">
+          <mxGeometry x="1870" y="650" width="500" height="170" as="geometry" />
+        </mxCell>
+        <mxCell id="55" value="BTC_TASK [SDK]" style="rounded=1;whiteSpace=wrap;html=0;fontSize=15;spacing=10;fillColor=#eee7f5;strokeColor=#9673a6;verticalAlign=top;align=left;fontStyle=1;" parent="6rSli4vtfrA97XrJgapH-68" vertex="1">
+          <mxGeometry width="500" height="170" as="geometry" />
+        </mxCell>
+        <mxCell id="56" value="P 19" style="rounded=1;whiteSpace=wrap;html=0;fontSize=15;spacing=10;fillColor=#eee7f5;strokeColor=#9673a6;spacing=2;fontStyle=1;" parent="6rSli4vtfrA97XrJgapH-68" vertex="1">
+          <mxGeometry x="400" y="8" width="88" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="57" value="SDK stack&#xa;Created during Bluedroid initialization&#xa;SDK event loop invokes registered Bluetooth callbacks" style="rounded=1;whiteSpace=wrap;html=0;fontSize=15;spacing=10;fillColor=#e8effa;strokeColor=#6484ac;" parent="6rSli4vtfrA97XrJgapH-68" vertex="1">
+          <mxGeometry x="10" y="50" width="480" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="6rSli4vtfrA97XrJgapH-69" value="" style="group" parent="1" vertex="1" connectable="0">
+          <mxGeometry x="-580" y="930" width="500" height="170" as="geometry" />
+        </mxCell>
+        <mxCell id="22" value="i2s_rx_task" style="rounded=1;whiteSpace=wrap;html=0;fontSize=15;spacing=10;fillColor=#eee7f5;strokeColor=#9673a6;verticalAlign=top;align=left;fontStyle=1;" parent="6rSli4vtfrA97XrJgapH-69" vertex="1">
+          <mxGeometry width="500" height="170" as="geometry" />
+        </mxCell>
+        <mxCell id="23" value="P 5" style="rounded=1;whiteSpace=wrap;html=0;fontSize=15;spacing=10;fillColor=#eee7f5;strokeColor=#9673a6;spacing=2;fontStyle=1;" parent="6rSli4vtfrA97XrJgapH-69" vertex="1">
+          <mxGeometry x="400" y="8" width="88" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="24" value="4096 B stack&#xa;Capture I2S → PCM16 → pcm_stream&#xa;Created by i2s_driver_install(RX)" style="rounded=1;whiteSpace=wrap;html=0;fontSize=15;spacing=10;fillColor=#e8effa;strokeColor=#6484ac;" parent="6rSli4vtfrA97XrJgapH-69" vertex="1">
+          <mxGeometry x="10" y="50" width="480" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="6rSli4vtfrA97XrJgapH-70" value="" style="group" parent="1" vertex="1" connectable="0">
+          <mxGeometry x="-580" y="1640" width="500" height="170" as="geometry" />
+        </mxCell>
+        <mxCell id="40" value="a2dp_aac [conditional]" style="rounded=1;whiteSpace=wrap;html=0;fontSize=15;spacing=10;fillColor=#eee7f5;strokeColor=#9673a6;verticalAlign=top;align=left;fontStyle=1;" parent="6rSli4vtfrA97XrJgapH-70" vertex="1">
+          <mxGeometry width="500" height="170" as="geometry" />
+        </mxCell>
+        <mxCell id="41" value="P 10" style="rounded=1;whiteSpace=wrap;html=0;fontSize=15;spacing=10;fillColor=#eee7f5;strokeColor=#9673a6;spacing=2;fontStyle=1;" parent="6rSli4vtfrA97XrJgapH-70" vertex="1">
+          <mxGeometry x="400" y="8" width="88" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="42" value="4096 B stack&#xa;PCM stream → AAC encode → A2DP send&#xa;Created only after successful start + valid AAC config" style="rounded=1;whiteSpace=wrap;html=0;fontSize=15;spacing=10;fillColor=#e8effa;strokeColor=#6484ac;" parent="6rSli4vtfrA97XrJgapH-70" vertex="1">
+          <mxGeometry x="10" y="50" width="480" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="6rSli4vtfrA97XrJgapH-71" value="" style="group" parent="1" vertex="1" connectable="0">
+          <mxGeometry x="-580" y="1450" width="500" height="170" as="geometry" />
+        </mxCell>
+        <mxCell id="58" value="Timer service [SDK]" style="rounded=1;whiteSpace=wrap;html=0;fontSize=15;spacing=10;fillColor=#eee7f5;strokeColor=#9673a6;verticalAlign=top;align=left;fontStyle=1;" parent="6rSli4vtfrA97XrJgapH-71" vertex="1">
+          <mxGeometry width="500" height="170" as="geometry" />
+        </mxCell>
+        <mxCell id="59" value="P 1" style="rounded=1;whiteSpace=wrap;html=0;fontSize=15;spacing=10;fillColor=#eee7f5;strokeColor=#9673a6;spacing=2;fontStyle=1;" parent="6rSli4vtfrA97XrJgapH-71" vertex="1">
+          <mxGeometry x="400" y="8" width="88" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="60" value="SDK stack&#xa;Existing FreeRTOS service task, not created by source_start&#xa;J2B connTmr callback executes here every 10 seconds" style="rounded=1;whiteSpace=wrap;html=0;fontSize=15;spacing=10;fillColor=#e8effa;strokeColor=#6484ac;" parent="6rSli4vtfrA97XrJgapH-71" vertex="1">
+          <mxGeometry x="10" y="50" width="480" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="6rSli4vtfrA97XrJgapH-72" value="" style="group" parent="1" vertex="1" connectable="0">
+          <mxGeometry x="1920" y="932.5" width="500" height="170" as="geometry" />
+        </mxCell>
+        <mxCell id="25" value="i2s_tx_task" style="rounded=1;whiteSpace=wrap;html=0;fontSize=15;spacing=10;fillColor=#eee7f5;strokeColor=#9673a6;verticalAlign=top;align=left;fontStyle=1;" parent="6rSli4vtfrA97XrJgapH-72" vertex="1">
+          <mxGeometry width="500" height="170" as="geometry" />
+        </mxCell>
+        <mxCell id="26" value="P 22" style="rounded=1;whiteSpace=wrap;html=0;fontSize=15;spacing=10;fillColor=#eee7f5;strokeColor=#9673a6;spacing=2;fontStyle=1;" parent="6rSli4vtfrA97XrJgapH-72" vertex="1">
+          <mxGeometry x="400" y="8" width="88" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="27" value="8192 B stack&#xa;Wait for semaphore → drain ring → I2S TX&#xa;Created by i2s_driver_install(TX)" style="rounded=1;whiteSpace=wrap;html=0;fontSize=15;spacing=10;fillColor=#e8effa;strokeColor=#6484ac;" parent="6rSli4vtfrA97XrJgapH-72" vertex="1">
+          <mxGeometry x="10" y="50" width="480" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="6rSli4vtfrA97XrJgapH-73" value="" style="group" parent="1" vertex="1" connectable="0">
+          <mxGeometry x="1920" y="1287.5" width="500" height="170" as="geometry" />
+        </mxCell>
+        <mxCell id="43" value="sbc_decode" style="rounded=1;whiteSpace=wrap;html=0;fontSize=15;spacing=10;fillColor=#eee7f5;strokeColor=#9673a6;verticalAlign=top;align=left;fontStyle=1;" parent="6rSli4vtfrA97XrJgapH-73" vertex="1">
+          <mxGeometry width="500" height="170" as="geometry" />
+        </mxCell>
+        <mxCell id="44" value="P 5" style="rounded=1;whiteSpace=wrap;html=0;fontSize=15;spacing=10;fillColor=#eee7f5;strokeColor=#9673a6;spacing=2;fontStyle=1;" parent="6rSli4vtfrA97XrJgapH-73" vertex="1">
+          <mxGeometry x="400" y="8" width="88" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="45" value="4096 B stack&#xa;Wait for packet queue → SBC decode → PCM ring&#xa;Created inside sbc_sink_init(), before queued BT setup" style="rounded=1;whiteSpace=wrap;html=0;fontSize=15;spacing=10;fillColor=#e8effa;strokeColor=#6484ac;" parent="6rSli4vtfrA97XrJgapH-73" vertex="1">
+          <mxGeometry x="10" y="50" width="480" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="AyQxq1sOCkeg5A0eH-gT-65" value="" style="html=1;strokeWidth=1;shadow=0;dashed=0;shape=mxgraph.ios7.misc.bluetooth;fillColor=#007AFF;strokeColor=none;buttonText=;strokeColor2=#222222;fontColor=#222222;fontSize=8;verticalLabelPosition=bottom;verticalAlign=top;align=center;sketch=0;" vertex="1" parent="1">
+          <mxGeometry x="-370" y="1920" width="80" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="AyQxq1sOCkeg5A0eH-gT-66" value="" style="pointerEvents=1;verticalLabelPosition=bottom;shadow=0;dashed=0;align=center;html=1;verticalAlign=top;shape=mxgraph.electrical.miscellaneous.3_conductor_jack" vertex="1" parent="1">
+          <mxGeometry x="-430" y="700" width="100" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="JrWpawCVXuiMXicUYV-X-65" value="" style="verticalLabelPosition=bottom;shadow=0;dashed=0;align=center;html=1;verticalAlign=top;shape=mxgraph.electrical.radio.headphones;pointerEvents=1;" vertex="1" parent="1">
+          <mxGeometry x="-363" y="2120" width="66" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="dMfcoZ2WuXoV45__WCq4-66" value="" style="endArrow=none;html=1;rounded=0;curved=1;startArrow=classic;startFill=1;entryX=0.25;entryY=1;entryDx=0;entryDy=0;exitX=0.25;exitY=0;exitDx=0;exitDy=0;strokeWidth=10;endFill=0;" edge="1" parent="1" source="40" target="22">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="-190" y="760" as="sourcePoint" />
+            <mxPoint x="-140" y="710" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="-910" y="1400" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="JbI1EMrP6hNv9rUUBeJR-64" value="&lt;span style=&quot;font-size: 13px;&quot;&gt;pcm_stream&lt;/span&gt;&lt;br style=&quot;padding: 0px; margin: 0px; font-size: 13px;&quot;&gt;&lt;span style=&quot;font-size: 13px;&quot;&gt;8192 bytes&lt;/span&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="dMfcoZ2WuXoV45__WCq4-66">
+          <mxGeometry x="0.3517" y="-96" relative="1" as="geometry">
+            <mxPoint x="-51" y="3" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dMfcoZ2WuXoV45__WCq4-68" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.982;exitY=0.495;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=10;" edge="1" parent="1" source="AyQxq1sOCkeg5A0eH-gT-66" target="22">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="-60" y="1190" as="sourcePoint" />
+            <mxPoint x="-10" y="1140" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dMfcoZ2WuXoV45__WCq4-70" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;strokeWidth=10;" edge="1" parent="1" source="40" target="AyQxq1sOCkeg5A0eH-gT-65">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dMfcoZ2WuXoV45__WCq4-72" value="encoded aac" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="dMfcoZ2WuXoV45__WCq4-70">
+          <mxGeometry x="-0.2632" y="-2" relative="1" as="geometry">
+            <mxPoint x="52" y="1" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dMfcoZ2WuXoV45__WCq4-71" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;strokeWidth=10;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="-330.53" y="2010" as="sourcePoint" />
+            <mxPoint x="-330.53" y="2120" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="JbI1EMrP6hNv9rUUBeJR-65" value="" style="pointerEvents=1;verticalLabelPosition=bottom;shadow=0;dashed=0;align=center;html=1;verticalAlign=top;shape=mxgraph.electrical.miscellaneous.3_conductor_jack;direction=west;" vertex="1" parent="1">
+          <mxGeometry x="2120" y="1172.5" width="100" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="faW5RVA_8mrcT3fm99Vg-64" value="" style="html=1;strokeWidth=1;shadow=0;dashed=0;shape=mxgraph.ios7.misc.bluetooth;fillColor=#007AFF;strokeColor=none;buttonText=;strokeColor2=#222222;fontColor=#222222;fontSize=8;verticalLabelPosition=bottom;verticalAlign=top;align=center;sketch=0;" vertex="1" parent="1">
+          <mxGeometry x="2075" y="420" width="90" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="faW5RVA_8mrcT3fm99Vg-65" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;strokeWidth=10;startArrow=classic;startFill=1;endArrow=none;endFill=0;" edge="1" parent="1" source="55">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="2120" y="510" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="gwNP__IbfEE1y5LRwmED-64" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.75;entryY=0;entryDx=0;entryDy=0;curved=1;strokeWidth=10;" edge="1" parent="1" source="55" target="43">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2500" y="735" />
+              <mxPoint x="2500" y="1160" />
+              <mxPoint x="2295" y="1160" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="4QvmPS0hkcfipZOBQ_3p-64" value="&lt;span style=&quot;font-size: 13px;&quot;&gt;packet_queue&lt;/span&gt;&lt;br style=&quot;padding: 0px; margin: 0px; font-size: 13px;&quot;&gt;&lt;span style=&quot;font-size: 13px;&quot;&gt;24 packets&lt;/span&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="gwNP__IbfEE1y5LRwmED-64">
+          <mxGeometry x="-0.1955" y="6" relative="1" as="geometry">
+            <mxPoint x="54" y="9" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="gwNP__IbfEE1y5LRwmED-65" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.75;entryDx=0;entryDy=0;curved=1;strokeWidth=10;" edge="1" parent="1" source="43" target="25">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2045" y="1500" />
+              <mxPoint x="1830" y="1500" />
+              <mxPoint x="1830" y="1060" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="y9zUSz1hiGl54kKNKP2l-64" value="&lt;span style=&quot;font-size: 13px;&quot;&gt;PCM ring&lt;/span&gt;&lt;br style=&quot;padding: 0px; margin: 0px; font-size: 13px;&quot;&gt;&lt;span style=&quot;font-size: 13px;&quot;&gt;64 KiB&lt;/span&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="gwNP__IbfEE1y5LRwmED-65">
+          <mxGeometry x="-0.6093" y="-4" relative="1" as="geometry">
+            <mxPoint x="7" y="34" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="gwNP__IbfEE1y5LRwmED-66" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=1.05;entryDx=0;entryDy=0;entryPerimeter=0;strokeWidth=10;" edge="1" parent="1" source="27" target="JbI1EMrP6hNv9rUUBeJR-65">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="2120" y="1170" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="3l1M0Kb5IK_8cgUmtYEK" name="SINK  |  Bluetooth → Jack">
+    <mxGraphModel dx="3178" dy="1725" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="P3cnZn7GwaPvSq8VvVxR-1" value="SINK  |  Bluetooth → Jack" style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#243954;strokeColor=#243954;fontColor=#ffffff;fontSize=24;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="29.889999999999986" y="20" width="1530" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="P3cnZn7GwaPvSq8VvVxR-2" value="Your phone sends SBC audio. The ESP32 decodes it to PCM, sends PCM over I2S, and the external audio codec produces the analog output." style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#f3f6fa;strokeColor=#93a4b8;" vertex="1" parent="1">
+          <mxGeometry x="29.889999999999986" y="90" width="1530" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="P3cnZn7GwaPvSq8VvVxR-3" value="Read numbered startup steps top → bottom. Then follow the green audio arrows left → right.&#xa;P = task priority. Callback = a function called inside an existing task; it does not create a task or execute as a GPIO interrupt.&#xa;Purple dashed arrows: event enables the marked startup transition. Green dashed arrows labeled creates: startup creates the task." style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#f3f6fa;strokeColor=#93a4b8;" vertex="1" parent="1">
+          <mxGeometry x="29.889999999999986" y="1790" width="1530" height="105" as="geometry" />
+        </mxCell>
+        <mxCell id="P3cnZn7GwaPvSq8VvVxR-4" value="A. STARTUP — happens once" style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#243954;strokeColor=#243954;fontColor=#ffffff;fontSize=24;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="29.889999999999986" y="185" width="750" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="P3cnZn7GwaPvSq8VvVxR-5" value="1. app_main has already selected B2J&#xa;I2S TX installed: create ring buffer (64 KiB), binary semaphore,&#xa;tx_mutex and i2s_tx_task (P22). Configure DAC / headphones." style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#f3f6fa;strokeColor=#93a4b8;" vertex="1" parent="1">
+          <mxGeometry x="64.88999999999999" y="245" width="690" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="P3cnZn7GwaPvSq8VvVxR-6" value="2. app_main calls bt_app_a2dp_sink_start()&#xa;sbc_sink_init() creates decoder_mutex + packet_queue (24 entries),&#xa;opens SBC decoder and creates sbc_decode task (P5)." style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#f3f6fa;strokeColor=#93a4b8;" vertex="1" parent="1">
+          <mxGeometry x="64.88999999999999" y="410" width="690" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="P3cnZn7GwaPvSq8VvVxR-7" value="3. sink_start queues a setup message to BtAppTask, then returns&#xa;BtAppTask runs register_a2dp_sink_callback_function(): register&#xa;control callback + audio callback, then request A2DP sink init." style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#f3f6fa;strokeColor=#93a4b8;" vertex="1" parent="1">
+          <mxGeometry x="64.88999999999999" y="575" width="690" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="P3cnZn7GwaPvSq8VvVxR-8" value="4. Bluetooth reports INIT_SUCCESS → register SBC endpoint&#xa;Endpoint registration succeeds → device becomes discoverable.&#xa;Phone connects and negotiates SBC, 44.1 kHz stereo." style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#f3f6fa;strokeColor=#93a4b8;" vertex="1" parent="1">
+          <mxGeometry x="64.88999999999999" y="740" width="690" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="P3cnZn7GwaPvSq8VvVxR-9" value="5. AUDIO_CFG + AUDIO_STARTED enable playback&#xa;BtAppTask calls sbc_sink_set_playing(true) only for valid config.&#xa;It resets decoder / queued audio and marks the stream active." style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#f3f6fa;strokeColor=#93a4b8;" vertex="1" parent="1">
+          <mxGeometry x="64.88999999999999" y="905" width="690" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="P3cnZn7GwaPvSq8VvVxR-10" value="" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;fontSize=13;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="P3cnZn7GwaPvSq8VvVxR-5" target="P3cnZn7GwaPvSq8VvVxR-6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="P3cnZn7GwaPvSq8VvVxR-11" value="" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;fontSize=13;labelBackgroundColor=#ffffff;endArrow=none;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="P3cnZn7GwaPvSq8VvVxR-6" target="P3cnZn7GwaPvSq8VvVxR-33">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="P3cnZn7GwaPvSq8VvVxR-12" value="" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;fontSize=13;labelBackgroundColor=#ffffff;endArrow=none;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="P3cnZn7GwaPvSq8VvVxR-7" target="P3cnZn7GwaPvSq8VvVxR-35">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="P3cnZn7GwaPvSq8VvVxR-13" value="" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;fontSize=13;labelBackgroundColor=#ffffff;endArrow=none;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="P3cnZn7GwaPvSq8VvVxR-8" target="P3cnZn7GwaPvSq8VvVxR-37">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="P3cnZn7GwaPvSq8VvVxR-14" value="HOW CONTROL EVENTS REACH YOUR CODE" style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#243954;strokeColor=#243954;fontColor=#ffffff;fontSize=24;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="844.89" y="185" width="715" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="P3cnZn7GwaPvSq8VvVxR-15" value="BTC_TASK — Bluetooth event arrives&#xa;SDK calls bt_app_a2dp_cb(event, params).&#xa;That function copies event parameters and calls&#xa;bt_app_work_dispatch(handle_a2dp_event, ...).&#xa;Then the callback returns." style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#e8ddf4;strokeColor=#9673a6;spacingTop=42;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="874.89" y="245" width="655" height="195" as="geometry" />
+        </mxCell>
+        <mxCell id="P3cnZn7GwaPvSq8VvVxR-16" value="P 19" style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#f3f6fa;strokeColor=#93a4b8;" vertex="1" parent="1">
+          <mxGeometry x="1439.8899999999999" y="252" width="80" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="P3cnZn7GwaPvSq8VvVxR-17" value="s_bt_app_task_queue — 10 messages&#xa;Carries control events and setup requests, NOT audio packets." style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#d5e8d4;strokeColor=#619766;" vertex="1" parent="1">
+          <mxGeometry x="874.89" y="500" width="655" height="95" as="geometry" />
+        </mxCell>
+        <mxCell id="P3cnZn7GwaPvSq8VvVxR-18" value="enqueue" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;fontSize=13;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="P3cnZn7GwaPvSq8VvVxR-15" target="P3cnZn7GwaPvSq8VvVxR-17">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="P3cnZn7GwaPvSq8VvVxR-19" value="BtAppTask — repeating loop&#xa;WAIT: xQueueReceive(..., portMAX_DELAY)&#xa;→ execute msg.cb(event, params)&#xa;→ free message parameters&#xa;→ return to WAIT.&#xa;Sink events execute handle_a2dp_event()." style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#e8ddf4;strokeColor=#9673a6;spacingTop=42;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="874.89" y="655" width="655" height="245" as="geometry" />
+        </mxCell>
+        <mxCell id="P3cnZn7GwaPvSq8VvVxR-20" value="P 10" style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#f3f6fa;strokeColor=#93a4b8;" vertex="1" parent="1">
+          <mxGeometry x="1439.8899999999999" y="662" width="80" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="P3cnZn7GwaPvSq8VvVxR-21" value="wake" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;fontSize=13;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="P3cnZn7GwaPvSq8VvVxR-17" target="P3cnZn7GwaPvSq8VvVxR-19">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="P3cnZn7GwaPvSq8VvVxR-22" value="wait for next message" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;fontSize=13;labelBackgroundColor=#ffffff;dashed=1;" edge="1" parent="1" source="P3cnZn7GwaPvSq8VvVxR-19" target="P3cnZn7GwaPvSq8VvVxR-17">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1544.8899999999999" y="950" />
+              <mxPoint x="1544.8899999999999" y="545" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="P3cnZn7GwaPvSq8VvVxR-23" value="B. AUDIO — repeats continuously after playback starts" style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#243954;strokeColor=#243954;fontColor=#ffffff;fontSize=24;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="29.889999999999986" y="1110" width="1530" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="P3cnZn7GwaPvSq8VvVxR-24" value="BTC_TASK (already running before sink_start)&#xa;Phone → SDK audio receive queue&#xa;→ sbc_sink_receive(buffer)&#xa;&#xa;If playing: enqueue buffer pointer + generation.&#xa;If inactive / invalid / queue full: free buffer.&#xa;Callback returns to Bluetooth." style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#e8ddf4;strokeColor=#9673a6;spacingTop=42;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="29.889999999999986" y="1205" width="430" height="290" as="geometry" />
+        </mxCell>
+        <mxCell id="P3cnZn7GwaPvSq8VvVxR-25" value="P 19" style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#f3f6fa;strokeColor=#93a4b8;" vertex="1" parent="1">
+          <mxGeometry x="369.89" y="1212" width="80" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="P3cnZn7GwaPvSq8VvVxR-26" value="sbc_decode&#xa;WAIT for packet_queue&#xa;→ take decoder_mutex&#xa;→ discard stale generation OR decode SBC frames&#xa;→ validate PCM16 stereo / 44.1 kHz&#xa;→ write PCM to ring under tx_mutex&#xa;→ release mutex; free input buffer&#xa;→ repeat WAIT." style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#e8ddf4;strokeColor=#9673a6;spacingTop=42;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="579.89" y="1205" width="430" height="290" as="geometry" />
+        </mxCell>
+        <mxCell id="P3cnZn7GwaPvSq8VvVxR-27" value="P 5" style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#f3f6fa;strokeColor=#93a4b8;" vertex="1" parent="1">
+          <mxGeometry x="919.89" y="1212" width="80" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="P3cnZn7GwaPvSq8VvVxR-28" value="i2s_tx_task&#xa;WAIT for binary semaphore&#xa;→ take tx_mutex; read ring chunk&#xa;→ convert PCM16 to 32-bit I2S words&#xa;→ write I2S; return ring item; unlock&#xa;→ repeat chunks until ring empty&#xa;→ return to semaphore WAIT.&#xa;External DAC → headphones / Jack." style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#e8ddf4;strokeColor=#9673a6;spacingTop=42;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="1129.8899999999999" y="1205" width="430" height="290" as="geometry" />
+        </mxCell>
+        <mxCell id="P3cnZn7GwaPvSq8VvVxR-29" value="P 22" style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#f3f6fa;strokeColor=#93a4b8;" vertex="1" parent="1">
+          <mxGeometry x="1469.8899999999999" y="1212" width="80" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="P3cnZn7GwaPvSq8VvVxR-30" value="packet_queue&#xa;24 packets" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;fontSize=13;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="P3cnZn7GwaPvSq8VvVxR-24" target="P3cnZn7GwaPvSq8VvVxR-26">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="P3cnZn7GwaPvSq8VvVxR-31" value="PCM ring&#xa;64 KiB" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;fontSize=13;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="P3cnZn7GwaPvSq8VvVxR-26" target="P3cnZn7GwaPvSq8VvVxR-28">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="P3cnZn7GwaPvSq8VvVxR-32" value="Ring wakeup: at 48 KiB buffered, producer gives semaphore. Underflow → prefetch again. Ring overflow → drop incoming PCM.&#xa;The decoder loops over all SBC frames in each packet. TX loops over chunks until empty; DMA writes may block while holding tx_mutex.&#xa;Suspend / disconnect: BtAppTask calls sbc_sink_set_playing(false), invalidates old packets, resets decoder and flushes TX. Tasks remain allocated." style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="29.889999999999986" y="1570" width="1530" height="155" as="geometry" />
+        </mxCell>
+        <mxCell id="P3cnZn7GwaPvSq8VvVxR-33" value="" style="ellipse;fillColor=#8a4ea8;strokeColor=#8a4ea8;" vertex="1" parent="1">
+          <mxGeometry x="404.89" y="547" width="10" height="10" as="geometry" />
+        </mxCell>
+        <mxCell id="P3cnZn7GwaPvSq8VvVxR-34" value="" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="P3cnZn7GwaPvSq8VvVxR-33" target="P3cnZn7GwaPvSq8VvVxR-7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="P3cnZn7GwaPvSq8VvVxR-35" value="" style="ellipse;fillColor=#8a4ea8;strokeColor=#8a4ea8;" vertex="1" parent="1">
+          <mxGeometry x="404.89" y="712" width="10" height="10" as="geometry" />
+        </mxCell>
+        <mxCell id="P3cnZn7GwaPvSq8VvVxR-36" value="" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="P3cnZn7GwaPvSq8VvVxR-35" target="P3cnZn7GwaPvSq8VvVxR-8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="P3cnZn7GwaPvSq8VvVxR-37" value="" style="ellipse;fillColor=#8a4ea8;strokeColor=#8a4ea8;" vertex="1" parent="1">
+          <mxGeometry x="404.89" y="877" width="10" height="10" as="geometry" />
+        </mxCell>
+        <mxCell id="P3cnZn7GwaPvSq8VvVxR-38" value="" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="P3cnZn7GwaPvSq8VvVxR-37" target="P3cnZn7GwaPvSq8VvVxR-9">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="P3cnZn7GwaPvSq8VvVxR-39" value="Setup message dequeued" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=block;html=0;fontSize=12;labelBackgroundColor=#ffffff;strokeWidth=2;strokeColor=#8a4ea8;dashed=1;exitX=0;exitY=0.1;entryX=1;entryY=0.5;" edge="1" parent="1" source="P3cnZn7GwaPvSq8VvVxR-19" target="P3cnZn7GwaPvSq8VvVxR-33">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="809.89" y="680" />
+              <mxPoint x="809.89" y="552" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="P3cnZn7GwaPvSq8VvVxR-40" value="INIT_SUCCESS → handle_a2dp_event" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=block;html=0;fontSize=12;labelBackgroundColor=#ffffff;strokeWidth=2;strokeColor=#8a4ea8;dashed=1;exitX=0;exitY=0.4;entryX=1;entryY=0.5;" edge="1" parent="1" source="P3cnZn7GwaPvSq8VvVxR-19" target="P3cnZn7GwaPvSq8VvVxR-35">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="799.89" y="750" />
+              <mxPoint x="799.89" y="717" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="P3cnZn7GwaPvSq8VvVxR-41" value="AUDIO_CFG + AUDIO_STARTED" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=block;html=0;fontSize=12;labelBackgroundColor=#ffffff;strokeWidth=2;strokeColor=#8a4ea8;dashed=1;exitX=0;exitY=0.8;entryX=1;entryY=0.5;" edge="1" parent="1" source="P3cnZn7GwaPvSq8VvVxR-19" target="P3cnZn7GwaPvSq8VvVxR-37">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="789.89" y="850" />
+              <mxPoint x="789.89" y="882" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="P3cnZn7GwaPvSq8VvVxR-42" value="creates" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=block;html=0;fontSize=12;labelBackgroundColor=#ffffff;strokeWidth=2;strokeColor=#177d57;dashed=1;exitX=0;exitY=0.5;entryX=0.5;entryY=0;" edge="1" parent="1" source="P3cnZn7GwaPvSq8VvVxR-5" target="P3cnZn7GwaPvSq8VvVxR-28">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="9.889999999999986" y="305" />
+              <mxPoint x="9.889999999999986" y="1060" />
+              <mxPoint x="1579.8899999999999" y="1060" />
+              <mxPoint x="1579.8899999999999" y="1180" />
+              <mxPoint x="1344.8899999999999" y="1180" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="P3cnZn7GwaPvSq8VvVxR-43" value="creates" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=block;html=0;fontSize=12;labelBackgroundColor=#ffffff;strokeWidth=2;strokeColor=#177d57;dashed=1;exitX=0;exitY=0.5;entryX=0.5;entryY=0;" edge="1" parent="1" source="P3cnZn7GwaPvSq8VvVxR-6" target="P3cnZn7GwaPvSq8VvVxR-26">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="39.889999999999986" y="470" />
+              <mxPoint x="39.889999999999986" y="1085" />
+              <mxPoint x="794.89" y="1085" />
+              <mxPoint x="794.89" y="1185" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="ug1pgtTAvfxsrM9GMxKT" name="SOURCE  |  Jack → Bluetooth">
+    <mxGraphModel dx="2431" dy="1319" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="A0Lk1Ms2tbRdlZo5ghbr-1" value="SOURCE  |  Jack → Bluetooth" style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#243954;strokeColor=#243954;fontColor=#ffffff;fontSize=24;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="380" y="30" width="1530" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="A0Lk1Ms2tbRdlZo5ghbr-2" value="The external codec samples the Jack input. The ESP32 captures PCM over I2S, encodes AAC and sends it to the Bluetooth receiver." style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#f3f6fa;strokeColor=#93a4b8;" vertex="1" parent="1">
+          <mxGeometry x="380" y="100" width="1530" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="A0Lk1Ms2tbRdlZo5ghbr-3" value="Read numbered startup steps top → bottom. Then follow the green audio arrows left → right.&#xa;P = task priority. Callback = a function called inside an existing task; it does not create a task or execute as a GPIO interrupt.&#xa;Purple dashed arrows: event enables the marked startup transition. Green dashed arrows labeled creates: startup creates the task." style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#f3f6fa;strokeColor=#93a4b8;" vertex="1" parent="1">
+          <mxGeometry x="380" y="1800" width="1530" height="105" as="geometry" />
+        </mxCell>
+        <mxCell id="A0Lk1Ms2tbRdlZo5ghbr-4" value="A. STARTUP — then wait for connection" style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#243954;strokeColor=#243954;fontColor=#ffffff;fontSize=24;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="380" y="195" width="750" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="A0Lk1Ms2tbRdlZo5ghbr-5" value="1. app_main has already selected J2B&#xa;Install I2S RX: create pcm_stream (8192 bytes) and i2s_rx_task (P5).&#xa;Configure the ADC; capture starts before Bluetooth streaming." style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#f3f6fa;strokeColor=#93a4b8;" vertex="1" parent="1">
+          <mxGeometry x="415" y="255" width="690" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="A0Lk1Ms2tbRdlZo5ghbr-6" value="2. app_main calls bt_app_a2dp_source_start()&#xa;It queues source setup to BtAppTask, then returns.&#xa;No AAC worker is created by this call." style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#f3f6fa;strokeColor=#93a4b8;" vertex="1" parent="1">
+          <mxGeometry x="415" y="420" width="690" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="A0Lk1Ms2tbRdlZo5ghbr-7" value="3. BtAppTask runs the source setup callback&#xa;Initialize AVRCP controller + A2DP source; register callbacks.&#xa;Start discovery and repeating 10-second connTmr." style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#f3f6fa;strokeColor=#93a4b8;" vertex="1" parent="1">
+          <mxGeometry x="415" y="585" width="690" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="A0Lk1Ms2tbRdlZo5ghbr-8" value="4. GAP callback finds matching target name / rendering device&#xa;Cancel discovery → on discovery stopped, connect to target.&#xa;A2DP callbacks report connection / negotiated AAC configuration." style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#f3f6fa;strokeColor=#93a4b8;" vertex="1" parent="1">
+          <mxGeometry x="415" y="750" width="690" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="A0Lk1Ms2tbRdlZo5ghbr-9" value="5. Connected: heartbeat requests CHECK_SRC_RDY&#xa;Successful ACK → request START. Successful START ACK + AAC&#xa;configuration → encode_task_launch() creates a2dp_aac (P10)." style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#f3f6fa;strokeColor=#93a4b8;" vertex="1" parent="1">
+          <mxGeometry x="415" y="915" width="690" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="A0Lk1Ms2tbRdlZo5ghbr-10" value="" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;fontSize=13;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="A0Lk1Ms2tbRdlZo5ghbr-5" target="A0Lk1Ms2tbRdlZo5ghbr-6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="A0Lk1Ms2tbRdlZo5ghbr-11" value="" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;fontSize=13;labelBackgroundColor=#ffffff;endArrow=none;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="A0Lk1Ms2tbRdlZo5ghbr-6" target="A0Lk1Ms2tbRdlZo5ghbr-32">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="A0Lk1Ms2tbRdlZo5ghbr-12" value="" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;fontSize=13;labelBackgroundColor=#ffffff;endArrow=none;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="A0Lk1Ms2tbRdlZo5ghbr-7" target="A0Lk1Ms2tbRdlZo5ghbr-34">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="A0Lk1Ms2tbRdlZo5ghbr-13" value="" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;fontSize=13;labelBackgroundColor=#ffffff;endArrow=none;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="A0Lk1Ms2tbRdlZo5ghbr-8" target="A0Lk1Ms2tbRdlZo5ghbr-36">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="A0Lk1Ms2tbRdlZo5ghbr-14" value="EVENTS THAT DRIVE STARTUP" style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#243954;strokeColor=#243954;fontColor=#ffffff;fontSize=24;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1195" y="195" width="715" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="A0Lk1Ms2tbRdlZo5ghbr-15" value="BTC_TASK&#xa;A2DP: bt_app_a2d_cb → queue connection / media events.&#xa;INIT_SUCCESS also registers AAC + SBC endpoints.&#xa;AVRCP: bt_app_rc_ct_cb → queue supported events.&#xa;GAP: bt_app_gap_cb handles discovery / connect directly.&#xa;Callbacks return to the SDK; none creates a task per event." style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#e8ddf4;strokeColor=#9673a6;spacingTop=42;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="1225" y="255" width="655" height="230" as="geometry" />
+        </mxCell>
+        <mxCell id="A0Lk1Ms2tbRdlZo5ghbr-16" value="P 19" style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#f3f6fa;strokeColor=#93a4b8;" vertex="1" parent="1">
+          <mxGeometry x="1790" y="262" width="80" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="A0Lk1Ms2tbRdlZo5ghbr-17" value="FreeRTOS timer-service task&#xa;Every 10 s: call bt_app_a2d_heart_beat()&#xa;→ enqueue heartbeat event → return.&#xa;connTmr is a timer object, NOT a new task." style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#e8ddf4;strokeColor=#9673a6;spacingTop=42;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="1225" y="525" width="655" height="175" as="geometry" />
+        </mxCell>
+        <mxCell id="A0Lk1Ms2tbRdlZo5ghbr-18" value="P 1" style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#f3f6fa;strokeColor=#93a4b8;" vertex="1" parent="1">
+          <mxGeometry x="1790" y="532" width="80" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="A0Lk1Ms2tbRdlZo5ghbr-19" value="BtAppTask&#xa;WAIT on shared 10-message control queue&#xa;→ run state-machine / AVRCP handler&#xa;→ free copied parameters → repeat WAIT.&#xa;The connection / media state machine sends requests&#xa;and waits for later ACK events; it does not spin-wait." style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#e8ddf4;strokeColor=#9673a6;spacingTop=42;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="1225" y="770" width="655" height="230" as="geometry" />
+        </mxCell>
+        <mxCell id="A0Lk1Ms2tbRdlZo5ghbr-20" value="P 10" style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#f3f6fa;strokeColor=#93a4b8;" vertex="1" parent="1">
+          <mxGeometry x="1790" y="777" width="80" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="A0Lk1Ms2tbRdlZo5ghbr-21" value="queued A2DP / AVRCP events" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;fontSize=13;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="A0Lk1Ms2tbRdlZo5ghbr-15" target="A0Lk1Ms2tbRdlZo5ghbr-19">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1185" y="370" />
+              <mxPoint x="1185" y="885" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="A0Lk1Ms2tbRdlZo5ghbr-22" value="queued heartbeat" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;fontSize=13;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="A0Lk1Ms2tbRdlZo5ghbr-17" target="A0Lk1Ms2tbRdlZo5ghbr-19">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="A0Lk1Ms2tbRdlZo5ghbr-23" value="B. AUDIO — repeats while a2dp_aac is running" style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#243954;strokeColor=#243954;fontColor=#ffffff;fontSize=24;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="380" y="1120" width="1530" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="A0Lk1Ms2tbRdlZo5ghbr-24" value="i2s_rx_task&#xa;External ADC → I2S DMA&#xa;WAIT: i2s_channel_read (up to 1000 ms)&#xa;→ extract upper 16 bits, retain L/R ordering&#xa;→ if space exists, write complete PCM chunk&#xa;→ repeat read.&#xa;Full stream: discard captured chunk." style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#e8ddf4;strokeColor=#9673a6;spacingTop=42;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="380" y="1215" width="430" height="290" as="geometry" />
+        </mxCell>
+        <mxCell id="A0Lk1Ms2tbRdlZo5ghbr-25" value="P 5" style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#f3f6fa;strokeColor=#93a4b8;" vertex="1" parent="1">
+          <mxGeometry x="720" y="1222" width="80" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="A0Lk1Ms2tbRdlZo5ghbr-26" value="a2dp_aac&#xa;WAIT: read pcm_stream (100 ms at a time)&#xa;→ keep reading until one PCM frame is full&#xa;→ esp_audio_enc_process()&#xa;→ verify encoded length ≤ MTU − 20&#xa;→ allocate / copy A2DP audio buffer&#xa;→ send; retry up to 10 times&#xa;→ repeat while s_stream_run." style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#e8ddf4;strokeColor=#9673a6;spacingTop=42;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="930" y="1215" width="430" height="290" as="geometry" />
+        </mxCell>
+        <mxCell id="A0Lk1Ms2tbRdlZo5ghbr-27" value="P 10" style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#f3f6fa;strokeColor=#93a4b8;" vertex="1" parent="1">
+          <mxGeometry x="1270" y="1222" width="80" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="A0Lk1Ms2tbRdlZo5ghbr-28" value="A2DP transport → remote receiver&#xa;&#xa;esp_a2d_source_audio_data_send()&#xa;Success: stack owns the audio buffer;&#xa;AAC task advances timestamp.&#xa;Failure: task frees buffer.&#xa;Remote device decodes and plays audio.&#xa;This box is transport, not a new application task." style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#d5e8d4;strokeColor=#619766;" vertex="1" parent="1">
+          <mxGeometry x="1480" y="1215" width="430" height="290" as="geometry" />
+        </mxCell>
+        <mxCell id="A0Lk1Ms2tbRdlZo5ghbr-29" value="pcm_stream&#xa;8192 bytes" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;fontSize=13;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="A0Lk1Ms2tbRdlZo5ghbr-24" target="A0Lk1Ms2tbRdlZo5ghbr-26">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="A0Lk1Ms2tbRdlZo5ghbr-30" value="encoded AAC" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;fontSize=13;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="A0Lk1Ms2tbRdlZo5ghbr-26" target="A0Lk1Ms2tbRdlZo5ghbr-28">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="A0Lk1Ms2tbRdlZo5ghbr-31" value="Oversized / failed encode: drop frame and continue. Queue busy: delay 2 ms converted to ticks before retry; invalid state exits worker.&#xa;encode_task_stop(): set run=false; worker normally leaves loop, frees buffers, closes encoder and deletes itself. After 3 s, caller force-deletes it.&#xa;Source advertises SBC too, but this application only launches its encoder when an AAC configuration exists. No SBC source encoder is implemented here." style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="380" y="1580" width="1530" height="155" as="geometry" />
+        </mxCell>
+        <mxCell id="A0Lk1Ms2tbRdlZo5ghbr-32" value="" style="ellipse;fillColor=#8a4ea8;strokeColor=#8a4ea8;" vertex="1" parent="1">
+          <mxGeometry x="755" y="557" width="10" height="10" as="geometry" />
+        </mxCell>
+        <mxCell id="A0Lk1Ms2tbRdlZo5ghbr-33" value="" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="A0Lk1Ms2tbRdlZo5ghbr-32" target="A0Lk1Ms2tbRdlZo5ghbr-7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="A0Lk1Ms2tbRdlZo5ghbr-34" value="" style="ellipse;fillColor=#8a4ea8;strokeColor=#8a4ea8;" vertex="1" parent="1">
+          <mxGeometry x="755" y="722" width="10" height="10" as="geometry" />
+        </mxCell>
+        <mxCell id="A0Lk1Ms2tbRdlZo5ghbr-35" value="" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="A0Lk1Ms2tbRdlZo5ghbr-34" target="A0Lk1Ms2tbRdlZo5ghbr-8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="A0Lk1Ms2tbRdlZo5ghbr-36" value="" style="ellipse;fillColor=#8a4ea8;strokeColor=#8a4ea8;" vertex="1" parent="1">
+          <mxGeometry x="755" y="887" width="10" height="10" as="geometry" />
+        </mxCell>
+        <mxCell id="A0Lk1Ms2tbRdlZo5ghbr-37" value="" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="A0Lk1Ms2tbRdlZo5ghbr-36" target="A0Lk1Ms2tbRdlZo5ghbr-9">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="A0Lk1Ms2tbRdlZo5ghbr-38" value="Setup message dequeued" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=block;html=0;fontSize=12;labelBackgroundColor=#ffffff;strokeWidth=2;strokeColor=#8a4ea8;dashed=1;exitX=0;exitY=0.1;entryX=1;entryY=0.5;" edge="1" parent="1" source="A0Lk1Ms2tbRdlZo5ghbr-19" target="A0Lk1Ms2tbRdlZo5ghbr-32">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1170" y="790" />
+              <mxPoint x="1170" y="562" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="A0Lk1Ms2tbRdlZo5ghbr-39" value="GAP discovery result / discovery stopped" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=block;html=0;fontSize=12;labelBackgroundColor=#ffffff;strokeWidth=2;strokeColor=#8a4ea8;dashed=1;exitX=0;exitY=0.8;entryX=1;entryY=0.5;" edge="1" parent="1" source="A0Lk1Ms2tbRdlZo5ghbr-15" target="A0Lk1Ms2tbRdlZo5ghbr-34">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1150" y="445" />
+              <mxPoint x="1150" y="727" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="A0Lk1Ms2tbRdlZo5ghbr-40" value="CONNECTED + heartbeat handled" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=block;html=0;fontSize=12;labelBackgroundColor=#ffffff;strokeWidth=2;strokeColor=#8a4ea8;dashed=1;exitX=0;exitY=0.53;entryX=1;entryY=0.5;" edge="1" parent="1" source="A0Lk1Ms2tbRdlZo5ghbr-19" target="A0Lk1Ms2tbRdlZo5ghbr-36">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1160" y="892" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="A0Lk1Ms2tbRdlZo5ghbr-41" value="creates" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=block;html=0;fontSize=12;labelBackgroundColor=#ffffff;strokeWidth=2;strokeColor=#177d57;dashed=1;exitX=0;exitY=0.5;entryX=0.5;entryY=0;" edge="1" parent="1" source="A0Lk1Ms2tbRdlZo5ghbr-5" target="A0Lk1Ms2tbRdlZo5ghbr-24">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="360" y="315" />
+              <mxPoint x="360" y="1190" />
+              <mxPoint x="595" y="1190" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="A0Lk1Ms2tbRdlZo5ghbr-42" value="" style="ellipse;fillColor=#8a4ea8;strokeColor=#8a4ea8;" vertex="1" parent="1">
+          <mxGeometry x="755" y="1065" width="10" height="10" as="geometry" />
+        </mxCell>
+        <mxCell id="A0Lk1Ms2tbRdlZo5ghbr-43" value="" style="edgeStyle=orthogonalEdgeStyle;endArrow=none;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="A0Lk1Ms2tbRdlZo5ghbr-9" target="A0Lk1Ms2tbRdlZo5ghbr-42">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="A0Lk1Ms2tbRdlZo5ghbr-44" value="CHECK_SRC_RDY ACK → START ACK + AAC config" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=block;html=0;fontSize=12;labelBackgroundColor=#ffffff;strokeWidth=2;strokeColor=#8a4ea8;dashed=1;exitX=0;exitY=0.9;entryX=1;entryY=0.5;" edge="1" parent="1" source="A0Lk1Ms2tbRdlZo5ghbr-19" target="A0Lk1Ms2tbRdlZo5ghbr-42">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1200" y="980" />
+              <mxPoint x="1200" y="1070" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="A0Lk1Ms2tbRdlZo5ghbr-45" value="creates" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=block;html=0;fontSize=12;labelBackgroundColor=#ffffff;strokeWidth=2;strokeColor=#177d57;dashed=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="A0Lk1Ms2tbRdlZo5ghbr-42" target="A0Lk1Ms2tbRdlZo5ghbr-26">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="760" y="1095" />
+              <mxPoint x="1145" y="1095" />
+              <mxPoint x="1145" y="1195" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

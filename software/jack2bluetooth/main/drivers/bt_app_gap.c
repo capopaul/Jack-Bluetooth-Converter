@@ -245,6 +245,18 @@ static void gap_cb_2(uint16_t event, void *p_param)
         }
         break;
     }
+    case ESP_BT_GAP_CONFIG_EIR_DATA_EVT:
+    {
+        if (param->config_eir_data.stat != ESP_BT_STATUS_SUCCESS)
+        {
+            ESP_LOGW(GAP_TAG, "EIR configuration status: %d", param->config_eir_data.stat);
+        }
+        else
+        {
+            ESP_LOGD(GAP_TAG, "EIR configuration complete");
+        }
+        break;
+    }
     /* when authentication completed, this event comes */
     case ESP_BT_GAP_AUTH_CMPL_EVT:
     {

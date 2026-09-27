@@ -69,7 +69,7 @@ void app_main(void)
 
     bt_app_init();
 
-    ESP_ERROR_CHECK(bt_app_gap_start());
+    bt_app_gap_start();
 
     // check switch status.
     // during this phase, switch must not change state
@@ -92,7 +92,7 @@ void app_main(void)
 
         audio_codec_unmute_adc();
 
-        ESP_ERROR_CHECK(bt_app_a2dp_source_start());
+        bt_app_a2dp_source_start();
     }
     else
     {

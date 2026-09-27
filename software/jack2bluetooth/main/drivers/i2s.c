@@ -35,7 +35,7 @@ enum
  * STATIC FUNCTION DECLARATIONS
  ******************************/
 
-static void task__i2s_rx(void *arg);
+static void rx_task(void *arg);
 static void task__i2s_tx(void *arg);
 static void i2s_rx_task_start_up(void);
 static void i2s_tx_task_start_up(void);
@@ -51,7 +51,7 @@ static void write_pcm16_to_i2s(const uint8_t *data, size_t size, pcm_conversion_
  * STATIC VARIABLE DEFINITIONS
  ******************************/
 
-static TaskHandle_t s_bt_i2s_rx_task_handle = NULL;
+static TaskHandle_t rx_task_handle = NULL;
 static TaskHandle_t s_bt_i2s_tx_task_handle = NULL;
 
 static atomic_bool rx_stop_requested = false;
@@ -108,7 +108,8 @@ static i2s_std_gpio_config_t gpio_cfg = {
  * STATIC FUNCTION DEFINITIONS
  *******************************/
 
-static void task__i2s_rx(void *arg)
+// This function is executed by the task : i2s_rx_task
+static void rx_task(void *arg)
 {
     // Keep capture and conversion buffers off the task's 4096-byte stack.
     uint32_t *samples = malloc(BUFF_SIZE * sizeof(*samples));
@@ -210,7 +211,8 @@ static void task__i2s_tx(void *arg)
 }
 
 static void i2s_rx_task_start_up(void)
-{ // Pulse-Code Modulate (PCM) stream buffer
+{
+    // Pulse-Code Modulate (PCM) stream buffer
     pcm_stream = xStreamBufferCreate(8192, 1);
     rx_stop_acknowledge = xSemaphoreCreateBinary();
 
@@ -220,7 +222,7 @@ static void i2s_rx_task_start_up(void)
 
     atomic_store(&rx_stop_requested, false);
 
-    BaseType_t result = xTaskCreate(task__i2s_rx, "i2s_rx_task", 4096, NULL, 5, &s_bt_i2s_rx_task_handle);
+    BaseType_t result = xTaskCreate(rx_task, "i2s_rx_task", 4096, NULL, 5, &rx_task_handle);
     configASSERT(result == pdPASS);
 }
 
@@ -247,7 +249,7 @@ static void i2s_tx_task_start_up(void)
 
 static void i2s_rx_task_shut_down(void)
 {
-    if (s_bt_i2s_rx_task_handle == NULL)
+    if (rx_task_handle == NULL)
     {
         return;
     }
@@ -260,7 +262,7 @@ static void i2s_rx_task_shut_down(void)
 
     configASSERT(stopped == pdTRUE);
 
-    s_bt_i2s_rx_task_handle = NULL;
+    rx_task_handle = NULL;
 
     vSemaphoreDelete(rx_stop_acknowledge);
     rx_stop_acknowledge = NULL;

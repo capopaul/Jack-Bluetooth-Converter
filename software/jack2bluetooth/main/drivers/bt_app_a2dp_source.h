@@ -33,7 +33,7 @@ enum
  * This starts the Bluetooth application task and schedules initialization of
  * GAP discovery, AVRCP, A2DP, stream endpoints, and the media state machine.
  */
-esp_err_t bt_app_a2dp_source_start(void);
+void bt_app_a2dp_source_start(void);
 
 void bt_app_a2dp_source_connect(const uint8_t *address);
 

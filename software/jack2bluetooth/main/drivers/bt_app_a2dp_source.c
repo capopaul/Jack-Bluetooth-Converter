@@ -82,22 +82,22 @@ static void register_a2dp_source_callback_function(uint16_t event, void *p_param
 static void bt_av_hdl_avrc_ct_evt(uint16_t event, void *p_param);
 
 /* callback function for A2DP source */
-static void bt_app_a2d_cb(esp_a2d_cb_event_t event, esp_a2d_cb_param_t *param);
+static void a2dp_cb_1(esp_a2d_cb_event_t event, esp_a2d_cb_param_t *param);
 
 /* callback function for AVRCP controller */
-static void bt_app_rc_ct_cb(esp_avrc_ct_cb_event_t event, esp_avrc_ct_cb_param_t *param);
+static void avrcp_controller_cb(esp_avrc_ct_cb_event_t event, esp_avrc_ct_cb_param_t *param);
 
 /* handler for heart beat timer */
 static void bt_app_a2d_heart_beat(TimerHandle_t arg);
 
 /* A2DP application state machine */
-static void bt_app_av_sm_hdlr(uint16_t event, void *param);
+static void a2dp_cb_2(uint16_t event, void *param);
 
 /* A2DP application state machine handler for each state */
-static void bt_app_av_state_unconnected_hdlr(uint16_t event, void *param);
-static void bt_app_av_state_connecting_hdlr(uint16_t event, void *param);
-static void bt_app_av_state_connected_hdlr(uint16_t event, void *param);
-static void bt_app_av_state_disconnecting_hdlr(uint16_t event, void *param);
+static void handler_unconnected(uint16_t event, void *param);
+static void handler_connecting(uint16_t event, void *param);
+static void handler_connected(uint16_t event, void *param);
+static void handler_disconnected(uint16_t event, void *param);
 
 /*********************************
  * STATIC VARIABLE DEFINITIONS
@@ -197,6 +197,7 @@ static void bt_app_register_a2dp_src_seps(void)
     }
 }
 
+// This function is called by task : "bt_app"
 static void register_a2dp_source_callback_function(uint16_t event, void *p_param)
 {
     // both parameters : event and p_param are ignored.
@@ -208,7 +209,7 @@ static void register_a2dp_source_callback_function(uint16_t event, void *p_param
     {
         ESP_LOGE(BT_A2DP, "esp_avrc_ct_init failed with code %x", err);
     }
-    err = esp_avrc_ct_register_callback(bt_app_rc_ct_cb);
+    err = esp_avrc_ct_register_callback(avrcp_controller_cb);
     if (err != ESP_OK)
     {
         ESP_LOGE(BT_A2DP, "esp_avrc_ct_register_callback failed with code %x", err);
@@ -219,11 +220,15 @@ static void register_a2dp_source_callback_function(uint16_t event, void *p_param
     {
         ESP_LOGE(BT_A2DP, "esp_a2d_source_init failed with code %x", err);
     }
-    err = esp_a2d_register_callback(&bt_app_a2d_cb);
+    err = esp_a2d_register_callback(a2dp_cb_1);
     if (err != ESP_OK)
     {
         ESP_LOGE(BT_A2DP, "esp_a2d_register_callback failed with code %x", err);
     }
+
+    //
+    // This has not much to do with A2DP source
+    //
 
     /* Avoid the state error of s_a2d_state caused by the connection initiated by the peer device. */
     err = esp_bt_gap_set_scan_mode(ESP_BT_NON_CONNECTABLE, ESP_BT_NON_DISCOVERABLE);
@@ -250,10 +255,10 @@ static void register_a2dp_source_callback_function(uint16_t event, void *p_param
     } while (0);
 }
 
-// When the HW call this cb function because a new a2dp event is available,
-// This task create a message in my own bluetooth queue.
+// this function is called by task : "BTC_TASK"
 // The processing is not done here to keep it fast.
-static void bt_app_a2d_cb(esp_a2d_cb_event_t event, esp_a2d_cb_param_t *param)
+// a message a created to the task "bt_app"
+static void a2dp_cb_1(esp_a2d_cb_event_t event, esp_a2d_cb_param_t *param)
 {
     if (event == ESP_A2D_PROF_STATE_EVT)
     {
@@ -270,19 +275,13 @@ static void bt_app_a2d_cb(esp_a2d_cb_event_t event, esp_a2d_cb_param_t *param)
             bt_app_register_a2dp_src_seps();
         }
     }
-    bt_app_work_dispatch(bt_app_av_sm_hdlr, event, param, sizeof(esp_a2d_cb_param_t), NULL, NULL);
+    bt_app_work_dispatch(a2dp_cb_2, event, param, sizeof(esp_a2d_cb_param_t), NULL, NULL);
 }
 
-static void bt_app_a2d_heart_beat(TimerHandle_t arg)
+// this function is called by task "bt_app"
+static void a2dp_cb_2(uint16_t event, void *param)
 {
-    bt_app_work_dispatch(bt_app_av_sm_hdlr, BT_APP_HEART_BEAT_EVT, NULL, 0, NULL, NULL);
-}
-
-static void bt_app_av_sm_hdlr(uint16_t event, void *param)
-{
-    ESP_LOGI(BT_A2DP, "%s state: %d, event: 0x%x", __func__, s_a2d_state, event);
-
-    /* Inside bt_app_av_sm_hdlr(), before the existing switch. */
+    /* Inside a2dp_cb_2(), before the existing switch. */
 
     if (s_stop_state != SOURCE_STOP_NONE)
     {
@@ -313,30 +312,33 @@ static void bt_app_av_sm_hdlr(uint16_t event, void *param)
     switch (s_a2d_state)
     {
     case APP_AV_STATE_DISCOVERING:
+        break;
     case APP_AV_STATE_DISCOVERED:
         break;
     case APP_AV_STATE_UNCONNECTED:
-        ESP_LOGW(BT_A2DP, "APP_AV_STATE_UNCONNECTED");
-        bt_app_av_state_unconnected_hdlr(event, param);
+        handler_unconnected(event, param);
         break;
     case APP_AV_STATE_CONNECTING:
-        ESP_LOGW(BT_A2DP, "CONNECTING");
-        bt_app_av_state_connecting_hdlr(event, param);
+        handler_connecting(event, param);
         break;
     case APP_AV_STATE_CONNECTED:
-        ESP_LOGW(BT_A2DP, "CONNECTED");
-        bt_app_av_state_connected_hdlr(event, param);
+        handler_connected(event, param);
         break;
     case APP_AV_STATE_DISCONNECTING:
-        bt_app_av_state_disconnecting_hdlr(event, param);
+        handler_disconnected(event, param);
         break;
     default:
-        ESP_LOGE(BT_A2DP, "%s invalid state: %d", __func__, s_a2d_state);
+        ESP_LOGW(BT_A2DP, "%s invalid state: %d", __func__, s_a2d_state);
         break;
     }
 }
 
-static void bt_app_av_state_unconnected_hdlr(uint16_t event, void *param)
+static void bt_app_a2d_heart_beat(TimerHandle_t arg)
+{
+    bt_app_work_dispatch(a2dp_cb_2, BT_APP_HEART_BEAT_EVT, NULL, 0, NULL, NULL);
+}
+
+static void handler_unconnected(uint16_t event, void *param)
 {
     esp_a2d_cb_param_t *a2d = NULL;
     /* handle the events of interest in unconnected state */
@@ -371,7 +373,7 @@ static void bt_app_av_state_unconnected_hdlr(uint16_t event, void *param)
     }
 }
 
-static void bt_app_av_state_connecting_hdlr(uint16_t event, void *param)
+static void handler_connecting(uint16_t event, void *param)
 {
     esp_a2d_cb_param_t *a2d = NULL;
 
@@ -462,7 +464,7 @@ static void bt_app_av_state_connecting_hdlr(uint16_t event, void *param)
         ESP_LOGI(BT_A2DP, "%s all sink caps conn_hdl=%u sep_num=%u", __func__,
                  (unsigned)a2d->a2d_report_snk_all_codec_caps_stat.conn_hdl, (unsigned)n);
         // it is not possible to print the codec here because the memory from a2d.a2d_report_snk_all_codec_caps_stat.sep_mcc has been erased.
-        // but it was possible to print it inside bt_app_a2d_cb
+        // but it was possible to print it inside a2dp_cb_1
         // and it reported:
         // W (9916) BT_APPL: REMOTE SEP: index=0 seid=3 in_use=0 tsep=1 expected_tsep=1 media_type=0 expected_media_type=0
         // W (9976) BT_APPL: BOSE SEP: codec=2 seid=3 index=0 caps=08 00 02 c0 ff 8c 82 ee 00 b8
@@ -472,10 +474,10 @@ static void bt_app_av_state_connecting_hdlr(uint16_t event, void *param)
         // D (9986) BT_APP_CORE: bt_app_task_handler, signal: 0x1, event: 0xc
 
         // W (9986) BT_APPL: REMOTE SEP: index=1 seid=51 in_use=0 tsep=0 expected_tsep=1 media_type=0 expected_media_type=0
-        // I (9986) BT_AV: bt_app_av_sm_hdlr state: 4, event: 0xc
+        // I (9986) BT_AV: a2dp_cb_2 state: 4, event: 0xc
         // W (10006) BT_AV: CONNECTING
         // W (10006) BT_AV: ESP_A2D_REPORT_SNK_ALL_CODEC_CAPS_EVT
-        // I (10016) BT_AV: bt_app_av_state_connecting_hdlr all sink caps conn_hdl=65 sep_num=1
+        // I (10016) BT_AV: handler_connecting all sink caps conn_hdl=65 sep_num=1
         // W (10036) BT_APPL: bta_dm_act no entry for connected service cbs
         // W (10036) BT_BTC: BTA_AV_OPEN_EVT::FAILED status: 3
         break;
@@ -574,7 +576,7 @@ static void bt_app_av_media_proc(uint16_t event, void *param)
     }
 }
 
-static void bt_app_av_state_connected_hdlr(uint16_t event, void *param)
+static void handler_connected(uint16_t event, void *param)
 {
     esp_a2d_cb_param_t *a2d = NULL;
 
@@ -691,7 +693,7 @@ static void bt_app_av_state_connected_hdlr(uint16_t event, void *param)
     }
 }
 
-static void bt_app_av_state_disconnecting_hdlr(uint16_t event, void *param)
+static void handler_disconnected(uint16_t event, void *param)
 {
     esp_a2d_cb_param_t *a2d = NULL;
 
@@ -730,8 +732,9 @@ static void bt_app_av_state_disconnecting_hdlr(uint16_t event, void *param)
     }
 }
 
-/* callback function for AVRCP controller */
-static void bt_app_rc_ct_cb(esp_avrc_ct_cb_event_t event, esp_avrc_ct_cb_param_t *param)
+// callback function for AVRCP controller
+// this function is called by task " BTC_TASK"
+static void avrcp_controller_cb(esp_avrc_ct_cb_event_t event, esp_avrc_ct_cb_param_t *param)
 {
     switch (event)
     {
@@ -906,9 +909,9 @@ static void request_source_shutdown(uint16_t event, void *param)
     //     ↓ requests disconnection
     // Bluetooth stack reports a connection-state event
     //     ↓
-    // bt_app_a2d_cb()
+    // a2dp_cb_1()
     //     ↓ queues the event
-    // bt_app_av_sm_hdlr()
+    // a2dp_cb_2()
     //     ↓ selects a handler based on s_a2d_state
 }
 
@@ -916,7 +919,7 @@ static void request_source_shutdown(uint16_t event, void *param)
  * EXTERNAL FUNCTION DECLARATIONS
  *******************************/
 
-esp_err_t bt_app_a2dp_source_start(void)
+void bt_app_a2dp_source_start(void)
 {
     if (s_source_stopped == NULL)
     {
@@ -928,10 +931,8 @@ esp_err_t bt_app_a2dp_source_start(void)
     {
         ESP_LOGE(BT_A2DP, "failed to dispatch Bluetooth stack initialization");
         bt_app_task_shut_down();
-        return ESP_FAIL;
+        abort();
     }
-
-    return ESP_OK;
 }
 
 void bt_app_a2dp_source_connect(const uint8_t *address)

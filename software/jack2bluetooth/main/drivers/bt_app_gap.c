@@ -3,7 +3,6 @@
 #include "esp_gap_bt_api.h"
 
 #include "bt_app_gap.h"
-#include "bt_app_a2dp_source.h"
 #include "bt_app_core.h"
 
 #define GAP_TAG "BT_APP_GAP"
@@ -13,11 +12,27 @@
 
 static const char remote_device_name[] = "Bose-Paul-2";
 
-static esp_bd_addr_t discovered_address = {0};               /* Bluetooth Device Address of peer device*/
-static uint8_t s_peer_bdname[ESP_BT_GAP_MAX_BDNAME_LEN + 1]; /* Bluetooth Device Name of peer device*/
+static esp_bd_addr_t verified_address = {0}; /* Bluetooth Device Address of peer device*/
+
+static bool discovery_running = false;                      // True when discovery is running
+static bool target_found = false;                           // True when a device matching remote_device_name is found.
+static bt_app_gap_device_found_cb_t device_found_cb = NULL; // Function to use when a device is found
 
 /********************************
  * STATIC FUNCTION DECLARATIONS
+ *******************************/
+
+static char *bda2str(esp_bd_addr_t bda, char *str, size_t size);
+static bool get_name_from_eir(uint8_t *eir, uint8_t *bdname, uint8_t *bdname_len);
+static bool discovery_result_matches_target(esp_bt_gap_cb_param_t *param);
+
+static void gap_cb_1(esp_bt_gap_cb_event_t event, esp_bt_gap_cb_param_t *param);
+static void gap_cb_2(uint16_t event, void *p_param);
+
+static void register_gap_callback_function(uint16_t event, void *p_param);
+
+/********************************
+ * STATIC FUNCTION DEFINITIONS
  *******************************/
 
 /* utils for transfer BLuetooth Deveice Address into string form */
@@ -72,7 +87,8 @@ static bool get_name_from_eir(uint8_t *eir, uint8_t *bdname, uint8_t *bdname_len
     return false;
 }
 
-static void filter_inquiry_scan_result(esp_bt_gap_cb_param_t *param)
+// this function is executed by the task: "BTC_TASK"
+static bool discovery_result_matches_target(esp_bt_gap_cb_param_t *param)
 {
     char bda_str[18];
     uint32_t cod = 0;    /* class of device */
@@ -108,36 +124,90 @@ static void filter_inquiry_scan_result(esp_bt_gap_cb_param_t *param)
     if (!esp_bt_gap_is_valid_cod(cod) ||
         !(esp_bt_gap_get_cod_srvc(cod) & ESP_BT_COD_SRVC_RENDERING))
     {
-        return;
+        return false;
     }
 
     /* search for target device in its Extended Inqury Response */
-    if (eir)
+    uint8_t peer_name[ESP_BT_GAP_MAX_BDNAME_LEN + 1] = {0};
+
+    if (eir &&
+        get_name_from_eir(eir, peer_name, NULL) &&
+        strcmp((const char *)peer_name, remote_device_name) == 0)
     {
-        get_name_from_eir(eir, s_peer_bdname, NULL);
-        if (strcmp((char *)s_peer_bdname, remote_device_name) == 0)
-        {
-            ESP_LOGI(GAP_TAG, "Found a target device, address %s, name %s", bda_str, s_peer_bdname);
-            bt_app_a2dp_source_set_state(APP_AV_STATE_DISCOVERED);
-            memcpy(discovered_address, param->disc_res.bda, sizeof(discovered_address));
-            ESP_LOGI(GAP_TAG, "Cancel device discovery ...");
-            esp_bt_gap_cancel_discovery();
-        }
+        ESP_LOGI(GAP_TAG, "Found target: %s, name %s",
+                 bda_str, (const char *)peer_name);
+        return true;
     }
+
+    return false;
 }
 
 // this function is executed by the task: "BTC_TASK"
-static void gap_cb(esp_bt_gap_cb_event_t event, esp_bt_gap_cb_param_t *param)
+static void gap_cb_1(esp_bt_gap_cb_event_t event, esp_bt_gap_cb_param_t *param)
 {
     switch (event)
     {
     /* when device discovered a result, this event comes */
     case ESP_BT_GAP_DISC_RES_EVT:
     {
-        if (bt_app_a2dp_source_get_state() == APP_AV_STATE_DISCOVERING)
+        // This event needs special handling because param contains a pointer to a list.
+        // struct disc_res_param {
+        //     esp_bd_addr_t bda;             /*!< remote bluetooth device address*/
+        //     int num_prop;                  /*!< number of properties got */
+        //     esp_bt_gap_dev_prop_t *prop;   /*!< properties discovered from the new device */
+        // } disc_res;
+
+        esp_bt_gap_cb_param_t param_copy = *param;
+
+        if (discovery_result_matches_target(param))
         {
-            filter_inquiry_scan_result(param);
+            param_copy.disc_res.prop = NULL;
+            param_copy.disc_res.num_prop = 0;
+
+            if (!bt_app_work_dispatch(gap_cb_2, event, &param_copy, sizeof(esp_bt_gap_cb_param_t), NULL, NULL))
+            {
+                ESP_LOGE(GAP_TAG, "dispatch failed.");
+            }
         }
+
+        break;
+    }
+    default:
+    {
+
+        if (!bt_app_work_dispatch(gap_cb_2, event, param, sizeof(esp_bt_gap_cb_param_t), NULL, NULL))
+        {
+            ESP_LOGE(GAP_TAG, "dispatch failed.");
+        }
+        break;
+    }
+    }
+}
+
+// this function is executed by the task: "bt_app"
+static void gap_cb_2(uint16_t event, void *p_param)
+{
+    esp_bt_gap_cb_param_t *param = (esp_bt_gap_cb_param_t *)p_param;
+
+    switch (event)
+    {
+    /* when device discovered a result, this event comes */
+    case ESP_BT_GAP_DISC_RES_EVT:
+    {
+        if (target_found || !discovery_running)
+        {
+            break;
+        }
+        target_found = true;
+        memcpy(verified_address, param->disc_res.bda, sizeof(verified_address));
+
+        esp_err_t err = esp_bt_gap_cancel_discovery();
+        if (err != ESP_OK)
+        {
+            ESP_LOGE(GAP_TAG, "Cancel discovery failed: %s",
+                     esp_err_to_name(err));
+        }
+
         break;
     }
     /* when discovery state changed, this event comes */
@@ -145,24 +215,32 @@ static void gap_cb(esp_bt_gap_cb_event_t event, esp_bt_gap_cb_param_t *param)
     {
         if (param->disc_st_chg.state == ESP_BT_GAP_DISCOVERY_STOPPED)
         {
-            if (bt_app_a2dp_source_get_state() == APP_AV_STATE_DISCOVERED)
+            if (target_found)
             {
-                bt_app_a2dp_source_set_state(APP_AV_STATE_CONNECTING);
-                ESP_LOGI(GAP_TAG, "Device discovery stopped.");
-                ESP_LOGI(GAP_TAG, "a2dp connecting to peer: %s", s_peer_bdname);
-                /* connect source to peer device specified by Bluetooth Device Address */
+                bt_app_gap_device_found_cb_t callback = device_found_cb;
 
-                bt_app_a2dp_source_connect(discovered_address);
+                device_found_cb = NULL;
+                discovery_running = false;
+
+                if (callback != NULL)
+                {
+                    callback(verified_address);
+                }
             }
             else
             {
-                /* not discovered, continue to discover */
-                ESP_LOGI(GAP_TAG, "Device discovery failed, continue to discover...");
-                esp_bt_gap_start_discovery(ESP_BT_INQ_MODE_GENERAL_INQUIRY, 10, 0);
+                esp_err_t err = esp_bt_gap_start_discovery(ESP_BT_INQ_MODE_GENERAL_INQUIRY, 10, 0);
+                if (err != ESP_OK)
+                {
+                    ESP_LOGE(GAP_TAG, "esp_bt_gap_start_discovery failed with code %x", err);
+                    discovery_running = false;
+                    device_found_cb = NULL;
+                }
             }
         }
         else if (param->disc_st_chg.state == ESP_BT_GAP_DISCOVERY_STARTED)
         {
+            target_found = false;
             ESP_LOGI(GAP_TAG, "Discovery started.");
         }
         break;
@@ -286,7 +364,7 @@ static void register_gap_callback_function(uint16_t event, void *p_param)
     }
 
     // Register the GAP (Generic Access Profile) callback function (handles authentication, encryption, etc.)
-    err = esp_bt_gap_register_callback(gap_cb);
+    err = esp_bt_gap_register_callback(gap_cb_1);
     if (err != ESP_OK)
     {
         ESP_LOGE(GAP_TAG, "esp_bt_gap_register_callback failed with code %x", err);
@@ -306,4 +384,22 @@ void bt_app_gap_start(void)
         bt_app_task_shut_down();
         abort();
     }
+}
+
+esp_err_t bt_app_gap_start_discovery(bt_app_gap_device_found_cb_t cb_ptr)
+{
+    if (!discovery_running && cb_ptr != NULL)
+    {
+        device_found_cb = cb_ptr;
+        discovery_running = true;
+        esp_err_t err = esp_bt_gap_start_discovery(ESP_BT_INQ_MODE_GENERAL_INQUIRY, 10, 0);
+        if (err != ESP_OK)
+        {
+            ESP_LOGE(GAP_TAG, "esp_bt_gap_start_discovery failed with code %x", err);
+            discovery_running = false;
+            device_found_cb = NULL;
+        }
+        return err;
+    }
+    return ESP_ERR_INVALID_STATE;
 }

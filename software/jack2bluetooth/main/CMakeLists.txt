@@ -8,11 +8,15 @@ idf_component_register(SRCS "main.c"
         "./drivers/bt_app_core.c"
         "./drivers/bt_app_gap.c"
         "./drivers/button.c"
+        "./drivers/decode_image.c"
         "./drivers/decode_task.c"
         "./drivers/i2c.c"
         "./drivers/i2s.c"
-        "./drivers/sbc_sink.c"
         "./drivers/io_expander.c"
         "./drivers/nvs.c"
-        PRIV_REQUIRES bt nvs_flash esp_driver_i2c esp_driver_gpio esp_driver_i2s console esp_ringbuf espressif__esp_audio_codec
-        INCLUDE_DIRS "." "./drivers/")
+        "./drivers/pretty_effect.c"
+        "./drivers/sbc_sink.c"
+        "./drivers/spi_master_example.c"
+        PRIV_REQUIRES bt nvs_flash esp_driver_i2c esp_driver_spi esp_driver_gpio esp_driver_i2s console esp_ringbuf espressif__esp_audio_codec
+        INCLUDE_DIRS "." "./drivers/"
+        EMBED_FILES "./drivers/image.jpg")

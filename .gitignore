@@ -17,6 +17,7 @@ software/a2dp_sink/
 software/empty/build/
 software/jack2bluetooth/managed_components/**
 software/jack2bluetooth/build/**
+software/lcd/**
 
 doc/standards
 

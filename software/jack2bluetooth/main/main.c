@@ -20,6 +20,9 @@
 #include "driver/i2c_master.h"
 #include "./drivers/i2c.h"
 
+// Include spi
+#include "./driver/spi_master_example.h"
+
 // Include I2S
 #include "./drivers/i2s.h"
 
@@ -54,83 +57,95 @@ void app_main(void)
     io_expander_set(IO_EXPANDER_LED_DAC_MASK);
 
     ///////////////////////
-    //    Audio Codec    //
+    //    LCD Screen     //
     ///////////////////////
 
-    audio_codec_reset();
+    // 1.69 Inch 1.69" Color TFT Display Module HD IPS LCD LED Screen 240X280 SPI Interface ST7789 Controller For Arduino
 
-    audio_codec_configure_pll();
+    // power on the screen
+    io_expander_clear(IO_EXPANDER_LCD_VCC_CTRL_MASK);
+
+    // run spi demo
+    spi_init();
 
     ///////////////////////
-    //     Bluetooth     //
-    ///////////////////////
+    // //    Audio Codec    //
+    // ///////////////////////
 
-    encode_task_init();
+    // audio_codec_reset();
 
-    bt_app_init();
+    // audio_codec_configure_pll();
 
-    bt_app_gap_start();
+    // ///////////////////////
+    // //     Bluetooth     //
+    // ///////////////////////
 
-    // check switch status.
-    // during this phase, switch must not change state
-    if (is_direction_j2b())
-    {
-        printf("=====================\n");
-        printf("Jack -----> Bluetooth\n");
-        printf("=====================\n");
+    // encode_task_init();
 
-        // Init I2S
-        // This should be moved after bluetooth initialized.
-        // Because i2s should be set according to bluetooth
-        i2s_driver_install(I2S_MODE_RX);
-        audio_codec_configure_i2s_settings(FS_44_1HZ);
+    // bt_app_init();
 
-        // Configure Routing
-        audio_codec_connect_line2_to_adc();
+    // bt_app_gap_start();
 
-        // Remove ADC DC offset without cutting audible bass.
-        audio_codec_configure_adc_high_pass();
+    // // check switch status.
+    // // during this phase, switch must not change state
+    // if (is_direction_j2b())
+    // {
+    //     printf("=====================\n");
+    //     printf("Jack -----> Bluetooth\n");
+    //     printf("=====================\n");
 
-        audio_codec_power_up_adc();
+    //     // Init I2S
+    //     // This should be moved after bluetooth initialized.
+    //     // Because i2s should be set according to bluetooth
+    //     i2s_driver_install(I2S_MODE_RX);
+    //     audio_codec_configure_i2s_settings(FS_44_1HZ);
 
-        audio_codec_unmute_adc();
+    //     // Configure Routing
+    //     audio_codec_connect_line2_to_adc();
 
-        bt_app_a2dp_source_start();
-    }
-    else
-    {
-        printf("=====================\n");
-        printf("Bluetooth -----> Jack\n");
-        printf("=====================\n");
+    //     // Remove ADC DC offset without cutting audible bass.
+    //     audio_codec_configure_adc_high_pass();
 
-        // Init I2S
-        i2s_driver_install(I2S_MODE_TX);
-        audio_codec_configure_i2s_settings(FS_44_1HZ);
+    //     audio_codec_power_up_adc();
 
-        // Configure Routing
-        audio_codec_connect_input_to_dac();
+    //     audio_codec_unmute_adc();
 
-        audio_codec_configure_sink_topology();
+    //     bt_app_a2dp_source_start();
+    // }
+    // else
+    // {
+    //     printf("=====================\n");
+    //     printf("Bluetooth -----> Jack\n");
+    //     printf("=====================\n");
 
-        audio_codec_power_up_dac();
+    //     // Init I2S
+    //     i2s_driver_install(I2S_MODE_TX);
+    //     audio_codec_configure_i2s_settings(FS_44_1HZ);
 
-        audio_codec_power_up_headphone();
+    //     // Configure Routing
+    //     audio_codec_connect_input_to_dac();
 
-        audio_codec_unmute_dac();
+    //     audio_codec_configure_sink_topology();
 
-        audio_codec_unmute_headphone();
+    //     audio_codec_power_up_dac();
 
-        // Status
+    //     audio_codec_power_up_headphone();
 
-        // Register 94 - Module Power Status Register
-        is_expected(CODEC_TAG, 94, i2c_get(CODEC_ADDR, 94), 0b11000110);
+    //     audio_codec_unmute_dac();
 
-        // Register 95 - Output driver short circuit detection status register
-        is_expected(CODEC_TAG, 95, i2c_get(CODEC_ADDR, 95), 0b00000000);
+    //     audio_codec_unmute_headphone();
 
-        // Register 96 - Sticky Interrupt Flags register
-        is_expected(CODEC_TAG, 96, i2c_get(CODEC_ADDR, 96), 0b00000000);
+    //     // Status
 
-        ESP_ERROR_CHECK(bt_app_a2dp_sink_start());
-    }
+    //     // Register 94 - Module Power Status Register
+    //     is_expected(CODEC_TAG, 94, i2c_get(CODEC_ADDR, 94), 0b11000110);
+
+    //     // Register 95 - Output driver short circuit detection status register
+    //     is_expected(CODEC_TAG, 95, i2c_get(CODEC_ADDR, 95), 0b00000000);
+
+    //     // Register 96 - Sticky Interrupt Flags register
+    //     is_expected(CODEC_TAG, 96, i2c_get(CODEC_ADDR, 96), 0b00000000);
+
+    //     ESP_ERROR_CHECK(bt_app_a2dp_sink_start());
+    // }
 }

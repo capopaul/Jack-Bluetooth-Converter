@@ -214,6 +214,17 @@ void audio_codec_power_up_headphone(void)
     i2c_set(CODEC_ADDR, 65, 0b00000111);
 }
 
+void audio_codec_mute_adc(void)
+{
+    // Set D7 in both ADC PGA gain registers, preserving D6-0 (gain).
+    uint8_t left = i2c_get(CODEC_ADDR, 15) | 0x80;
+    uint8_t right = i2c_get(CODEC_ADDR, 16) | 0x80;
+    i2c_set(CODEC_ADDR, 15, left);
+    is_expected(CODEC_TAG, 15, i2c_get(CODEC_ADDR, 15), left);
+    i2c_set(CODEC_ADDR, 16, right);
+    is_expected(CODEC_TAG, 16, i2c_get(CODEC_ADDR, 16), right);
+}
+
 void audio_codec_unmute_adc()
 {
     // Register 15 - Left-ADC PGA Gain Control Register

@@ -39,6 +39,8 @@ void audio_codec_power_up_dac(void);
 
 void audio_codec_power_up_headphone(void);
 
+void audio_codec_mute_adc(void);
+
 void audio_codec_unmute_adc(void);
 
 void audio_codec_unmute_dac(void);

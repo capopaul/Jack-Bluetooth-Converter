@@ -1,5 +1,7 @@
 
 #include "button.h"
+#include "audio_codec.h"
+#include <stdbool.h>
 
 #include <esp_system.h>
 
@@ -12,9 +14,23 @@
  * EXTERNAL FUNCTION DECLARATIONS
  *******************************/
 
+static bool adc_muted = false;
+
 void on_enter_pressed(void)
 {
     ESP_LOGI(BUTTON_TAG, "Button ENTER pushed");
+    if (!adc_muted)
+    {
+        audio_codec_mute_adc();
+        adc_muted = true;
+        ESP_LOGI(BUTTON_TAG, "ADC MUTE");
+    }
+    else
+    {
+        audio_codec_unmute_adc();
+        adc_muted = false;
+        ESP_LOGI(BUTTON_TAG, "ADC UNMUTE");
+    }
 }
 
 void on_back_pressed(void)

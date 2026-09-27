@@ -1,4 +1,4 @@
-<mxfile host="Electron" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/28.0.6 Chrome/138.0.7204.100 Electron/37.2.3 Safari/537.36" version="28.0.6" pages="3">
+<mxfile host="Electron" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/28.0.6 Chrome/138.0.7204.100 Electron/37.2.3 Safari/537.36" version="28.0.6" pages="5">
   <diagram id="1" name="1 | Task creation and resource ownership">
     <mxGraphModel dx="2786" dy="1319" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1860" pageHeight="2400" math="0" shadow="0">
       <root>
@@ -683,4 +683,215 @@
       </root>
     </mxGraphModel>
   </diagram>
+<diagram id="a2dp-source-state-flow" name="A2DP | Source state machine">
+  <mxGraphModel grid="1" gridSize="10" page="1" pageScale="1" pageWidth="1500" pageHeight="1500">
+    <root>
+      <mxCell id="0" />
+      <mxCell id="1" parent="0" />
+      <mxCell id="title" value="A2DP source | Connection state machine" style="rounded=1;whiteSpace=wrap;html=0;fontSize=17;spacing=12;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+        <mxGeometry as="geometry" x="50" y="30" width="1400" height="65" />
+      </mxCell>
+      <mxCell id="intro" value="Events on the arrows trigger state changes. CONNECTED means the A2DP link is established; audio streaming has a separate media state machine." style="rounded=1;whiteSpace=wrap;html=0;fontSize=17;spacing=12;fillColor=#f5f5f5;strokeColor=#6c8ebf;" vertex="1" parent="1">
+        <mxGeometry as="geometry" x="50" y="115" width="1400" height="75" />
+      </mxCell>
+      <mxCell id="idle" value="IDLE&#10;Initial state" style="rounded=1;whiteSpace=wrap;html=0;fontSize=17;spacing=12;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+        <mxGeometry as="geometry" x="450" y="240" width="310" height="90" />
+      </mxCell>
+      <mxCell id="search" value="DISCOVERING&#10;Searching for the target device" style="rounded=1;whiteSpace=wrap;html=0;fontSize=17;spacing=12;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+        <mxGeometry as="geometry" x="450" y="430" width="310" height="90" />
+      </mxCell>
+      <mxCell id="found" value="DISCOVERED&#10;Address saved; waiting for discovery to stop" style="rounded=1;whiteSpace=wrap;html=0;fontSize=17;spacing=12;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+        <mxGeometry as="geometry" x="450" y="630" width="310" height="90" />
+      </mxCell>
+      <mxCell id="connecting" value="CONNECTING&#10;Waiting for connection result" style="rounded=1;whiteSpace=wrap;html=0;fontSize=17;spacing=12;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+        <mxGeometry as="geometry" x="450" y="830" width="310" height="90" />
+      </mxCell>
+      <mxCell id="unconnected" value="UNCONNECTED&#10;Waiting to retry saved address" style="rounded=1;whiteSpace=wrap;html=0;fontSize=17;spacing=12;fillColor=#fff2cc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+        <mxGeometry as="geometry" x="1020" y="830" width="310" height="90" />
+      </mxCell>
+      <mxCell id="connected" value="CONNECTED&#10;A2DP link established" style="rounded=1;whiteSpace=wrap;html=0;fontSize=17;spacing=12;fillColor=#d5e8d4;strokeColor=#6c8ebf;" vertex="1" parent="1">
+        <mxGeometry as="geometry" x="450" y="1120" width="310" height="90" />
+      </mxCell>
+      <mxCell id="disconnecting" value="DISCONNECTING&#10;Waiting for disconnection confirmation" style="rounded=1;whiteSpace=wrap;html=0;fontSize=17;spacing=12;fillColor=#f8cecc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+        <mxGeometry as="geometry" x="1020" y="1120" width="310" height="90" />
+      </mxCell>
+      <mxCell id="edge0" value="Start source" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;fontSize=15;labelBackgroundColor=#ffffff;strokeWidth=2;" edge="1" parent="1" source="idle" target="search">
+        <mxGeometry as="geometry" relative="1" />
+      </mxCell>
+      <mxCell id="edge1" value="Search ends without a match; restart" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;fontSize=15;labelBackgroundColor=#ffffff;strokeWidth=2;exitX=0;exitY=0.7;entryX=0;entryY=0.3;" edge="1" parent="1" source="search" target="search">
+        <mxGeometry as="geometry" relative="1">
+          <Array as="points">
+            <mxPoint x="200" y="493" />
+            <mxPoint x="200" y="380" />
+            <mxPoint x="350" y="380" />
+            <mxPoint x="350" y="457" />
+          </Array>
+        </mxGeometry>
+      </mxCell>
+      <mxCell id="edge2" value="Target device found" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;fontSize=15;labelBackgroundColor=#ffffff;strokeWidth=2;" edge="1" parent="1" source="search" target="found">
+        <mxGeometry as="geometry" relative="1" />
+      </mxCell>
+      <mxCell id="edge3" value="Discovery stops; request connection" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;fontSize=15;labelBackgroundColor=#ffffff;strokeWidth=2;" edge="1" parent="1" source="found" target="connecting">
+        <mxGeometry as="geometry" relative="1" />
+      </mxCell>
+      <mxCell id="edge4" value="Connection succeeds" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;fontSize=15;labelBackgroundColor=#ffffff;strokeWidth=2;" edge="1" parent="1" source="connecting" target="connected">
+        <mxGeometry as="geometry" relative="1" />
+      </mxCell>
+      <mxCell id="edge5" value="Disconnected event&#10;or 2 heartbeats" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;fontSize=15;labelBackgroundColor=#ffffff;strokeWidth=2;exitX=1;exitY=0.2;entryX=0;entryY=0.2;" edge="1" parent="1" source="connecting" target="unconnected">
+        <mxGeometry as="geometry" relative="1" />
+      </mxCell>
+      <mxCell id="edge6" value="Next heartbeat; retry" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;fontSize=15;labelBackgroundColor=#ffffff;strokeWidth=2;exitX=0;exitY=0.85;entryX=1;entryY=0.85;" edge="1" parent="1" source="unconnected" target="connecting">
+        <mxGeometry as="geometry" relative="1">
+          <Array as="points">
+            <mxPoint x="960" y="906" />
+            <mxPoint x="960" y="1000" />
+            <mxPoint x="820" y="1000" />
+            <mxPoint x="820" y="906" />
+          </Array>
+        </mxGeometry>
+      </mxCell>
+      <mxCell id="edge7" value="Connection lost" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;fontSize=15;labelBackgroundColor=#ffffff;strokeWidth=2;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="connected" target="unconnected">
+        <mxGeometry as="geometry" relative="1">
+          <Array as="points">
+            <mxPoint x="340" y="1165" />
+            <mxPoint x="340" y="1320" />
+            <mxPoint x="1400" y="1320" />
+            <mxPoint x="1400" y="875" />
+          </Array>
+        </mxGeometry>
+      </mxCell>
+      <mxCell id="edge8" value="Suspend acknowledged;&#10;request disconnect" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;fontSize=15;labelBackgroundColor=#ffffff;strokeWidth=2;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="connected" target="disconnecting">
+        <mxGeometry as="geometry" relative="1" />
+      </mxCell>
+      <mxCell id="edge9" value="Disconnection confirmed" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;endArrow=block;endFill=1;fontSize=15;labelBackgroundColor=#ffffff;strokeWidth=2;exitX=0.5;exitY=0;entryX=0.5;entryY=1;" edge="1" parent="1" source="disconnecting" target="unconnected">
+        <mxGeometry as="geometry" relative="1" />
+      </mxCell>
+      <mxCell id="note" value="Heartbeat: a local timer event every 10 seconds, driving retries and connection timeout bookkeeping.&#10;When connected with media idle, it checks source readiness to trigger audio startup." style="rounded=1;whiteSpace=wrap;html=0;fontSize=17;spacing=12;fillColor=#f5f5f5;strokeColor=#6c8ebf;" vertex="1" parent="1">
+        <mxGeometry as="geometry" x="50" y="1380" width="1400" height="80" />
+      </mxCell>
+    </root>
+  </mxGraphModel>
+</diagram>
+<diagram id="a2dp-gap-proposed-interface" name="A2DP ↔ GAP | Proposed calls">
+  <mxGraphModel grid="1" gridSize="10" page="1" pageScale="1" pageWidth="1700" pageHeight="1900" arrows="1" connect="1">
+    <root>
+      <mxCell id="0" />
+      <mxCell id="1" parent="0" />
+      <mxCell id="title" value="Proposed interface | A2DP source requests discovery; GAP reports a completed result" style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=24;fontStyle=1;" vertex="1" parent="1">
+        <mxGeometry as="geometry" x="40" y="25" width="1620" height="70" />
+      </mxCell>
+      <mxCell id="scope" value="DESIGN PROPOSAL — expected calls after refactoring. A2DP owns connection state; GAP owns device search.&#10;Rows run top to bottom. Callback execution follows the calling task, not the file where the function is defined." style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#fff2cc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+        <mxGeometry as="geometry" x="40" y="110" width="1620" height="85" />
+      </mxCell>
+      <mxCell id="source" value="bt_app_a2dp_source.c&#10;Connection policy / state" style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+        <mxGeometry as="geometry" x="70" y="220" width="400" height="90" />
+      </mxCell>
+      <mxCell id="lifesource" value="" style="html=0;endArrow=block;endFill=1;strokeWidth=2;fontSize=16;labelBackgroundColor=#ffffff;dashed=1;" edge="1" parent="1">
+        <mxGeometry as="geometry" relative="1">
+          <mxPoint as="sourcePoint" x="270" y="320" />
+          <mxPoint as="targetPoint" x="270" y="1640" />
+        </mxGeometry>
+      </mxCell>
+      <mxCell id="gap" value="bt_app_gap.c&#10;Search and target address" style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#d5e8d4;strokeColor=#6c8ebf;" vertex="1" parent="1">
+        <mxGeometry as="geometry" x="650" y="220" width="400" height="90" />
+      </mxCell>
+      <mxCell id="lifegap" value="" style="html=0;endArrow=block;endFill=1;strokeWidth=2;fontSize=16;labelBackgroundColor=#ffffff;dashed=1;" edge="1" parent="1">
+        <mxGeometry as="geometry" relative="1">
+          <mxPoint as="sourcePoint" x="850" y="320" />
+          <mxPoint as="targetPoint" x="850" y="1640" />
+        </mxGeometry>
+      </mxCell>
+      <mxCell id="sdk" value="ESP-IDF Bluetooth stack&#10;GAP and A2DP APIs" style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#e1d5e7;strokeColor=#6c8ebf;" vertex="1" parent="1">
+        <mxGeometry as="geometry" x="1230" y="220" width="400" height="90" />
+      </mxCell>
+      <mxCell id="lifesdk" value="" style="html=0;endArrow=block;endFill=1;strokeWidth=2;fontSize=16;labelBackgroundColor=#ffffff;dashed=1;" edge="1" parent="1">
+        <mxGeometry as="geometry" relative="1">
+          <mxPoint as="sourcePoint" x="1430" y="320" />
+          <mxPoint as="targetPoint" x="1430" y="1640" />
+        </mxGeometry>
+      </mxCell>
+      <mxCell id="phase1" value="1  |  bt_app task — start a search after local A2DP endpoints are ready" style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#f5f5f5;strokeColor=#6c8ebf;" vertex="1" parent="1">
+        <mxGeometry as="geometry" x="40" y="340" width="1620" height="50" />
+      </mxCell>
+      <mxCell id="state1" value="Set A2DP state = DISCOVERING" style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+        <mxGeometry as="geometry" x="70" y="410" width="400" height="55" />
+      </mxCell>
+      <mxCell id="request" value="bt_app_gap_find_device(name, on_found)" style="html=0;endArrow=block;endFill=1;strokeWidth=2;fontSize=16;labelBackgroundColor=#ffffff;" edge="1" parent="1">
+        <mxGeometry as="geometry" relative="1">
+          <mxPoint as="sourcePoint" x="270" y="505" />
+          <mxPoint as="targetPoint" x="850" y="505" />
+        </mxGeometry>
+      </mxCell>
+      <mxCell id="save" value="Copy name; save callback;&#10;clear GAP target_found flag" style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#d5e8d4;strokeColor=#6c8ebf;" vertex="1" parent="1">
+        <mxGeometry as="geometry" x="650" y="535" width="400" height="65" />
+      </mxCell>
+      <mxCell id="start" value="esp_bt_gap_start_discovery(...)" style="html=0;endArrow=block;endFill=1;strokeWidth=2;fontSize=16;labelBackgroundColor=#ffffff;" edge="1" parent="1">
+        <mxGeometry as="geometry" relative="1">
+          <mxPoint as="sourcePoint" x="850" y="640" />
+          <mxPoint as="targetPoint" x="1430" y="640" />
+        </mxGeometry>
+      </mxCell>
+      <mxCell id="return" value="Return esp_err_t: request accepted or failed" style="html=0;endArrow=block;endFill=1;strokeWidth=2;fontSize=16;labelBackgroundColor=#ffffff;dashed=1;" edge="1" parent="1">
+        <mxGeometry as="geometry" relative="1">
+          <mxPoint as="sourcePoint" x="850" y="700" />
+          <mxPoint as="targetPoint" x="270" y="700" />
+        </mxGeometry>
+      </mxCell>
+      <mxCell id="phase2" value="2  |  BTC_TASK — asynchronous discovery callbacks" style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#f5f5f5;strokeColor=#6c8ebf;" vertex="1" parent="1">
+        <mxGeometry as="geometry" x="40" y="750" width="1620" height="50" />
+      </mxCell>
+      <mxCell id="result" value="gap_cb(ESP_BT_GAP_DISC_RES_EVT, param)" style="html=0;endArrow=block;endFill=1;strokeWidth=2;fontSize=16;labelBackgroundColor=#ffffff;" edge="1" parent="1">
+        <mxGeometry as="geometry" relative="1">
+          <mxPoint as="sourcePoint" x="1430" y="845" />
+          <mxPoint as="targetPoint" x="850" y="845" />
+        </mxGeometry>
+      </mxCell>
+      <mxCell id="match" value="Matching target: copy address;&#10;set GAP target_found = true" style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#d5e8d4;strokeColor=#6c8ebf;" vertex="1" parent="1">
+        <mxGeometry as="geometry" x="650" y="875" width="400" height="65" />
+      </mxCell>
+      <mxCell id="cancel" value="esp_bt_gap_cancel_discovery()" style="html=0;endArrow=block;endFill=1;strokeWidth=2;fontSize=16;labelBackgroundColor=#ffffff;" edge="1" parent="1">
+        <mxGeometry as="geometry" relative="1">
+          <mxPoint as="sourcePoint" x="850" y="980" />
+          <mxPoint as="targetPoint" x="1430" y="980" />
+        </mxGeometry>
+      </mxCell>
+      <mxCell id="stopped" value="gap_cb(DISC_STATE_CHANGED: STOPPED)" style="html=0;endArrow=block;endFill=1;strokeWidth=2;fontSize=16;labelBackgroundColor=#ffffff;" edge="1" parent="1">
+        <mxGeometry as="geometry" relative="1">
+          <mxPoint as="sourcePoint" x="1430" y="1050" />
+          <mxPoint as="targetPoint" x="850" y="1050" />
+        </mxGeometry>
+      </mxCell>
+      <mxCell id="found" value="on_found(saved_address) — still BTC_TASK" style="html=0;endArrow=block;endFill=1;strokeWidth=2;fontSize=16;labelBackgroundColor=#ffffff;" edge="1" parent="1">
+        <mxGeometry as="geometry" relative="1">
+          <mxPoint as="sourcePoint" x="850" y="1120" />
+          <mxPoint as="targetPoint" x="270" y="1120" />
+        </mxGeometry>
+      </mxCell>
+      <mxCell id="bridge" value="A2DP on_found callback:&#10;bt_app_work_dispatch(handle_device_found,&#10;DEVICE_FOUND, address, 6, NULL, NULL)&#10;Copy 6 address bytes into queued message.&#10;Check dispatch result." style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+        <mxGeometry as="geometry" x="60" y="1150" width="460" height="125" />
+      </mxCell>
+      <mxCell id="retry" value="If search stops without a match:&#10;GAP restarts discovery.&#10;Do not report a device yet." style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#fff2cc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+        <mxGeometry as="geometry" x="650" y="1150" width="400" height="100" />
+      </mxCell>
+      <mxCell id="phase3" value="3  |  bt_app task — dequeues DEVICE_FOUND" style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#f5f5f5;strokeColor=#6c8ebf;" vertex="1" parent="1">
+        <mxGeometry as="geometry" x="40" y="1320" width="1620" height="50" />
+      </mxCell>
+      <mxCell id="handle" value="handle_device_found(...):&#10;copy address into A2DP peer storage;&#10;set state = CONNECTING" style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+        <mxGeometry as="geometry" x="70" y="1400" width="400" height="90" />
+      </mxCell>
+      <mxCell id="connect" value="esp_a2d_source_connect(saved_peer_address)" style="html=0;endArrow=block;endFill=1;strokeWidth=2;fontSize=16;labelBackgroundColor=#ffffff;" edge="1" parent="1">
+        <mxGeometry as="geometry" relative="1">
+          <mxPoint as="sourcePoint" x="270" y="1530" />
+          <mxPoint as="targetPoint" x="1430" y="1530" />
+        </mxGeometry>
+      </mxCell>
+      <mxCell id="completion" value="Later: the SDK invokes the A2DP callback in BTC_TASK → callback queues event to bt_app → bt_app sets CONNECTED on success." style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+        <mxGeometry as="geometry" x="40" y="1660" width="1620" height="65" />
+      </mxCell>
+      <mxCell id="rules" value="Interface rules&#10;• GAP never reads or writes the A2DP state and never initiates the A2DP connection.&#10;• Only bt_app changes A2DP state. GAP reports a found device only after discovery stops.&#10;• The callback address is borrowed: copy it before returning. Check API and queue failures.&#10;• A2DP DISCOVERED is removed; GAP keeps a private target_found flag. Heartbeat / retry policy stays in A2DP." style="rounded=1;whiteSpace=wrap;html=0;fontSize=16;spacing=12;fillColor=#f5f5f5;strokeColor=#6c8ebf;" vertex="1" parent="1">
+        <mxGeometry as="geometry" x="40" y="1740" width="1620" height="140" />
+      </mxCell>
+    </root>
+  </mxGraphModel>
+</diagram>
 </mxfile>

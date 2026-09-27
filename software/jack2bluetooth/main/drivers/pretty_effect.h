@@ -17,7 +17,7 @@ extern "C" {
 /**
  * @brief Calculate the effect for a bunch of lines.
  *
- * @param dest Destination for the pixels. Assumed to be LINECT * 320 16-bit pixel values.
+ * @param dest Destination for the pixels. Assumed to be linect * LCD_WIDTH 16-bit pixel values.
  * @param line Starting line of the chunk of lines.
  * @param frame Current frame, used for animation
  * @param linect Amount of lines to calculate

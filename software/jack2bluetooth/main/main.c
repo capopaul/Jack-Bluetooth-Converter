@@ -21,7 +21,7 @@
 #include "./drivers/i2c.h"
 
 // Include spi
-#include "./driver/spi_master_example.h"
+#include "drivers/spi_master_example.h"
 
 // Include I2S
 #include "./drivers/i2s.h"

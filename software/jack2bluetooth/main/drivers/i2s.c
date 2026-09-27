@@ -3,6 +3,7 @@
 
 #include "i2s.h"
 #include "audio_codec.h"
+#include "pcm_capture.h"
 #include "driver/i2s_std.h"
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
@@ -140,8 +141,7 @@ static void rx_task(void *arg)
                 // 32-bit I2S word. Preserve interleaved L, R ordering.
                 pcm[i] = (int16_t)(samples[i] >> 16);
             }
-            // pcm[0..sample_count-1] is ready for the future PCM buffer.
-            // No Bluetooth handoff yet; this block is overwritten next read.
+            pcm_capture_feed(pcm, sample_count, clk_cfg.sample_rate_hz);
             size_t pcm_bytes = sample_count * sizeof(int16_t);
 
             if (pcm_bytes > 0 &&

@@ -1,6 +1,7 @@
 
 #include "button.h"
 #include "audio_codec.h"
+#include "pcm_capture.h"
 #include <stdbool.h>
 
 #include <esp_system.h>
@@ -36,11 +37,13 @@ void on_enter_pressed(void)
 void on_back_pressed(void)
 {
     ESP_LOGI(BUTTON_TAG, "Button BACK pushed");
+    pcm_capture_request(1);
 }
 
 void on_next_pressed(void)
 {
     ESP_LOGI(BUTTON_TAG, "Button NEXT pushed");
+    pcm_capture_request(0);
 }
 
 void on_direction_changed(direction_state new_state)

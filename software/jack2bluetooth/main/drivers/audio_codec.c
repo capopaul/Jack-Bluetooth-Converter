@@ -20,6 +20,10 @@
 #define REG7_DAC_MASK 0b00011110
 #define REG7_FS_MASK 0x80
 
+#define ADC_HPF_N0 0x7FE9
+#define ADC_HPF_N1 0x8017
+#define ADC_HPF_D1 0x7FD1
+
 static uint8_t reg7_value = 0x00;
 
 /********************************
@@ -142,6 +146,59 @@ void audio_codec_connect_line2_to_adc()
     // 1111 0000
     i2c_set(CODEC_ADDR, 18, 0b11110000);
     is_expected(CODEC_TAG, 18, i2c_get(CODEC_ADDR, 18), 0b11110000);
+}
+
+static void audio_codec_write_coefficient(uint8_t msb_register, uint16_t coefficient)
+{
+    uint8_t msb = (uint8_t)(coefficient >> 8);
+    uint8_t lsb = (uint8_t)coefficient;
+
+    i2c_set(CODEC_ADDR, msb_register, msb);
+    is_expected(CODEC_TAG, msb_register,
+                i2c_get(CODEC_ADDR, msb_register), msb);
+    i2c_set(CODEC_ADDR, msb_register + 1, lsb);
+    is_expected(CODEC_TAG, msb_register + 1,
+                i2c_get(CODEC_ADDR, msb_register + 1), lsb);
+}
+
+void audio_codec_configure_adc_high_pass(void)
+{
+    /* First-order 10 Hz HPF at fs=44.1 kHz:
+     * H(z) = N0 * (1 - z^-1) / (32768 - D1 * z^-1)
+     * Coefficients use the codec's signed 16-bit format. The gain is
+     * normalized at Nyquist, so the passband remains at approximately 0 dB.
+     */
+
+    // Page 1 contains the programmable ADC HPF coefficients.
+    i2c_set(CODEC_ADDR, 0, 1);
+    is_expected(CODEC_TAG, 0, i2c_get(CODEC_ADDR, 0), 1);
+
+    // Left ADC: N0 (65-66), N1 (67-68), D1 (69-70).
+    audio_codec_write_coefficient(65, ADC_HPF_N0);
+    audio_codec_write_coefficient(67, ADC_HPF_N1);
+    audio_codec_write_coefficient(69, ADC_HPF_D1);
+
+    // Right ADC: N0 (71-72), N1 (73-74), D1 (75-76).
+    audio_codec_write_coefficient(71, ADC_HPF_N0);
+    audio_codec_write_coefficient(73, ADC_HPF_N1);
+    audio_codec_write_coefficient(75, ADC_HPF_D1);
+
+    // Return to page 0 before accessing the normal control registers.
+    i2c_set(CODEC_ADDR, 0, 0);
+    is_expected(CODEC_TAG, 0, i2c_get(CODEC_ADDR, 0), 0);
+
+    // Register 107 D7/D6: use programmable coefficients on both ADCs.
+    uint8_t reg107 = i2c_get(CODEC_ADDR, 107) & 0x0c;
+    reg107 |= 0xc0;
+    i2c_set(CODEC_ADDR, 107, reg107);
+    is_expected(CODEC_TAG, 107, i2c_get(CODEC_ADDR, 107), reg107);
+
+    // Register 12 D7-D6/D5-D4 = 01: enable left/right ADC HPFs.
+    // When register 107 selects programmable coefficients, the nonzero
+    // setting enables the custom filter rather than the built-in 198 Hz HPF.
+    uint8_t reg12 = (i2c_get(CODEC_ADDR, 12) & 0x0f) | 0x50;
+    i2c_set(CODEC_ADDR, 12, reg12);
+    is_expected(CODEC_TAG, 12, i2c_get(CODEC_ADDR, 12), reg12);
 }
 
 void audio_codec_configure_sink_topology()

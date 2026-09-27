@@ -31,6 +31,9 @@ void audio_codec_connect_input_to_dac(void);
 
 void audio_codec_connect_line2_to_adc(void);
 
+// Enable the ADCs' programmable first-order 10 Hz high-pass filters.
+void audio_codec_configure_adc_high_pass(void);
+
 void audio_codec_configure_sink_topology(void);
 
 void audio_codec_power_up_adc(void);

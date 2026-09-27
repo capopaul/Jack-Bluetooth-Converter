@@ -88,6 +88,9 @@ void app_main(void)
         // Configure Routing
         audio_codec_connect_line2_to_adc();
 
+        // Remove ADC DC offset without cutting audible bass.
+        audio_codec_configure_adc_high_pass();
+
         audio_codec_power_up_adc();
 
         audio_codec_unmute_adc();

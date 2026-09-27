@@ -38,7 +38,6 @@ static void bluedroid_host_enable();
 static void set_bluetooth_pairing_parameters();
 static void bt_app_task(void *arg);
 static bool bt_app_send_msg(bt_app_msg_t *msg);
-static void bt_app_work_dispatched(bt_app_msg_t *msg);
 
 /*********************************
  * STATIC VARIABLE DEFINITIONS

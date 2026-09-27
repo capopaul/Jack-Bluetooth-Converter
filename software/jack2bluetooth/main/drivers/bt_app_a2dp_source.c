@@ -180,26 +180,32 @@ static void register_a2dp_source_callback_function(uint16_t event, void *p_param
 {
     // both parameters : event and p_param are ignored.
 
-    esp_err_t err = esp_avrc_ct_init();
-    if (err != ESP_OK)
-    {
-        ESP_LOGE(A2DP_TAG, "esp_avrc_ct_init failed with code %x", err);
-    }
-    err = esp_avrc_ct_register_callback(avrcp_controller_cb_1);
+    esp_err_t err = esp_avrc_ct_register_callback(avrcp_controller_cb_1);
     if (err != ESP_OK)
     {
         ESP_LOGE(A2DP_TAG, "esp_avrc_ct_register_callback failed with code %x", err);
+        return;
     }
-
-    err = esp_a2d_source_init();
+    err = esp_avrc_ct_init();
     if (err != ESP_OK)
     {
-        ESP_LOGE(A2DP_TAG, "esp_a2d_source_init failed with code %x", err);
+        ESP_LOGE(A2DP_TAG, "esp_avrc_ct_init failed with code %x", err);
+        return;
     }
+
+    /* Register before asynchronous init so its completion event cannot be lost.
+     * That event registers the endpoints and starts GAP discovery. */
     err = esp_a2d_register_callback(a2dp_cb_1);
     if (err != ESP_OK)
     {
         ESP_LOGE(A2DP_TAG, "esp_a2d_register_callback failed with code %x", err);
+        return;
+    }
+    err = esp_a2d_source_init();
+    if (err != ESP_OK)
+    {
+        ESP_LOGE(A2DP_TAG, "esp_a2d_source_init failed with code %x", err);
+        return;
     }
 
     //
@@ -235,7 +241,10 @@ static void a2dp_cb_1(esp_a2d_cb_event_t event, esp_a2d_cb_param_t *param)
             bt_app_register_a2dp_src_seps();
         }
     }
-    bt_app_work_dispatch(a2dp_cb_2, event, param, sizeof(esp_a2d_cb_param_t), NULL, NULL);
+    if (!bt_app_work_dispatch(a2dp_cb_2, event, param, sizeof(esp_a2d_cb_param_t), NULL, NULL))
+    {
+        ESP_LOGE(A2DP_TAG, "Failed to dispatch A2DP event: %d", event);
+    }
 }
 
 // this function is called by task "bt_app"

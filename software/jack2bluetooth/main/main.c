@@ -60,7 +60,7 @@ void app_main(void)
     //    LCD Screen     //
     ///////////////////////
 
-    // 1.69 Inch 1.69" Color TFT Display Module HD IPS LCD LED Screen 240X280 SPI Interface ST7789 Controller For Arduino
+    // 172x320 SPI display with ST7789 controller.
 
     // power on the screen
     io_expander_clear(IO_EXPANDER_LCD_VCC_CTRL_MASK);

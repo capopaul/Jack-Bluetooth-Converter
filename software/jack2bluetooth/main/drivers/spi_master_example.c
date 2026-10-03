@@ -21,7 +21,7 @@
 #include "spi_master_example.h"
 
 /*
- This code displays some fancy graphics on the 240x280 ST7789 LCD.
+ This code displays some fancy graphics on the 172x320 ST7789 LCD.
  This example demonstrates the use of both spi_device_transmit as well as
  spi_device_queue_trans/spi_device_get_trans_result and pre-transmit callbacks.
 
@@ -36,8 +36,8 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 #define LCD_HOST SPI2_HOST
 
-#define PIN_NUM_MOSI 22
-#define PIN_NUM_CLK 23
+#define PIN_NUM_MOSI 22 // Confirmed display SDA connection
+#define PIN_NUM_CLK 23  // Confirmed display SCL connection
 
 #define PIN_NUM_DC 26
 #define PIN_NUM_RST 25
@@ -204,7 +204,15 @@ static void display_pretty_colors(spi_device_handle_t spi)
             if (line_count > PARALLEL_LINES) {
                 line_count = PARALLEL_LINES;
             }
+#if LCD_COLOR_TEST
+            // RGB565 bytes in SPI transmission order on the little-endian ESP32.
+            const uint16_t colors[] = {0x00f8, 0xe007, 0x1f00, 0xffff, 0x0000};
+            for (int pixel = 0; pixel < LCD_WIDTH * line_count; pixel++) {
+                lines[calc_line][pixel] = colors[(frame - 1) % 5];
+            }
+#else
             pretty_effect_calc_lines(lines[calc_line], y, frame, line_count);
+#endif
             // Finish up the sending process of the previous line, if any
             if (sending_line != -1)
             {
@@ -219,6 +227,19 @@ static void display_pretty_colors(spi_device_handle_t spi)
             // background. We can go on to calculate the next line set as long as we do not
             // touch line[sending_line]; the SPI sending process is still reading from that.
         }
+#if LCD_COLOR_TEST
+        send_line_finish(spi);
+        sending_line = -1;
+        const char *names[] = {"red", "green", "blue", "white", "black"};
+        printf("LCD: transmitted %s test frame (172x320, X offset 34)\n", names[(frame - 1) % 5]);
+        vTaskDelay(pdMS_TO_TICKS(1000));
+#else
+        if (frame == 1) {
+            send_line_finish(spi);
+            sending_line = -1;
+            printf("LCD: first frame transmitted (172x320, SPI mode 3).\n");
+        }
+#endif
     }
 }
 
@@ -332,9 +353,9 @@ void spi_init(void)
         // #ifdef CONFIG_LCD_OVERCLOCK
         //         .clock_speed_hz = 26 * 1000 * 1000, // Clock out at 26 MHz
         // #else
-        .clock_speed_hz = 10 * 1000 * 1000, // Clock out at 10 MHz
+        .clock_speed_hz = 1000 * 1000, // 1 MHz while diagnosing wiring
                                             // #endif
-        .mode = 0,                          // SPI mode 0
+        .mode = 3, // Clock idles high for the ST7789 with CS permanently low
         .spics_io_num = -1, // CS is tied to GND; dedicate this bus to the LCD
         .queue_size = 7,                         // We want to be able to queue 7 transactions at a time
         .pre_cb = lcd_spi_pre_transfer_callback, // Specify pre-transfer callback to handle D/C line
@@ -348,8 +369,10 @@ void spi_init(void)
     // Initialize the LCD
     lcd_init(spi);
     // Initialize the effect displayed
+#if !LCD_COLOR_TEST
     ret = pretty_effect_init();
     ESP_ERROR_CHECK(ret);
+#endif
 
     // Go do nice stuff.
     display_pretty_colors(spi);

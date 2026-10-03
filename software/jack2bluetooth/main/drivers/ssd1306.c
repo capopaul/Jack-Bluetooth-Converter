@@ -25,6 +25,8 @@
 static uint8_t oled_buffer[OLED_WIDTH * OLED_HEIGHT / 8];
 static uint8_t lvgl_buffer[OLED_WIDTH * OLED_HEIGHT / 8 + LVGL_PALETTE_SIZE];
 static _lock_t lvgl_lock;
+static lv_obj_t *line_labels[3];
+static bool lvgl_ready;
 
 static bool oled_flush_complete(esp_lcd_panel_io_handle_t io_panel,
                                 esp_lcd_panel_io_event_data_t *event_data,
@@ -120,10 +122,32 @@ esp_err_t ssd1306_show_name(void)
     ESP_RETURN_ON_ERROR(esp_timer_create(&timer_config, &tick_timer), "OLED", "create LVGL timer");
     ESP_RETURN_ON_ERROR(esp_timer_start_periodic(tick_timer, LVGL_TICK_PERIOD_MS * 1000), "OLED", "start LVGL timer");
 
-    lv_obj_t *label = lv_label_create(lv_screen_active());
-    lv_label_set_text(label, "Paul");
-    lv_obj_center(label);
+    for (int line = 0; line < 3; ++line) {
+        line_labels[line] = lv_label_create(lv_screen_active());
+        lv_obj_set_width(line_labels[line], OLED_WIDTH);
+        lv_obj_set_y(line_labels[line], 3 + line * 20);
+        lv_obj_set_style_text_align(line_labels[line], LV_TEXT_ALIGN_CENTER, 0);
+    }
+    lvgl_ready = true;
+    ESP_RETURN_ON_ERROR(ssd1306_set_text_lines("Paul", "", ""), "OLED", "set initial text");
 
     BaseType_t task_created = xTaskCreate(lvgl_task, "lvgl", 4096, NULL, 2, NULL);
     return task_created == pdPASS ? ESP_OK : ESP_ERR_NO_MEM;
+}
+
+esp_err_t ssd1306_set_text_lines(const char *first_line,
+                                 const char *second_line,
+                                 const char *third_line)
+{
+    if (!lvgl_ready) {
+        return ESP_ERR_INVALID_STATE;
+    }
+
+    const char *lines[] = {first_line, second_line, third_line};
+    _lock_acquire(&lvgl_lock);
+    for (int line = 0; line < 3; ++line) {
+        lv_label_set_text(line_labels[line], lines[line] ? lines[line] : "");
+    }
+    _lock_release(&lvgl_lock);
+    return ESP_OK;
 }

@@ -155,21 +155,9 @@ int i2c_detect()
     return 0;
 }
 
-esp_err_t i2c_write_raw(uint8_t chip_address, const uint8_t *data, size_t data_len)
+i2c_master_bus_handle_t i2c_get_bus(void)
 {
-    i2c_device_config_t i2c_dev_conf = {
-        .scl_speed_hz = i2c_frequency,
-        .device_address = chip_address,
-    };
-    i2c_master_dev_handle_t dev_handle;
-    esp_err_t ret = i2c_master_bus_add_device(tool_bus_handle, &i2c_dev_conf, &dev_handle);
-    if (ret != ESP_OK) {
-        return ret;
-    }
-
-    ret = i2c_master_transmit(dev_handle, data, data_len, I2C_TOOL_TIMEOUT_VALUE_MS);
-    esp_err_t remove_ret = i2c_master_bus_rm_device(dev_handle);
-    return ret != ESP_OK ? ret : remove_ret;
+    return tool_bus_handle;
 }
 
 int i2c_dump(int chip_addr, int size)

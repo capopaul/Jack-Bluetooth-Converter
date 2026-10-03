@@ -15,5 +15,5 @@ idf_component_register(SRCS "main.c"
         "./drivers/io_expander.c"
         "./drivers/nvs.c"
         "./drivers/ssd1306.c"
-        PRIV_REQUIRES bt nvs_flash esp_driver_i2c esp_driver_gpio esp_driver_i2s console esp_ringbuf espressif__esp_audio_codec
+        PRIV_REQUIRES bt nvs_flash esp_driver_i2c esp_driver_gpio esp_driver_i2s console esp_ringbuf esp_lcd lvgl espressif__esp_audio_codec
         INCLUDE_DIRS "." "./drivers/")

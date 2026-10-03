@@ -13,8 +13,16 @@ dependencies:
     source:
       type: idf
     version: 6.1.0
+  lvgl/lvgl:
+    component_hash: 2409fdc84e9766d2a18afd84b051aef3f838348136cdb1c10ac2e8bcdb012bf6
+    dependencies: []
+    source:
+      registry_url: https://components.espressif.com/
+      type: service
+    version: 9.2.0
 direct_dependencies:
 - espressif/esp_audio_codec
-manifest_hash: fc0a0fe4fae5dd7152b069daef0fe4e767dce1db5e9ae7aaa9b24769c8679c64
+- lvgl/lvgl
+manifest_hash: d9d92542a802307ab00a7745bbf815879c4f236c242ea6cf1beef4241f665605
 target: esp32
 version: 3.0.0

@@ -44,7 +44,7 @@ void app_main(void)
     i2c_init();
 
     ESP_ERROR_CHECK(ssd1306_show_name());
-    ssd1306_set_text_lines("Hello", "This message is", "Isn't it?");
+    ssd1306_set_text_lines("Hello", "This message is very important!", "Isn't it?");
 
     ///////////////////////
     //    IO Expander    //

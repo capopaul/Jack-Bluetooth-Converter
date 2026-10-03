@@ -127,6 +127,10 @@ esp_err_t ssd1306_show_name(void)
         lv_obj_set_width(line_labels[line], OLED_WIDTH);
         lv_obj_set_y(line_labels[line], 3 + line * 20);
         lv_obj_set_style_text_align(line_labels[line], LV_TEXT_ALIGN_CENTER, 0);
+        // Keep each message on one line. Text wider than 128 pixels scrolls
+        // continuously from right to left instead of wrapping.
+        lv_label_set_long_mode(line_labels[line], LV_LABEL_LONG_SCROLL_CIRCULAR);
+        lv_obj_set_style_anim_duration(line_labels[line], 6000, 0);
     }
     lvgl_ready = true;
     ESP_RETURN_ON_ERROR(ssd1306_set_text_lines("Paul", "", ""), "OLED", "set initial text");

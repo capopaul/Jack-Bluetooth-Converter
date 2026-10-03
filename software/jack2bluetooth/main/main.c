@@ -19,6 +19,7 @@
 // Include i2c
 #include "driver/i2c_master.h"
 #include "./drivers/i2c.h"
+#include "./drivers/ssd1306.h"
 
 // Include I2S
 #include "./drivers/i2s.h"
@@ -42,6 +43,8 @@ void app_main(void)
 
     i2c_init();
 
+    ESP_ERROR_CHECK(ssd1306_show_name());
+
     ///////////////////////
     //    IO Expander    //
     ///////////////////////
@@ -61,9 +64,11 @@ void app_main(void)
 
     audio_codec_configure_pll();
 
-    ///////////////////////
-    //     Bluetooth     //
-    ///////////////////////
+    i2c_detect();
+
+    // ///////////////////////
+    // //     Bluetooth     //
+    // ///////////////////////
 
     encode_task_init();
 

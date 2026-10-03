@@ -2,6 +2,10 @@
 // Date   : Oct 10, 2025
 #pragma once
 
+#include <stddef.h>
+#include <stdint.h>
+#include "esp_err.h"
+
 #define I2C_GPIO_SDA 21
 #define I2C_GPIO_SCL 19
 
@@ -18,3 +22,7 @@ int is_expected(const char *tag, int register_address, uint8_t read_value, uint8
 
 int i2c_detect();
 int i2c_dump(int chip_addr, int size);
+
+// Send raw bytes to an I2C device. Useful for devices such as displays that
+// use a control byte rather than a register address.
+esp_err_t i2c_write_raw(uint8_t chip_address, const uint8_t *data, size_t data_len);

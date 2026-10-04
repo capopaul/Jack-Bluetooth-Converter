@@ -43,8 +43,14 @@ void app_main(void)
 
     i2c_init();
 
-    ESP_ERROR_CHECK(ssd1306_show_name());
-    ssd1306_set_text_lines("Hello", "This message is very important!", "Isn't it?");
+    if (ssd1306_show_name() == ESP_OK)
+    {
+        ssd1306_set_text_lines("Hello", "This message is very important!", "Isn't it?");
+    }
+    else
+    {
+        printf("Failed to init screen!\n");
+    }
 
     ///////////////////////
     //    IO Expander    //
@@ -67,9 +73,9 @@ void app_main(void)
 
     i2c_detect();
 
-    // ///////////////////////
-    // //     Bluetooth     //
-    // ///////////////////////
+    ///////////////////////
+    //     Bluetooth     //
+    ///////////////////////
 
     encode_task_init();
 

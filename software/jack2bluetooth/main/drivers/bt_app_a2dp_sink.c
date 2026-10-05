@@ -31,6 +31,10 @@
 #include "i2s.h"
 #include "sbc_sink.h"
 
+// Screen
+#include "./drivers/ssd1306.h"
+#include "bt_app_gap.h"
+
 #include "sys/lock.h"
 
 /* Application layer causes delay value */
@@ -174,10 +178,10 @@ static void handle_a2dp_event(uint16_t event, void *p_param)
         esp_a2d_mcc_t *p_mcc = &a2d->audio_cfg.mcc;
         ESP_LOGI(BT_A2DP, "A2DP audio stream configuration, codec type: %d", p_mcc->type);
         s_sbc_configured = p_mcc->type == ESP_A2D_MCT_SBC &&
-            p_mcc->cie.sbc_info.samp_freq == ESP_A2D_SBC_CIE_SF_44K &&
-            (p_mcc->cie.sbc_info.ch_mode == ESP_A2D_SBC_CIE_CH_MODE_DUAL_CHANNEL ||
-             p_mcc->cie.sbc_info.ch_mode == ESP_A2D_SBC_CIE_CH_MODE_STEREO ||
-             p_mcc->cie.sbc_info.ch_mode == ESP_A2D_SBC_CIE_CH_MODE_JOINT_STEREO);
+                           p_mcc->cie.sbc_info.samp_freq == ESP_A2D_SBC_CIE_SF_44K &&
+                           (p_mcc->cie.sbc_info.ch_mode == ESP_A2D_SBC_CIE_CH_MODE_DUAL_CHANNEL ||
+                            p_mcc->cie.sbc_info.ch_mode == ESP_A2D_SBC_CIE_CH_MODE_STEREO ||
+                            p_mcc->cie.sbc_info.ch_mode == ESP_A2D_SBC_CIE_CH_MODE_JOINT_STEREO);
         sbc_sink_set_playing(s_sbc_configured && s_audio_state == ESP_A2D_AUDIO_STATE_STARTED);
         if (!s_sbc_configured)
         {
@@ -275,7 +279,20 @@ static void handle_a2dp_event(uint16_t event, void *p_param)
 esp_err_t bt_app_a2dp_sink_start(void)
 {
     esp_err_t err = sbc_sink_init();
-    if (err != ESP_OK) return err;
+    if (err != ESP_OK)
+        return err;
+
+    // I2C  Screen
+    if (ssd1306_show_name() == ESP_OK)
+    {
+        const char *second_line = "\"" LOCAL_DEVICE_NAME "\"";
+        ssd1306_set_text_lines("Bluetooth -> Jack", "Connect to", second_line);
+    }
+    else
+    {
+        printf("Failed to init screen!\n");
+    }
+
     if (!bt_app_work_dispatch(register_a2dp_sink_callback_function, 0, NULL, 0, NULL, NULL))
     {
         ESP_LOGE(BT_A2DP, "failed to dispatch Bluetooth stack initialization");

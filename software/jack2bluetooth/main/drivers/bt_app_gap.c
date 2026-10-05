@@ -7,9 +7,6 @@
 
 #define GAP_TAG "BT_APP_GAP"
 
-/* device name */
-#define LOCAL_DEVICE_NAME "Jack2Bluetooth"
-
 static const char remote_device_name[] = "Bose-Paul-2";
 
 static esp_bd_addr_t verified_address = {0}; /* Bluetooth Device Address of peer device*/

@@ -5,6 +5,9 @@
 
 // Generic Access Profile
 
+/* device name */
+#define LOCAL_DEVICE_NAME "Jack2Bluetooth"
+
 typedef void (*bt_app_gap_device_found_cb_t)(const uint8_t *address);
 
 void bt_app_gap_start(void);

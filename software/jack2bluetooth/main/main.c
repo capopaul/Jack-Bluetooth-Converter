@@ -21,7 +21,6 @@
 // Include i2c
 #include "driver/i2c_master.h"
 #include "./drivers/i2c.h"
-#include "./drivers/ssd1306.h"
 
 // Include I2S
 #include "./drivers/i2s.h"
@@ -74,19 +73,6 @@ void app_main(void)
     audio_codec_reset();
 
     audio_codec_configure_pll();
-
-    ///////////////////////
-    //    I2C  Screen    //
-    ///////////////////////
-
-    if (ssd1306_show_name() == ESP_OK)
-    {
-        ssd1306_set_text_lines("Hello", "This message is very important!", "Isn't it?");
-    }
-    else
-    {
-        printf("Failed to init screen!\n");
-    }
 
     ///////////////////////
     //     Bluetooth     //

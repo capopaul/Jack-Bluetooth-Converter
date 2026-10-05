@@ -9,6 +9,8 @@
 #include "esp_log.h"
 #include "esp_console.h"
 #include "esp_err.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 
 // Bluetooth
 #include "bt_app_core.h"
@@ -41,24 +43,29 @@ void app_main(void)
 {
     printf("Hello world!\n");
 
-    i2c_init();
+    // A reset button resets the ESP32 but does not reset the OLED.  If reset
+    // interrupts an I2C transfer, the powered OLED can keep SDA low and lock
+    // the bus. Reset the MCP23008 first: its outputs become inputs and the
+    // P-channel MOSFET pull-up removes power from lcd_vdc before I2C starts.
+    io_expander_reset();
 
-    if (ssd1306_show_name() == ESP_OK)
-    {
-        ssd1306_set_text_lines("Hello", "This message is very important!", "Isn't it?");
-    }
-    else
-    {
-        printf("Failed to init screen!\n");
-    }
+    // The OLED can be parasitically powered through its SDA/SCL protection
+    // diodes. Drain those lines while lcd_vdc is off so it performs a real
+    // power-on reset before it is connected to the I2C peripheral.
+    i2c_discharge_lines();
+
+    i2c_init();
 
     ///////////////////////
     //    IO Expander    //
     ///////////////////////
 
-    io_expander_reset();
-
     io_expander_init();
+
+    // lcd_vcc_ctrl drives the gate of the display's P-channel power MOSFET.
+    // It is active low: low connects 3.3 V to the lcd_vdc supply rail.
+    io_expander_clear(IO_EXPANDER_LCD_VCC_CTRL_MASK);
+    vTaskDelay(pdMS_TO_TICKS(20));
 
     io_expander_set(IO_EXPANDER_LED_ADC_MASK);
     io_expander_set(IO_EXPANDER_LED_DAC_MASK);
@@ -71,7 +78,18 @@ void app_main(void)
 
     audio_codec_configure_pll();
 
-    i2c_detect();
+    ///////////////////////
+    //    I2C  Screen    //
+    ///////////////////////
+
+    if (ssd1306_show_name() == ESP_OK)
+    {
+        ssd1306_set_text_lines("Hello", "This message is very important!", "Isn't it?");
+    }
+    else
+    {
+        printf("Failed to init screen!\n");
+    }
 
     ///////////////////////
     //     Bluetooth     //

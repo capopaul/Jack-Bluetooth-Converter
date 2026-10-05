@@ -4,9 +4,11 @@
 #include <stdio.h>
 #include <string.h>
 #include "argtable3/argtable3.h"
+#include "driver/gpio.h"
 #include "driver/i2c_master.h"
 #include "esp_console.h"
 #include "esp_log.h"
+#include "esp_rom_sys.h"
 #include "i2c.h"
 
 #define I2C_TAG "I2C"
@@ -14,6 +16,22 @@
 
 static uint32_t i2c_frequency = 100 * 1000;
 static i2c_master_bus_handle_t tool_bus_handle;
+
+void i2c_discharge_lines(void)
+{
+    const gpio_config_t config = {
+        .pin_bit_mask = (1ULL << I2C_GPIO_SDA) | (1ULL << I2C_GPIO_SCL),
+        .mode = GPIO_MODE_OUTPUT_OD,
+        .pull_up_en = GPIO_PULLUP_DISABLE,
+        .pull_down_en = GPIO_PULLDOWN_DISABLE,
+        .intr_type = GPIO_INTR_DISABLE,
+    };
+
+    ESP_ERROR_CHECK(gpio_config(&config));
+    ESP_ERROR_CHECK(gpio_set_level(I2C_GPIO_SDA, 0));
+    ESP_ERROR_CHECK(gpio_set_level(I2C_GPIO_SCL, 0));
+    esp_rom_delay_us(50 * 1000);
+}
 
 void i2c_init()
 {

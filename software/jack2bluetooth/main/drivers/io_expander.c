@@ -163,6 +163,12 @@ void io_expander_reset(void)
 
 void io_expander_init(void)
 {
+    // GPIO writes update the MCP23008 output latch even while all pins are
+    // inputs. Preload the active-low LCD switch to its off state before D6
+    // becomes an output, otherwise its reset value (low) powers the OLED.
+    output_state = IO_EXPANDER_LCD_VCC_CTRL_MASK;
+    i2c_set(IO_EXPANDER_ADDR, 0x09, output_state);
+
     // Set I/O direction
     // Register IODIR - I/O DIRECTION REGISTER
     i2c_set(IO_EXPANDER_ADDR, 0x0, IO_EXPANDER_IODIR);

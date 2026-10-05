@@ -8,6 +8,11 @@
 #define I2C_GPIO_SDA 21
 #define I2C_GPIO_SCL 19
 
+// Hold both I2C lines low before starting the I2C peripheral. Use this after
+// removing power from an I2C device that may otherwise be parasitically
+// powered through SDA or SCL.
+void i2c_discharge_lines(void);
+
 void i2c_init();
 
 // Set an i2c register

@@ -11,7 +11,7 @@
 #define IO_EXPANDER_IODIR 0b00001111
 
 // D7 - O - codec_reset_l
-// D6 - O - lcd_vcc_ctrl
+// D6 - O - lcd_vcc_ctrl (active low; low enables lcd_vdc)
 // D5 - O - led_dac
 // D4 - O - led_adc
 // D3 - I - button_direction

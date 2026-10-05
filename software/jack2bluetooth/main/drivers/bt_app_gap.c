@@ -14,6 +14,10 @@ static esp_bd_addr_t verified_address = {0}; /* Bluetooth Device Address of peer
 static bool discovery_running = false;                      // True when discovery is running
 static bool target_found = false;                           // True when a device matching remote_device_name is found.
 static bt_app_gap_device_found_cb_t device_found_cb = NULL; // Function to use when a device is found
+static bool gap_start_requested = false;
+static bool gap_callback_registered = false;
+static esp_bd_addr_t remote_name_address = {0};
+static bt_app_gap_remote_name_cb_t remote_name_cb = NULL;
 
 /********************************
  * STATIC FUNCTION DECLARATIONS
@@ -327,6 +331,32 @@ static void gap_cb_2(uint16_t event, void *p_param)
         }
         break;
     }
+    case ESP_BT_GAP_READ_REMOTE_NAME_EVT:
+    {
+        if (remote_name_cb == NULL ||
+            memcmp(remote_name_address, param->read_rmt_name.bda, sizeof(remote_name_address)) != 0)
+        {
+            break;
+        }
+
+        bt_app_gap_remote_name_cb_t callback = remote_name_cb;
+        remote_name_cb = NULL;
+
+        if (param->read_rmt_name.stat == ESP_BT_STATUS_SUCCESS &&
+            param->read_rmt_name.rmt_name[0] != '\0')
+        {
+            char name[ESP_BT_GAP_MAX_BDNAME_LEN + 1];
+            memcpy(name, param->read_rmt_name.rmt_name, ESP_BT_GAP_MAX_BDNAME_LEN);
+            name[ESP_BT_GAP_MAX_BDNAME_LEN] = '\0';
+            callback(param->read_rmt_name.bda, name);
+        }
+        else
+        {
+            ESP_LOGW(GAP_TAG, "Could not read remote name, status: %d", param->read_rmt_name.stat);
+            callback(param->read_rmt_name.bda, NULL);
+        }
+        break;
+    }
     case ESP_BT_GAP_ENC_CHG_EVT:
     {
         char *str_enc[3] = {"OFF", "E0", "AES"};
@@ -378,6 +408,10 @@ static void register_gap_callback_function(uint16_t event, void *p_param)
     {
         ESP_LOGE(GAP_TAG, "esp_bt_gap_register_callback failed with code %x", err);
     }
+    else
+    {
+        gap_callback_registered = true;
+    }
 }
 
 /********************************
@@ -386,6 +420,12 @@ static void register_gap_callback_function(uint16_t event, void *p_param)
 
 void bt_app_gap_start(void)
 {
+    if (gap_start_requested)
+    {
+        return;
+    }
+    gap_start_requested = true;
+
     if (!bt_app_work_dispatch(register_gap_callback_function,
                               0, NULL, 0, NULL, NULL))
     {
@@ -411,4 +451,22 @@ esp_err_t bt_app_gap_start_discovery(bt_app_gap_device_found_cb_t cb_ptr)
         return err;
     }
     return ESP_ERR_INVALID_STATE;
+}
+
+esp_err_t bt_app_gap_read_remote_name(const uint8_t *address,
+                                      bt_app_gap_remote_name_cb_t callback)
+{
+    if (!gap_callback_registered || address == NULL || callback == NULL || remote_name_cb != NULL)
+    {
+        return ESP_ERR_INVALID_ARG;
+    }
+
+    memcpy(remote_name_address, address, sizeof(remote_name_address));
+    remote_name_cb = callback;
+    esp_err_t err = esp_bt_gap_read_remote_name(remote_name_address);
+    if (err != ESP_OK)
+    {
+        remote_name_cb = NULL;
+    }
+    return err;
 }

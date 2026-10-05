@@ -5,6 +5,7 @@
 #include <assert.h>
 #include "audio_codec.h"
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
@@ -49,6 +50,7 @@ static void register_a2dp_sink_callback_function(uint16_t event, void *p_param);
 static void bt_app_a2dp_cb(esp_a2d_cb_event_t event, esp_a2d_cb_param_t *param);
 
 static void handle_a2dp_event(uint16_t event, void *p_param);
+static void show_connected_device(const uint8_t *address, const char *name);
 
 /*******************************
  * STATIC VARIABLE DEFINITIONS
@@ -73,6 +75,25 @@ static void register_a2dp_sink_callback_function(uint16_t event, void *p_param)
     ESP_ERROR_CHECK(esp_a2d_sink_register_audio_data_callback(sbc_sink_receive));
     ESP_ERROR_CHECK(esp_a2d_sink_init());
     // Endpoint registration follows ESP_A2D_INIT_SUCCESS below.
+}
+
+static void show_connected_device(const uint8_t *address, const char *name)
+{
+    char address_text[18];
+    const char *display_name = name;
+
+    if (display_name == NULL || display_name[0] == '\0')
+    {
+        snprintf(address_text, sizeof(address_text), "%02X:%02X:%02X:%02X:%02X:%02X",
+                 address[0], address[1], address[2], address[3], address[4], address[5]);
+        display_name = address_text;
+    }
+
+    esp_err_t err = ssd1306_set_text_lines("Bluetooth -> Jack", "Connected to", display_name);
+    if (err != ESP_OK)
+    {
+        ESP_LOGW(BT_A2DP, "Could not update OLED: %s", esp_err_to_name(err));
+    }
 }
 
 static void register_sbc_endpoint(void)
@@ -144,10 +165,18 @@ static void handle_a2dp_event(uint16_t event, void *p_param)
             s_sbc_configured = false;
             sbc_sink_set_playing(false);
             // I2S is installed once by main; keep it available for reconnection.
+            ssd1306_set_text_lines("Bluetooth -> Jack", "Waiting for", "connection");
         }
         else if (a2d->conn_stat.state == ESP_A2D_CONNECTION_STATE_CONNECTED)
         {
             esp_bt_gap_set_scan_mode(ESP_BT_NON_CONNECTABLE, ESP_BT_NON_DISCOVERABLE);
+            ssd1306_set_text_lines("Bluetooth -> Jack", "Connected to", "Reading name...");
+            esp_err_t err = bt_app_gap_read_remote_name(bda, show_connected_device);
+            if (err != ESP_OK)
+            {
+                ESP_LOGW(BT_A2DP, "Remote-name request failed: %s", esp_err_to_name(err));
+                show_connected_device(bda, NULL);
+            }
         }
         else if (a2d->conn_stat.state == ESP_A2D_CONNECTION_STATE_CONNECTING)
         {
@@ -282,16 +311,10 @@ esp_err_t bt_app_a2dp_sink_start(void)
     if (err != ESP_OK)
         return err;
 
-    // I2C  Screen
-    if (ssd1306_show_name() == ESP_OK)
-    {
-        const char *second_line = "\"" LOCAL_DEVICE_NAME "\"";
-        ssd1306_set_text_lines("Bluetooth -> Jack", "Connect to", second_line);
-    }
-    else
-    {
-        printf("Failed to init screen!\n");
-    }
+    bt_app_gap_start();
+
+    // The OLED is initialized once in main before the Bluetooth stack starts.
+    ssd1306_set_text_lines("Bluetooth -> Jack", "Waiting for", "connection");
 
     if (!bt_app_work_dispatch(register_a2dp_sink_callback_function, 0, NULL, 0, NULL, NULL))
     {

@@ -28,6 +28,9 @@
 // Include audio codec
 #include "./drivers/audio_codec.h"
 
+// Screen
+#include "./drivers/ssd1306.h"
+
 // Include IO expander
 #include "./drivers/io_expander.h"
 
@@ -73,6 +76,15 @@ void app_main(void)
     audio_codec_reset();
 
     audio_codec_configure_pll();
+
+    ///////////////////////
+    //    I2C Screen     //
+    ///////////////////////
+
+    if (ssd1306_show_name() != ESP_OK)
+    {
+        printf("Failed to initialize screen!\n");
+    }
 
     ///////////////////////
     //     Bluetooth     //

@@ -16,8 +16,13 @@
 #define BUFF_SIZE 512
 #define I2S_PCM_CHUNK_BYTES (240 * 6)
 #define I2S_TAG "I2S"
-#define RINGBUF_HIGHEST_WATER_LEVEL (64 * 1024)
-#define RINGBUF_PREFETCH_WATER_LEVEL (48 * 1024)
+// At 44.1 kHz, 16-bit stereo PCM is about 176 KiB/s. A 24 KiB buffer keeps
+// roughly 140 ms of audio while leaving internal RAM for Bluedroid's HCI
+// receive buffers. The former 64 KiB buffer exhausted that heap on connect.
+#define RINGBUF_HIGHEST_WATER_LEVEL (48 * 1024)
+#define RINGBUF_PREFETCH_WATER_LEVEL (16 * 1024)
+// #define RINGBUF_HIGHEST_WATER_LEVEL (64 * 1024)
+// #define RINGBUF_PREFETCH_WATER_LEVEL (48 * 1024)
 typedef struct
 {
     bool have_low_byte;

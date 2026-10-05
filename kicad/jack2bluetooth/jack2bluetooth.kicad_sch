@@ -16112,7 +16112,7 @@
 			)
 		)
 	)
-	(global_label "led_adc"
+	(global_label "led_dac"
 		(shape input)
 		(at 254 91.44 180)
 		(fields_autoplaced yes)
@@ -16930,7 +16930,7 @@
 			)
 		)
 	)
-	(global_label "led_dac"
+	(global_label "led_adc"
 		(shape input)
 		(at 387.35 184.15 0)
 		(fields_autoplaced yes)
@@ -17218,7 +17218,7 @@
 			)
 		)
 	)
-	(global_label "led_adc"
+	(global_label "led_dac"
 		(shape input)
 		(at 387.35 186.69 0)
 		(fields_autoplaced yes)
@@ -17306,7 +17306,7 @@
 			)
 		)
 	)
-	(global_label "led_dac"
+	(global_label "led_adc"
 		(shape input)
 		(at 271.78 90.17 180)
 		(fields_autoplaced yes)

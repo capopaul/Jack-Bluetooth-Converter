@@ -427,8 +427,8 @@ This table contains all the pin assignments. It was updated during layout to mak
 | IO1 |  I  | button_back      |
 | IO2 |  I  | button_next      |
 | IO3 |  I  | button_direction |
-| IO4 |  O  | led_adc          |
-| IO5 |  O  | led_dac          |
+| IO4 |  O  | led_dac          |
+| IO5 |  O  | led_adc          |
 | IO6 |  O  | lcd_vcc_ctrl     |
 | IO7 |  O  | codec_reset_l    |
 

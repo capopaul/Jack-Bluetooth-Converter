@@ -67,9 +67,6 @@ void app_main(void)
     io_expander_clear(IO_EXPANDER_LCD_VCC_CTRL_MASK);
     vTaskDelay(pdMS_TO_TICKS(20));
 
-    io_expander_set(IO_EXPANDER_LED_ADC_MASK);
-    io_expander_set(IO_EXPANDER_LED_DAC_MASK);
-
     ///////////////////////
     //    Audio Codec    //
     ///////////////////////
@@ -126,6 +123,8 @@ void app_main(void)
         audio_codec_unmute_adc();
 
         bt_app_a2dp_source_start();
+
+        io_expander_set(IO_EXPANDER_LED_ADC_MASK);
     }
     else
     {
@@ -162,5 +161,7 @@ void app_main(void)
         is_expected(CODEC_TAG, 96, i2c_get(CODEC_ADDR, 96), 0b00000000);
 
         ESP_ERROR_CHECK(bt_app_a2dp_sink_start());
+
+        io_expander_set(IO_EXPANDER_LED_DAC_MASK);
     }
 }

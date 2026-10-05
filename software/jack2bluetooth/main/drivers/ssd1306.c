@@ -53,8 +53,11 @@ static void oled_flush(lv_display_t *display, const lv_area_t *area, uint8_t *pi
             }
         }
     }
-    ESP_ERROR_CHECK(esp_lcd_panel_draw_bitmap(panel, area->x1, area->y1,
-                                               area->x2 + 1, area->y2 + 1, oled_buffer));
+    i2c_lock();
+    esp_err_t ret = esp_lcd_panel_draw_bitmap(panel, area->x1, area->y1,
+                                               area->x2 + 1, area->y2 + 1, oled_buffer);
+    i2c_unlock();
+    ESP_ERROR_CHECK(ret);
 }
 
 static void lvgl_tick(void *arg)
@@ -89,7 +92,13 @@ esp_err_t ssd1306_show_name(void)
         .dc_bit_offset = 6,
     };
     esp_lcd_panel_io_handle_t io = NULL;
-    ESP_RETURN_ON_ERROR(esp_lcd_new_panel_io_i2c(i2c_get_bus(), &io_config, &io), "OLED", "create I2C panel IO");
+    esp_err_t ret;
+
+    i2c_lock();
+    ret = esp_lcd_new_panel_io_i2c(i2c_get_bus(), &io_config, &io);
+    if (ret != ESP_OK) {
+        goto unlock_i2c;
+    }
 
     esp_lcd_panel_ssd1306_config_t ssd1306_config = {.height = OLED_HEIGHT};
     esp_lcd_panel_dev_config_t panel_config = {
@@ -98,10 +107,15 @@ esp_err_t ssd1306_show_name(void)
         .vendor_config = &ssd1306_config,
     };
     esp_lcd_panel_handle_t panel = NULL;
-    ESP_RETURN_ON_ERROR(esp_lcd_new_panel_ssd1306(io, &panel_config, &panel), "OLED", "create SSD1306 panel");
-    ESP_RETURN_ON_ERROR(esp_lcd_panel_reset(panel), "OLED", "reset panel");
-    ESP_RETURN_ON_ERROR(esp_lcd_panel_init(panel), "OLED", "initialize panel");
-    ESP_RETURN_ON_ERROR(esp_lcd_panel_disp_on_off(panel, true), "OLED", "turn on panel");
+    ret = esp_lcd_new_panel_ssd1306(io, &panel_config, &panel);
+    if (ret == ESP_OK) ret = esp_lcd_panel_reset(panel);
+    if (ret == ESP_OK) ret = esp_lcd_panel_init(panel);
+    if (ret == ESP_OK) ret = esp_lcd_panel_disp_on_off(panel, true);
+    i2c_unlock();
+    if (ret != ESP_OK) {
+        ESP_LOGE("OLED", "SSD1306 initialization failed: %s", esp_err_to_name(ret));
+        return ret;
+    }
 
     lv_init();
     lv_display_t *display = lv_display_create(OLED_WIDTH, OLED_HEIGHT);
@@ -137,6 +151,11 @@ esp_err_t ssd1306_show_name(void)
 
     BaseType_t task_created = xTaskCreate(lvgl_task, "lvgl", 4096, NULL, 2, NULL);
     return task_created == pdPASS ? ESP_OK : ESP_ERR_NO_MEM;
+
+unlock_i2c:
+    i2c_unlock();
+    ESP_LOGE("OLED", "create I2C panel IO failed: %s", esp_err_to_name(ret));
+    return ret;
 }
 
 esp_err_t ssd1306_set_text_lines(const char *first_line,

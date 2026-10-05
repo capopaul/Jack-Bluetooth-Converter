@@ -9,6 +9,8 @@
 #include "esp_console.h"
 #include "esp_log.h"
 #include "esp_rom_sys.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/semphr.h"
 #include "i2c.h"
 
 #define I2C_TAG "I2C"
@@ -16,6 +18,7 @@
 
 static uint32_t i2c_frequency = 100 * 1000;
 static i2c_master_bus_handle_t tool_bus_handle;
+static SemaphoreHandle_t i2c_mutex;
 
 void i2c_discharge_lines(void)
 {
@@ -41,6 +44,9 @@ void i2c_init()
     esp_console_dev_uart_config_t uart_config = ESP_CONSOLE_DEV_UART_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_console_new_repl_uart(&uart_config, &repl_config, &repl));
 
+    i2c_mutex = xSemaphoreCreateMutex();
+    ESP_ERROR_CHECK(i2c_mutex ? ESP_OK : ESP_ERR_NO_MEM);
+
     i2c_master_bus_config_t i2c_bus_config = {
         .clk_source = I2C_CLK_SRC_DEFAULT,
         .i2c_port = I2C_NUM_0,
@@ -53,6 +59,17 @@ void i2c_init()
     ESP_ERROR_CHECK(i2c_new_master_bus(&i2c_bus_config, &tool_bus_handle));
 }
 
+void i2c_lock(void)
+{
+    configASSERT(i2c_mutex);
+    xSemaphoreTake(i2c_mutex, portMAX_DELAY);
+}
+
+void i2c_unlock(void)
+{
+    xSemaphoreGive(i2c_mutex);
+}
+
 int i2c_set(int chip_address, int register_address, uint8_t data)
 {
     int data_len = 1;
@@ -61,9 +78,12 @@ int i2c_set(int chip_address, int register_address, uint8_t data)
         .device_address = chip_address,
     };
     i2c_master_dev_handle_t dev_handle;
+    int result = 1;
+
+    i2c_lock();
     if (i2c_master_bus_add_device(tool_bus_handle, &i2c_dev_conf, &dev_handle) != ESP_OK)
     {
-        return 1;
+        goto done;
     }
 
     uint8_t *i2c_data = malloc(data_len + 1);
@@ -87,9 +107,13 @@ int i2c_set(int chip_address, int register_address, uint8_t data)
     free(i2c_data);
     if (i2c_master_bus_rm_device(dev_handle) != ESP_OK)
     {
-        return 1;
+        goto done;
     }
-    return 0;
+    result = ret == ESP_OK ? 0 : 1;
+
+done:
+    i2c_unlock();
+    return result;
 }
 
 uint8_t i2c_get(int chip_address, int register_address)
@@ -101,11 +125,13 @@ uint8_t i2c_get(int chip_address, int register_address)
         .device_address = chip_address,
     };
     i2c_master_dev_handle_t dev_handle;
+    uint8_t result = 0xff;
 
+    i2c_lock();
     if (i2c_master_bus_add_device(tool_bus_handle, &i2c_dev_conf, &dev_handle) != ESP_OK)
     {
         ESP_LOGE(I2C_TAG, "Failed to add I2C device");
-        return -1; // indicate error
+        goto done;
     }
 
     esp_err_t ret = i2c_master_transmit_receive(
@@ -118,7 +144,7 @@ uint8_t i2c_get(int chip_address, int register_address)
     {
         ESP_LOGW(I2C_TAG, "I2C read failed: %s", esp_err_to_name(ret));
         i2c_master_bus_rm_device(dev_handle);
-        return -1;
+        goto done;
     }
 
     printf("I2C_GET - Reg %d -> 0x%02x\n", register_address, data);
@@ -126,10 +152,14 @@ uint8_t i2c_get(int chip_address, int register_address)
     if (i2c_master_bus_rm_device(dev_handle) != ESP_OK)
     {
         ESP_LOGE(I2C_TAG, "Failed to remove I2C device");
-        return -1;
+        goto done;
     }
 
-    return data; // return the byte read
+    result = data;
+
+done:
+    i2c_unlock();
+    return result;
 }
 
 int is_expected(const char *tag, int register_address, uint8_t read_value, uint8_t expected_value)
@@ -145,6 +175,7 @@ int is_expected(const char *tag, int register_address, uint8_t read_value, uint8
 int i2c_detect()
 {
     uint8_t address;
+    i2c_lock();
     printf("     0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f\r\n");
     for (int i = 0; i < 128; i += 16)
     {
@@ -170,6 +201,7 @@ int i2c_detect()
         printf("\r\n");
     }
 
+    i2c_unlock();
     return 0;
 }
 
@@ -193,8 +225,10 @@ int i2c_dump(int chip_addr, int size)
         .device_address = chip_addr,
     };
     i2c_master_dev_handle_t dev_handle;
+    i2c_lock();
     if (i2c_master_bus_add_device(tool_bus_handle, &i2c_dev_conf, &dev_handle) != ESP_OK)
     {
+        i2c_unlock();
         return 1;
     }
 
@@ -252,7 +286,9 @@ int i2c_dump(int chip_addr, int size)
     }
     if (i2c_master_bus_rm_device(dev_handle) != ESP_OK)
     {
+        i2c_unlock();
         return 1;
     }
+    i2c_unlock();
     return 0;
 }

@@ -15,6 +15,11 @@ void i2c_discharge_lines(void);
 
 void i2c_init();
 
+// Serialize access to the shared I2C bus. Required around direct esp_lcd
+// panel operations because the register helpers add and remove devices.
+void i2c_lock(void);
+void i2c_unlock(void);
+
 // Set an i2c register
 int i2c_set(int chip_address, int register_address, uint8_t data);
 

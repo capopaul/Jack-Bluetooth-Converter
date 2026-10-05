@@ -27,6 +27,35 @@ static uint8_t lvgl_buffer[OLED_WIDTH * OLED_HEIGHT / 8 + LVGL_PALETTE_SIZE];
 static _lock_t lvgl_lock;
 static lv_obj_t *line_labels[3];
 static bool lvgl_ready;
+static const char *const *list_items;
+static size_t list_item_count;
+static size_t list_index;
+static bool list_active;
+
+static void set_text_lines_locked(const char *first_line,
+                                  const char *second_line,
+                                  const char *third_line)
+{
+    const char *lines[] = {first_line, second_line, third_line};
+    for (int line = 0; line < 3; ++line) {
+        lv_label_set_text(line_labels[line], lines[line] ? lines[line] : "");
+    }
+}
+
+static void render_list_locked(void)
+{
+    const char *first_visible = "No devices";
+    const char *second_visible = "";
+
+    if (list_item_count > 0) {
+        first_visible = list_items[list_index] ? list_items[list_index] : "";
+        if (list_index + 1 < list_item_count) {
+            second_visible = list_items[list_index + 1] ? list_items[list_index + 1] : "";
+        }
+    }
+
+    set_text_lines_locked("Jack -> Bluetooth", first_visible, second_visible);
+}
 
 static bool oled_flush_complete(esp_lcd_panel_io_handle_t io_panel,
                                 esp_lcd_panel_io_event_data_t *event_data,
@@ -166,10 +195,65 @@ esp_err_t ssd1306_set_text_lines(const char *first_line,
         return ESP_ERR_INVALID_STATE;
     }
 
-    const char *lines[] = {first_line, second_line, third_line};
     _lock_acquire(&lvgl_lock);
-    for (int line = 0; line < 3; ++line) {
-        lv_label_set_text(line_labels[line], lines[line] ? lines[line] : "");
+    list_active = false;
+    set_text_lines_locked(first_line, second_line, third_line);
+    _lock_release(&lvgl_lock);
+    return ESP_OK;
+}
+
+esp_err_t ssd1306_show_string_list(const char *const items[], size_t item_count)
+{
+    if (!lvgl_ready) {
+        return ESP_ERR_INVALID_STATE;
+    }
+    if (items == NULL && item_count != 0) {
+        return ESP_ERR_INVALID_ARG;
+    }
+
+    _lock_acquire(&lvgl_lock);
+    list_items = items;
+    list_item_count = item_count;
+    list_index = 0;
+    list_active = true;
+    render_list_locked();
+    _lock_release(&lvgl_lock);
+    return ESP_OK;
+}
+
+esp_err_t ssd1306_list_next(void)
+{
+    if (!lvgl_ready) {
+        return ESP_ERR_INVALID_STATE;
+    }
+
+    _lock_acquire(&lvgl_lock);
+    if (!list_active) {
+        _lock_release(&lvgl_lock);
+        return ESP_ERR_INVALID_STATE;
+    }
+    if (list_index + 1 < list_item_count) {
+        ++list_index;
+        render_list_locked();
+    }
+    _lock_release(&lvgl_lock);
+    return ESP_OK;
+}
+
+esp_err_t ssd1306_list_back(void)
+{
+    if (!lvgl_ready) {
+        return ESP_ERR_INVALID_STATE;
+    }
+
+    _lock_acquire(&lvgl_lock);
+    if (!list_active) {
+        _lock_release(&lvgl_lock);
+        return ESP_ERR_INVALID_STATE;
+    }
+    if (list_index > 0) {
+        --list_index;
+        render_list_locked();
     }
     _lock_release(&lvgl_lock);
     return ESP_OK;

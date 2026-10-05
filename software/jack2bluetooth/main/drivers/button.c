@@ -1,6 +1,7 @@
 
 #include "button.h"
 #include "audio_codec.h"
+#include "ssd1306.h"
 #include <stdbool.h>
 
 #include <esp_system.h>
@@ -36,11 +37,13 @@ void on_enter_pressed(void)
 void on_back_pressed(void)
 {
     ESP_LOGI(BUTTON_TAG, "Button BACK pushed");
+    ssd1306_list_back();
 }
 
 void on_next_pressed(void)
 {
     ESP_LOGI(BUTTON_TAG, "Button NEXT pushed");
+    ssd1306_list_next();
 }
 
 void on_direction_changed(direction_state new_state)

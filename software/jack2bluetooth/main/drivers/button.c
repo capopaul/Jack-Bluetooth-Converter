@@ -1,6 +1,7 @@
 
 #include "button.h"
 #include "audio_codec.h"
+#include "bt_app_a2dp_source.h"
 #include "ui_device_picker.h"
 #include <stdbool.h>
 
@@ -25,6 +26,10 @@ void on_enter_pressed(void)
     {
         ESP_LOGI(BUTTON_TAG, "Device selected: %02x:%02x:%02x:%02x:%02x:%02x",
                  address[0], address[1], address[2], address[3], address[4], address[5]);
+        if (bt_app_a2dp_source_connect_selected(address) != ESP_OK)
+        {
+            ESP_LOGE(BUTTON_TAG, "Could not start selected-device connection");
+        }
         return;
     }
 

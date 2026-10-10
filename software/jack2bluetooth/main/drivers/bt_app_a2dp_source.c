@@ -23,6 +23,7 @@
 #include "decode_task.h"
 #include "bt_app_a2dp_source.h"
 #include "bt_app_gap.h"
+#include "ui_device_picker.h"
 
 /* log tags */
 #define A2DP_TAG "BT_A2DP_SOURCE"
@@ -66,6 +67,7 @@ static void register_a2dp_source_callback_function(uint16_t event, void *p_param
 static void a2dp_cb_1(esp_a2d_cb_event_t event, esp_a2d_cb_param_t *param);
 static void a2dp_cb_2(uint16_t event, void *param);
 static void a2dp_cb_3(const uint8_t *address);
+static void connect_selected_device(uint16_t event, void *p_param);
 
 static void avrcp_controller_cb_1(esp_avrc_ct_cb_event_t event, esp_avrc_ct_cb_param_t *param);
 static void avrcp_controller_cb_2(uint16_t event, void *p_param);
@@ -80,6 +82,7 @@ static void handler_unconnected(uint16_t event, void *param);
 static void handler_connecting(uint16_t event, void *param);
 static void handler_connected(uint16_t event, void *param);
 static void handler_disconnected(uint16_t event, void *param);
+static void start_device_discovery(void);
 
 /*********************************
  * STATIC VARIABLE DEFINITIONS
@@ -280,15 +283,49 @@ static void a2dp_cb_2(uint16_t event, void *param)
 static void a2dp_cb_3(const uint8_t *address)
 {
     memcpy(verified_address, address, sizeof(verified_address));
+    ui_device_picker_show_connecting(verified_address);
 
     if (esp_a2d_source_connect(verified_address) != ESP_OK)
     {
         ESP_LOGE(A2DP_TAG, "esp_a2d_source_connect failed.");
         a2dp_state = APP_AV_STATE_UNCONNECTED;
+        ui_device_picker_show_connection_failed(verified_address);
+        start_device_discovery();
         return;
     }
     s_connecting_intv = 0;
     a2dp_state = APP_AV_STATE_CONNECTING;
+}
+
+static void connect_selected_device(uint16_t event, void *p_param)
+{
+    const uint8_t *address = (const uint8_t *)p_param;
+    if (a2dp_state != APP_AV_STATE_DISCOVERING && a2dp_state != APP_AV_STATE_UNCONNECTED)
+    {
+        ESP_LOGW(A2DP_TAG, "Ignoring selected device while A2DP state is %d", a2dp_state);
+        return;
+    }
+
+    esp_err_t err = bt_app_gap_stop_discovery();
+    if (err != ESP_OK && err != ESP_ERR_INVALID_STATE)
+    {
+        ESP_LOGW(A2DP_TAG, "Could not stop discovery: %s", esp_err_to_name(err));
+    }
+    a2dp_cb_3(address);
+}
+
+static void start_device_discovery(void)
+{
+    esp_err_t err = bt_app_gap_start_discovery();
+    if (err != ESP_OK)
+    {
+        ESP_LOGE(A2DP_TAG, "Could not start device discovery: %s", esp_err_to_name(err));
+        a2dp_state = APP_AV_STATE_UNCONNECTED;
+        return;
+    }
+
+    ESP_LOGI(A2DP_TAG, "Starting device discovery...");
+    a2dp_state = APP_AV_STATE_DISCOVERING;
 }
 
 static void bt_app_a2d_heart_beat(TimerHandle_t arg)
@@ -305,14 +342,7 @@ static void handler_idle(uint16_t event, void *p_param)
                                             ESP_A2D_INIT_SUCCESS))
     {
 
-        // Call GAP to start discovery
-        if (bt_app_gap_start_discovery(a2dp_cb_3) != ESP_OK)
-        {
-            return;
-        }
-
-        ESP_LOGI(A2DP_TAG, "Starting device discovery...");
-        a2dp_state = APP_AV_STATE_DISCOVERING;
+        start_device_discovery();
 
         /* create and start heart beat timer */
         do
@@ -347,21 +377,7 @@ static void handler_unconnected(uint16_t event, void *param)
     case ESP_A2D_MEDIA_CTRL_ACK_EVT:
         break;
     case BT_APP_HEART_BEAT_EVT:
-    {
-        uint8_t *bda = verified_address;
-        ESP_LOGI(A2DP_TAG, "a2dp connecting to peer: %02x:%02x:%02x:%02x:%02x:%02x",
-                 bda[0], bda[1], bda[2], bda[3], bda[4], bda[5]);
-        if (esp_a2d_source_connect(verified_address) != ESP_OK)
-        {
-            ESP_LOGE(A2DP_TAG, "esp_a2d_source_connect failed.");
-            a2dp_state = APP_AV_STATE_UNCONNECTED;
-            return;
-        }
-
-        a2dp_state = APP_AV_STATE_CONNECTING;
-        s_connecting_intv = 0;
         break;
-    }
     case ESP_A2D_REPORT_SNK_DELAY_VALUE_EVT:
     {
         a2d = (esp_a2d_cb_param_t *)(param);
@@ -395,6 +411,7 @@ static void handler_connecting(uint16_t event, void *param)
             s_media_state = APP_AV_MEDIA_STATE_IDLE;
             s_a2d_conn_hndl = a2d->conn_stat.conn_hdl;
             s_a2d_audio_mtu = a2d->conn_stat.audio_mtu;
+            ui_device_picker_show_connected(verified_address);
         }
         else if (a2d->conn_stat.state == ESP_A2D_CONNECTION_STATE_DISCONNECTED)
         {
@@ -402,6 +419,8 @@ static void handler_connecting(uint16_t event, void *param)
             bt_app_encode_stream_stop();
             s_media_state = APP_AV_MEDIA_STATE_IDLE;
             a2dp_state = APP_AV_STATE_UNCONNECTED;
+            ui_device_picker_show_connection_failed(verified_address);
+            start_device_discovery();
         }
         break;
     }
@@ -568,6 +587,8 @@ static void handler_connected(uint16_t event, void *param)
             bt_app_encode_stream_stop();
             s_media_state = APP_AV_MEDIA_STATE_IDLE;
             a2dp_state = APP_AV_STATE_UNCONNECTED;
+            ui_device_picker_show_disconnected(verified_address);
+            start_device_discovery();
         }
         break;
     }
@@ -680,6 +701,8 @@ static void handler_disconnected(uint16_t event, void *param)
             bt_app_encode_stream_stop();
             s_media_state = APP_AV_MEDIA_STATE_IDLE;
             a2dp_state = APP_AV_STATE_UNCONNECTED;
+            ui_device_picker_show_disconnected(verified_address);
+            start_device_discovery();
         }
         break;
     }
@@ -852,4 +875,18 @@ void bt_app_a2dp_source_start(void)
         bt_app_task_shut_down();
         abort();
     }
+}
+
+esp_err_t bt_app_a2dp_source_connect_selected(const uint8_t *address)
+{
+    if (address == NULL)
+    {
+        return ESP_ERR_INVALID_ARG;
+    }
+
+    if (!bt_app_work_dispatch(connect_selected_device, 0, (void *)address, 6, NULL, NULL))
+    {
+        return ESP_FAIL;
+    }
+    return ESP_OK;
 }

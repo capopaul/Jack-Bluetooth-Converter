@@ -16,3 +16,8 @@ esp_err_t ui_device_picker_back(void);
 // Copy the Bluetooth address of the selected device into address. This does
 // not initiate a connection; the connection step will use this in step 3.
 esp_err_t ui_device_picker_enter(uint8_t address[6]);
+
+void ui_device_picker_show_connecting(const uint8_t address[6]);
+void ui_device_picker_show_connected(const uint8_t address[6]);
+void ui_device_picker_show_connection_failed(const uint8_t address[6]);
+void ui_device_picker_show_disconnected(const uint8_t address[6]);

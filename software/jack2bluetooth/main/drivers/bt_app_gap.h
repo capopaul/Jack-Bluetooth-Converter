@@ -20,13 +20,13 @@ typedef struct
     uint32_t class_of_device;
 } bt_app_gap_discovered_device_t;
 
-typedef void (*bt_app_gap_device_found_cb_t)(const uint8_t *address);
 typedef void (*bt_app_gap_remote_name_cb_t)(const uint8_t *address, const char *name);
 typedef void (*bt_app_gap_device_list_changed_cb_t)(void);
 
 void bt_app_gap_start(void);
 
-esp_err_t bt_app_gap_start_discovery(bt_app_gap_device_found_cb_t cb_ptr);
+esp_err_t bt_app_gap_start_discovery(void);
+esp_err_t bt_app_gap_stop_discovery(void);
 
 // Read-only access to the latest inquiry results. Copy a device record before
 // using it because discovery can update the model asynchronously.

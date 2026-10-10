@@ -14,13 +14,8 @@
 #define GAP_TAG "BT_APP_GAP"
 #define BT_APP_GAP_DISCOVERY_RESULT_EVT 0x100
 
-static const char remote_device_name[] = "Bose-Paul-2";
-
-static esp_bd_addr_t verified_address = {0}; /* Bluetooth Device Address of peer device*/
-
-static bool discovery_running = false;                      // True when discovery is running
-static bool target_found = false;                           // True when a device matching remote_device_name is found.
-static bt_app_gap_device_found_cb_t device_found_cb = NULL; // Function to use when a device is found
+static bool discovery_running = false;
+static bool discovery_restart_after_stop = false;
 static bool gap_start_requested = false;
 static bool gap_callback_registered = false;
 static esp_bd_addr_t remote_name_address = {0};
@@ -44,7 +39,6 @@ typedef struct
 
 static char *bda2str(const uint8_t *bda, char *str, size_t size);
 static bool get_name_from_eir(uint8_t *eir, uint8_t *bdname, size_t bdname_size, uint8_t *bdname_len);
-static bool discovery_result_matches_target(const discovery_result_t *result);
 static void parse_discovery_result(const esp_bt_gap_cb_param_t *param, discovery_result_t *result);
 static bool update_discovered_device_list(const discovery_result_t *result, size_t *updated_index);
 static void clear_discovered_device_list(void);
@@ -115,19 +109,6 @@ static bool get_name_from_eir(uint8_t *eir, uint8_t *bdname, size_t bdname_size,
     }
 
     return false;
-}
-
-// this function is executed by the task: "BTC_TASK"
-static bool discovery_result_matches_target(const discovery_result_t *result)
-{
-    /* search for device with MAJOR service class as "rendering" in COD */
-    if (!esp_bt_gap_is_valid_cod(result->class_of_device) ||
-        !(esp_bt_gap_get_cod_srvc(result->class_of_device) & ESP_BT_COD_SRVC_RENDERING))
-    {
-        return false;
-    }
-
-    return strcmp(result->name, remote_device_name) == 0;
 }
 
 static void parse_discovery_result(const esp_bt_gap_cb_param_t *param, discovery_result_t *result)
@@ -311,18 +292,6 @@ static void gap_cb_2(uint16_t event, void *p_param)
             notify_device_list_changed();
         }
 
-        if (!target_found && discovery_result_matches_target(result))
-        {
-            target_found = true;
-            memcpy(verified_address, result->address, sizeof(verified_address));
-
-            ESP_LOGI(GAP_TAG, "Configured source found; stopping discovery.");
-            esp_err_t err = esp_bt_gap_cancel_discovery();
-            if (err != ESP_OK)
-            {
-                ESP_LOGE(GAP_TAG, "Cancel discovery failed: %s", esp_err_to_name(err));
-            }
-        }
         break;
     }
     /* when discovery state changed, this event comes */
@@ -330,17 +299,10 @@ static void gap_cb_2(uint16_t event, void *p_param)
     {
         if (param->disc_st_chg.state == ESP_BT_GAP_DISCOVERY_STOPPED)
         {
-            if (target_found)
+            if (!discovery_restart_after_stop)
             {
-                bt_app_gap_device_found_cb_t callback = device_found_cb;
-
-                device_found_cb = NULL;
                 discovery_running = false;
-
-                if (callback != NULL)
-                {
-                    callback(verified_address);
-                }
+                ESP_LOGI(GAP_TAG, "Discovery stopped.");
             }
             else
             {
@@ -349,13 +311,11 @@ static void gap_cb_2(uint16_t event, void *p_param)
                 {
                     ESP_LOGE(GAP_TAG, "esp_bt_gap_start_discovery failed with code %x", err);
                     discovery_running = false;
-                    device_found_cb = NULL;
                 }
             }
         }
         else if (param->disc_st_chg.state == ESP_BT_GAP_DISCOVERY_STARTED)
         {
-            target_found = false;
             ESP_LOGI(GAP_TAG, "Discovery started.");
         }
         break;
@@ -556,12 +516,25 @@ void bt_app_gap_start(void)
     }
 }
 
-esp_err_t bt_app_gap_start_discovery(bt_app_gap_device_found_cb_t cb_ptr)
+esp_err_t bt_app_gap_start_discovery(void)
 {
-    if (!discovery_running && cb_ptr != NULL)
+    if (discovery_running)
     {
-        device_found_cb = cb_ptr;
+        // A connection attempt may fail before the asynchronous STOPPED event
+        // for the previous inquiry is delivered. Request the restart now; the
+        // event handler will restart it as soon as the controller is idle.
+        if (!discovery_restart_after_stop)
+        {
+            discovery_restart_after_stop = true;
+            return ESP_OK;
+        }
+        return ESP_ERR_INVALID_STATE;
+    }
+
+    if (!discovery_running)
+    {
         discovery_running = true;
+        discovery_restart_after_stop = true;
         clear_discovered_device_list();
         notify_device_list_changed();
         esp_err_t err = esp_bt_gap_start_discovery(ESP_BT_INQ_MODE_GENERAL_INQUIRY, 10, 0);
@@ -569,11 +542,27 @@ esp_err_t bt_app_gap_start_discovery(bt_app_gap_device_found_cb_t cb_ptr)
         {
             ESP_LOGE(GAP_TAG, "esp_bt_gap_start_discovery failed with code %x", err);
             discovery_running = false;
-            device_found_cb = NULL;
         }
         return err;
     }
     return ESP_ERR_INVALID_STATE;
+}
+
+esp_err_t bt_app_gap_stop_discovery(void)
+{
+    if (!discovery_running)
+    {
+        return ESP_ERR_INVALID_STATE;
+    }
+
+    discovery_restart_after_stop = false;
+    esp_err_t err = esp_bt_gap_cancel_discovery();
+    if (err != ESP_OK)
+    {
+        ESP_LOGE(GAP_TAG, "Cancel discovery failed: %s", esp_err_to_name(err));
+        discovery_restart_after_stop = true;
+    }
+    return err;
 }
 
 size_t bt_app_gap_get_discovered_device_count(void)

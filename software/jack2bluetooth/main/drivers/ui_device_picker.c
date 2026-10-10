@@ -17,6 +17,38 @@ static size_t picker_device_count;
 static size_t picker_selected_index;
 static bool picker_active;
 
+static const char *device_name_for_address_locked(const uint8_t address[6])
+{
+    for (size_t i = 0; i < picker_device_count; ++i)
+    {
+        if (memcmp(picker_devices[i].address, address, sizeof(picker_devices[i].address)) == 0)
+        {
+            return picker_devices[i].name[0] != '\0' ? picker_devices[i].name : "<unknown>";
+        }
+    }
+    return "<unknown>";
+}
+
+static void show_connection_state(const char *state, const uint8_t address[6])
+{
+    if (picker_mutex == NULL || address == NULL)
+    {
+        return;
+    }
+
+    xSemaphoreTake(picker_mutex, portMAX_DELAY);
+    if (picker_active)
+    {
+        const char *name = device_name_for_address_locked(address);
+        esp_err_t err = ssd1306_set_text_lines("Jack -> Bluetooth", state, name);
+        if (err != ESP_OK)
+        {
+            ESP_LOGW(UI_DEVICE_PICKER_TAG, "Could not show connection state: %s", esp_err_to_name(err));
+        }
+    }
+    xSemaphoreGive(picker_mutex);
+}
+
 static void render_picker_locked(void)
 {
     esp_err_t err = ssd1306_show_string_list(picker_names, picker_device_count);
@@ -194,4 +226,24 @@ esp_err_t ui_device_picker_enter(uint8_t address[6])
     log_selected_device_locked();
     xSemaphoreGive(picker_mutex);
     return ESP_OK;
+}
+
+void ui_device_picker_show_connecting(const uint8_t address[6])
+{
+    show_connection_state("Connecting to...", address);
+}
+
+void ui_device_picker_show_connected(const uint8_t address[6])
+{
+    show_connection_state("Connected to", address);
+}
+
+void ui_device_picker_show_connection_failed(const uint8_t address[6])
+{
+    show_connection_state("Connection failed", address);
+}
+
+void ui_device_picker_show_disconnected(const uint8_t address[6])
+{
+    show_connection_state("Disconnected from", address);
 }

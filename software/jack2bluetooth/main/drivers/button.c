@@ -1,7 +1,7 @@
 
 #include "button.h"
 #include "audio_codec.h"
-#include "ssd1306.h"
+#include "ui_device_picker.h"
 #include <stdbool.h>
 
 #include <esp_system.h>
@@ -20,6 +20,14 @@ static bool adc_muted = false;
 void on_enter_pressed(void)
 {
     ESP_LOGI(BUTTON_TAG, "Button ENTER pushed");
+    uint8_t address[6];
+    if (ui_device_picker_enter(address) == ESP_OK)
+    {
+        ESP_LOGI(BUTTON_TAG, "Device selected: %02x:%02x:%02x:%02x:%02x:%02x",
+                 address[0], address[1], address[2], address[3], address[4], address[5]);
+        return;
+    }
+
     if (!adc_muted)
     {
         audio_codec_mute_adc();
@@ -37,13 +45,13 @@ void on_enter_pressed(void)
 void on_back_pressed(void)
 {
     ESP_LOGI(BUTTON_TAG, "Button BACK pushed");
-    ssd1306_list_back();
+    (void)ui_device_picker_back();
 }
 
 void on_next_pressed(void)
 {
     ESP_LOGI(BUTTON_TAG, "Button NEXT pushed");
-    ssd1306_list_next();
+    (void)ui_device_picker_next();
 }
 
 void on_direction_changed(direction_state new_state)

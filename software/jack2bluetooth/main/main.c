@@ -30,6 +30,7 @@
 
 // Screen
 #include "./drivers/ssd1306.h"
+#include "./drivers/ui_device_picker.h"
 
 // Include IO expander
 #include "./drivers/io_expander.h"
@@ -122,16 +123,9 @@ void app_main(void)
 
         bt_app_a2dp_source_start();
 
+        ESP_ERROR_CHECK(ui_device_picker_start());
+
         io_expander_set(IO_EXPANDER_LED_ADC_MASK);
-
-        static const char *devices[] = {
-            "Paul's iPhone",
-            "MacBook Pro",
-            "Kitchen Speaker",
-            "Headphones",
-        };
-
-        ssd1306_show_string_list(devices, 4);
     }
     else
     {

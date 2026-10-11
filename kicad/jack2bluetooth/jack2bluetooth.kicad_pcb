@@ -30042,6 +30042,18 @@
 			(uuid "92bbc2b7-5867-49b6-ae97-f850e294e9f0")
 		)
 		(embedded_fonts no)
+		(model "${KIPRJMOD}/local_lib/SLW-10558/SLW-105558-2A-N-D.stp"
+			(hide yes)
+			(offset
+				(xyz 0 0 0)
+			)
+			(scale
+				(xyz 1 1 1)
+			)
+			(rotate
+				(xyz 0 0 0)
+			)
+		)
 	)
 	(footprint "SLW-10558:SLW-105558-2A-N-D"
 		(layer "B.Cu")
@@ -30151,7 +30163,7 @@
 			(uuid "f57d4c85-edc9-4804-83b3-bdf38951129c")
 		)
 		(embedded_fonts no)
-		(model "../../Components/slide-switch/SLW-105558-2A-N-D/3D/SLW-105558-2A-N-D.stp"
+		(model "${KIPRJMOD}/local_lib/SLW-10558/SLW-105558-2A-N-D.stp"
 			(offset
 				(xyz 0 0 -5)
 			)

@@ -662,7 +662,7 @@
       "plot": "../../doc/gerber/",
       "pos_files": "",
       "specctra_dsn": "",
-      "step": "",
+      "step": "../../doc/3D_model/jack2bluetooth_pcb_3d_model.step",
       "svg": "",
       "vrml": ""
     },

@@ -18,12 +18,13 @@
 
 static uint32_t i2c_frequency = 100 * 1000;
 static i2c_master_bus_handle_t tool_bus_handle;
+static i2c_master_bus_handle_t display_bus_handle;
 static SemaphoreHandle_t i2c_mutex;
 
-void i2c_discharge_lines(void)
+static void i2c_discharge_lines_on_pins(gpio_num_t sda_pin, gpio_num_t scl_pin)
 {
     const gpio_config_t config = {
-        .pin_bit_mask = (1ULL << I2C_GPIO_SDA) | (1ULL << I2C_GPIO_SCL),
+        .pin_bit_mask = (1ULL << sda_pin) | (1ULL << scl_pin),
         .mode = GPIO_MODE_OUTPUT_OD,
         .pull_up_en = GPIO_PULLUP_DISABLE,
         .pull_down_en = GPIO_PULLDOWN_DISABLE,
@@ -31,9 +32,19 @@ void i2c_discharge_lines(void)
     };
 
     ESP_ERROR_CHECK(gpio_config(&config));
-    ESP_ERROR_CHECK(gpio_set_level(I2C_GPIO_SDA, 0));
-    ESP_ERROR_CHECK(gpio_set_level(I2C_GPIO_SCL, 0));
+    ESP_ERROR_CHECK(gpio_set_level(sda_pin, 0));
+    ESP_ERROR_CHECK(gpio_set_level(scl_pin, 0));
     esp_rom_delay_us(50 * 1000);
+}
+
+void i2c_discharge_lines(void)
+{
+    i2c_discharge_lines_on_pins(I2C_GPIO_SDA, I2C_GPIO_SCL);
+}
+
+void i2c_display_discharge_lines(void)
+{
+    i2c_discharge_lines_on_pins(DISPLAY_I2C_GPIO_SDA, DISPLAY_I2C_GPIO_SCL);
 }
 
 void i2c_init()
@@ -57,6 +68,20 @@ void i2c_init()
     };
 
     ESP_ERROR_CHECK(i2c_new_master_bus(&i2c_bus_config, &tool_bus_handle));
+}
+
+void i2c_display_init(void)
+{
+    const i2c_master_bus_config_t i2c_bus_config = {
+        .clk_source = I2C_CLK_SRC_DEFAULT,
+        .i2c_port = I2C_NUM_1,
+        .scl_io_num = DISPLAY_I2C_GPIO_SCL,
+        .sda_io_num = DISPLAY_I2C_GPIO_SDA,
+        .glitch_ignore_cnt = 7,
+        .flags.enable_internal_pullup = false,
+    };
+
+    ESP_ERROR_CHECK(i2c_new_master_bus(&i2c_bus_config, &display_bus_handle));
 }
 
 void i2c_lock(void)
@@ -208,6 +233,11 @@ int i2c_detect()
 i2c_master_bus_handle_t i2c_get_bus(void)
 {
     return tool_bus_handle;
+}
+
+i2c_master_bus_handle_t i2c_get_display_bus(void)
+{
+    return display_bus_handle;
 }
 
 int i2c_dump(int chip_addr, int size)

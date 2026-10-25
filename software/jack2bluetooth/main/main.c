@@ -53,11 +53,13 @@ void app_main(void)
     io_expander_reset();
 
     // The OLED can be parasitically powered through its SDA/SCL protection
-    // diodes. Drain those lines while lcd_vdc is off so it performs a real
-    // power-on reset before it is connected to the I2C peripheral.
+    // diodes. Drain both I2C buses while lcd_vdc is off so it performs a real
+    // power-on reset before it is connected to its dedicated I2C peripheral.
     i2c_discharge_lines();
+    i2c_display_discharge_lines();
 
     i2c_init();
+    i2c_display_init();
 
     ///////////////////////
     //    IO Expander    //

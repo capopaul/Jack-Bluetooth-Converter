@@ -130,9 +130,7 @@ static void oled_flush(lv_display_t *display, const lv_area_t *area, uint8_t *pi
             }
         }
     }
-    i2c_lock();
     esp_err_t ret = sh1106_flush();
-    i2c_unlock();
     if (ret != ESP_OK)
     {
         ESP_LOGE("OLED", "SH1106 update failed: %s", esp_err_to_name(ret));
@@ -170,13 +168,12 @@ esp_err_t ssd1306_show_name(void)
         .device_address = SH1106_ADDRESS,
         .scl_speed_hz = 400 * 1000,
     };
-    esp_err_t ret;
-
-    i2c_lock();
-    ret = i2c_master_bus_add_device(i2c_get_bus(), &device_config, &oled_device);
+    esp_err_t ret = i2c_master_bus_add_device(i2c_get_display_bus(),
+                                               &device_config, &oled_device);
     if (ret != ESP_OK)
     {
-        goto unlock_i2c;
+        ESP_LOGE("OLED", "create SH1106 I2C device failed: %s", esp_err_to_name(ret));
+        return ret;
     }
 
     const uint8_t init_commands[] = {
@@ -210,7 +207,6 @@ esp_err_t ssd1306_show_name(void)
         memset(oled_buffer, 0x00, sizeof(oled_buffer));
         ret = sh1106_flush();
     }
-    i2c_unlock();
     if (ret != ESP_OK)
     {
         ESP_LOGE("OLED", "SH1106 initialization failed: %s", esp_err_to_name(ret));
@@ -249,10 +245,6 @@ esp_err_t ssd1306_show_name(void)
     BaseType_t task_created = xTaskCreate(lvgl_task, "lvgl", 4096, NULL, 2, NULL);
     return task_created == pdPASS ? ESP_OK : ESP_ERR_NO_MEM;
 
-unlock_i2c:
-    i2c_unlock();
-    ESP_LOGE("OLED", "create SH1106 I2C device failed: %s", esp_err_to_name(ret));
-    return ret;
 }
 
 esp_err_t ssd1306_set_text_lines(const char *first_line,

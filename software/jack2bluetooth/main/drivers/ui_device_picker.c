@@ -5,7 +5,7 @@
 #include "freertos/semphr.h"
 
 #include "bt_app_gap.h"
-#include "ssd1306.h"
+#include "ssh1106.h"
 #include "ui_device_picker.h"
 
 #define UI_DEVICE_PICKER_TAG "DEVICE_PICKER"

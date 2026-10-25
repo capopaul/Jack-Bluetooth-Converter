@@ -33,7 +33,7 @@
 #include "sbc_sink.h"
 
 // Screen
-#include "./drivers/ssd1306.h"
+#include "./drivers/ssh1106.h"
 #include "bt_app_gap.h"
 
 #include "sys/lock.h"

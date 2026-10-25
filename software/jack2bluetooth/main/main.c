@@ -29,7 +29,7 @@
 #include "./drivers/audio_codec.h"
 
 // Screen
-#include "./drivers/ssd1306.h"
+#include "./drivers/ssh1106.h"
 #include "./drivers/ui_device_picker.h"
 
 // Include IO expander

@@ -187,8 +187,10 @@ esp_err_t ssd1306_show_name(void)
         0x40, // Display start line 0
         0xAD,
         0x8B, // Enable SH1106 internal DC-DC converter
-        0xA1, // Segment remap
-        0xC8, // Reverse COM scan direction
+        // Use the opposite segment and COM directions to rotate the panel
+        // 180 degrees in its current physical mounting orientation.
+        0xA0, // Normal segment mapping
+        0xC0, // Normal COM scan direction
         0xDA,
         0x12, // COM pins for 128x64 panel
         0x81,

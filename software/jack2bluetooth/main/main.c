@@ -38,8 +38,6 @@
 // Include decode_task
 #include "decode_task.h"
 
-#include "memory_debug.h"
-
 /*******************************
  * Main function
  ******************************/
@@ -169,6 +167,5 @@ void app_main(void)
 
         io_expander_set(IO_EXPANDER_LED_DAC_MASK);
 
-        log_internal_heap("end of main");
     }
 }

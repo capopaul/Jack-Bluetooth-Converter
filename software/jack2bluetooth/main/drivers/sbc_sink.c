@@ -4,7 +4,6 @@
 #include "i2s.h"
 #include "esp_sbc_dec.h"
 #include "esp_log.h"
-#include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
 #include "freertos/semphr.h"
@@ -25,8 +24,6 @@ typedef struct
 static QueueHandle_t packet_queue;
 static SemaphoreHandle_t decoder_mutex;
 static void *decoder;
-static uint64_t decoded_pcm_bytes;
-static uint32_t dropped_packets;
 // Even generations are stopped, odd generations are playing.
 static atomic_uint stream_generation;
 static atomic_uint stream_sample_rate_hz = 44100;
@@ -65,7 +62,6 @@ static void decode_packet(esp_a2d_audio_buff_t *buffer)
             return;
         }
         audio_i2s_write_ringbuf(out.buffer, out.decoded_size);
-        decoded_pcm_bytes += out.decoded_size;
         raw.buffer += raw.consumed;
         raw.len -= raw.consumed;
         frames++;
@@ -80,8 +76,6 @@ static void decode_packet(esp_a2d_audio_buff_t *buffer)
 static void task__sbc_decode(void *arg)
 {
     sbc_packet_t packet;
-    int64_t last_report_us = esp_timer_get_time();
-    uint64_t last_decoded_bytes = 0;
     for (;;)
     {
         xQueueReceive(packet_queue, &packet, portMAX_DELAY);
@@ -93,18 +87,6 @@ static void task__sbc_decode(void *arg)
         }
         xSemaphoreGive(decoder_mutex);
         esp_a2d_audio_buff_free(packet.buffer);
-
-        int64_t now_us = esp_timer_get_time();
-        if (now_us - last_report_us >= 1000000)
-        {
-            ESP_LOGI(TAG, "decoder rate: pcm=%llu B/s queue=%u/%u dropped=%u",
-                     (unsigned long long)(decoded_pcm_bytes - last_decoded_bytes),
-                     (unsigned)uxQueueMessagesWaiting(packet_queue),
-                     (unsigned)PACKET_QUEUE_LENGTH,
-                     (unsigned)dropped_packets);
-            last_decoded_bytes = decoded_pcm_bytes;
-            last_report_us = now_us;
-        }
     }
 }
 
@@ -189,7 +171,6 @@ void sbc_sink_receive(esp_a2d_conn_hdl_t conn_hdl, esp_a2d_audio_buff_t *audio_b
         !audio_buf->data_len || !audio_buf->number_frame ||
         xQueueSend(packet_queue, &packet, 0) != pdTRUE)
     {
-        ++dropped_packets;
         esp_a2d_audio_buff_free(audio_buf);
     }
 }

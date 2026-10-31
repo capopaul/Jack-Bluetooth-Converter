@@ -29,6 +29,7 @@ static uint64_t decoded_pcm_bytes;
 static uint32_t dropped_packets;
 // Even generations are stopped, odd generations are playing.
 static atomic_uint stream_generation;
+static atomic_uint stream_sample_rate_hz = 44100;
 
 static void decode_packet(esp_a2d_audio_buff_t *buffer)
 {
@@ -55,7 +56,8 @@ static void decode_packet(esp_a2d_audio_buff_t *buffer)
             esp_sbc_dec_reset(decoder);
             return;
         }
-        if (info.sample_rate != 44100 || info.channel != 2 || info.bits_per_sample != 16 ||
+        if (info.sample_rate != atomic_load(&stream_sample_rate_hz) ||
+            info.channel != 2 || info.bits_per_sample != 16 ||
             out.decoded_size > sizeof(pcm) || out.decoded_size % 4 != 0)
         {
             ESP_LOGE(TAG, "Unsupported PCM format: %lu Hz, %u channels, %u bits",
@@ -138,6 +140,17 @@ fail:
     packet_queue = NULL;
     decoder_mutex = NULL;
     return ESP_ERR_NO_MEM;
+}
+
+esp_err_t sbc_sink_set_sample_rate(uint32_t sample_rate_hz)
+{
+    if (sample_rate_hz != 44100 && sample_rate_hz != 48000)
+    {
+        return ESP_ERR_NOT_SUPPORTED;
+    }
+
+    atomic_store(&stream_sample_rate_hz, sample_rate_hz);
+    return ESP_OK;
 }
 
 void sbc_sink_set_playing(bool playing)

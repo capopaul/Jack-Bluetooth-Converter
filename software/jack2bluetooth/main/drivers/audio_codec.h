@@ -9,7 +9,8 @@
 
 typedef enum
 {
-    FS_44_1HZ
+    FS_44_1HZ,
+    FS_48HZ,
 } codec_fs_t;
 
 /********************************

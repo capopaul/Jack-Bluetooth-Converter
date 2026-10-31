@@ -66,6 +66,8 @@ static SemaphoreHandle_t rx_stop_acknowledge = NULL;
 
 static SemaphoreHandle_t s_i2s_write_semaphore = NULL;
 static SemaphoreHandle_t tx_mutex;
+// Serializes I2S DMA writes with a clock reconfiguration.
+static SemaphoreHandle_t tx_i2s_io_mutex;
 
 // Stream for rx task
 static StreamBufferHandle_t pcm_stream;
@@ -85,6 +87,7 @@ static i2s_std_clk_config_t clk_cfg = {
     .clk_src = I2S_CLK_SRC_DEFAULT,
     .mclk_multiple = I2S_MCLK_MULTIPLE_256,
     .bclk_div = 8};
+static uint32_t tx_sample_rate_hz = 44100;
 
 // So MCLK = 11.2896 MHz
 
@@ -235,8 +238,23 @@ static void task__i2s_tx(void *arg)
                  * it here can prevent the producer from refilling the buffer.
                  */
                 xSemaphoreGive(tx_mutex);
+                xSemaphoreTake(tx_i2s_io_mutex, portMAX_DELAY);
+
+                // A stream reconfiguration may have flushed this item while
+                // this task was waiting for exclusive I2S access.
+                xSemaphoreTake(tx_mutex, portMAX_DELAY);
+                bool write_item = ringbuffer_mode == RINGBUFFER_MODE_PROCESSING;
+                xSemaphoreGive(tx_mutex);
+                if (!write_item)
+                {
+                    vRingbufferReturnItem(s_ringbuf_i2s, (void *)data);
+                    xSemaphoreGive(tx_i2s_io_mutex);
+                    break;
+                }
+
                 write_pcm16_to_i2s(data, item_size, &pcm_state);
                 vRingbufferReturnItem(s_ringbuf_i2s, (void *)data);
+                xSemaphoreGive(tx_i2s_io_mutex);
 
                 int64_t now_us = esp_timer_get_time();
                 xSemaphoreTake(tx_mutex, portMAX_DELAY);
@@ -301,6 +319,8 @@ static void i2s_tx_task_start_up(void)
     log_internal_heap("after I2S ring buffer");
     tx_mutex = xSemaphoreCreateMutex();
     configASSERT(tx_mutex != NULL);
+    tx_i2s_io_mutex = xSemaphoreCreateMutex();
+    configASSERT(tx_i2s_io_mutex != NULL);
     // This task handles the new data added to the ring.
     xTaskCreate(task__i2s_tx, "i2s_tx_task", 8192, NULL, configMAX_PRIORITIES - 3, &s_bt_i2s_tx_task_handle);
 }
@@ -346,6 +366,11 @@ static void i2s_tx_task_shut_down(void)
     {
         vSemaphoreDelete(s_i2s_write_semaphore);
         s_i2s_write_semaphore = NULL;
+    }
+    if (tx_i2s_io_mutex)
+    {
+        vSemaphoreDelete(tx_i2s_io_mutex);
+        tx_i2s_io_mutex = NULL;
     }
 }
 
@@ -557,4 +582,57 @@ void audio_i2s_flush_tx(void)
     xSemaphoreTake(s_i2s_write_semaphore, 0);
     ringbuffer_mode = RINGBUFFER_MODE_PREFETCHING;
     xSemaphoreGive(tx_mutex);
+}
+
+esp_err_t audio_i2s_set_sample_rate(uint32_t sample_rate_hz)
+{
+    if (sample_rate_hz != 44100 && sample_rate_hz != 48000)
+    {
+        return ESP_ERR_NOT_SUPPORTED;
+    }
+    if (mode != I2S_MODE_TX || !tx_chan || !tx_i2s_io_mutex)
+    {
+        return ESP_ERR_INVALID_STATE;
+    }
+
+    /*
+     * Prevent an I2S write from overlapping the disable/reconfigure/enable
+     * sequence. Flush while this lock is held so an item removed by the TX
+     * task cannot be written after the new clock is active.
+     */
+    xSemaphoreTake(tx_i2s_io_mutex, portMAX_DELAY);
+    audio_i2s_flush_tx();
+
+    if (sample_rate_hz == tx_sample_rate_hz)
+    {
+        xSemaphoreGive(tx_i2s_io_mutex);
+        return ESP_OK;
+    }
+
+    esp_err_t err = i2s_channel_disable(tx_chan);
+    if (err == ESP_OK)
+    {
+        i2s_std_clk_config_t new_clk_cfg = clk_cfg;
+        new_clk_cfg.sample_rate_hz = sample_rate_hz;
+        err = i2s_channel_reconfig_std_clock(tx_chan, &new_clk_cfg);
+        if (err == ESP_OK)
+        {
+            err = i2s_channel_enable(tx_chan);
+            if (err == ESP_OK)
+            {
+                clk_cfg = new_clk_cfg;
+                tx_sample_rate_hz = sample_rate_hz;
+                ESP_LOGI(I2S_TAG, "TX sample rate configured: %lu Hz",
+                         (unsigned long)sample_rate_hz);
+            }
+        }
+        else
+        {
+            // The existing clock remains valid after a failed reconfiguration.
+            (void)i2s_channel_enable(tx_chan);
+        }
+    }
+
+    xSemaphoreGive(tx_i2s_io_mutex);
+    return err;
 }

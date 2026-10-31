@@ -51,6 +51,8 @@ static void bt_app_a2dp_cb(esp_a2d_cb_event_t event, esp_a2d_cb_param_t *param);
 
 static void handle_a2dp_event(uint16_t event, void *p_param);
 static void show_connected_device(const uint8_t *address, const char *name);
+static bool sbc_sample_rate_hz(uint8_t sbc_rate, uint32_t *sample_rate_hz);
+static esp_err_t configure_sbc_output(uint32_t sample_rate_hz);
 
 /*******************************
  * STATIC VARIABLE DEFINITIONS
@@ -99,10 +101,11 @@ static void show_connected_device(const uint8_t *address, const char *name)
 static void register_sbc_endpoint(void)
 {
     // Based on IDF v6.1 a2dp_sink_stream's external-codec example.
-    // Advertise only formats supported by the current 44.1 kHz stereo DAC path.
+    // The DAC path supports the two standard stereo music rates.
     esp_a2d_mcc_t mcc = {0};
     mcc.type = ESP_A2D_MCT_SBC;
-    mcc.cie.sbc_info.samp_freq = ESP_A2D_SBC_CIE_SF_44K;
+    mcc.cie.sbc_info.samp_freq = ESP_A2D_SBC_CIE_SF_44K |
+                                 ESP_A2D_SBC_CIE_SF_48K;
     mcc.cie.sbc_info.ch_mode = ESP_A2D_SBC_CIE_CH_MODE_DUAL_CHANNEL |
                                ESP_A2D_SBC_CIE_CH_MODE_STEREO |
                                ESP_A2D_SBC_CIE_CH_MODE_JOINT_STEREO;
@@ -117,6 +120,40 @@ static void register_sbc_endpoint(void)
     mcc.cie.sbc_info.min_bitpool = 2;
     mcc.cie.sbc_info.max_bitpool = 53;
     ESP_ERROR_CHECK(esp_a2d_sink_register_stream_endpoint(0, &mcc));
+}
+
+static bool sbc_sample_rate_hz(uint8_t sbc_rate, uint32_t *sample_rate_hz)
+{
+    if (sbc_rate == ESP_A2D_SBC_CIE_SF_44K)
+    {
+        *sample_rate_hz = 44100;
+        return true;
+    }
+    if (sbc_rate == ESP_A2D_SBC_CIE_SF_48K)
+    {
+        *sample_rate_hz = 48000;
+        return true;
+    }
+    return false;
+}
+
+static esp_err_t configure_sbc_output(uint32_t sample_rate_hz)
+{
+    codec_fs_t codec_rate = sample_rate_hz == 44100 ? FS_44_1HZ : FS_48HZ;
+
+    // Invalidate decoded data before either clock is changed.
+    sbc_sink_set_playing(false);
+
+    esp_err_t err = sbc_sink_set_sample_rate(sample_rate_hz);
+    if (err == ESP_OK)
+    {
+        err = audio_i2s_set_sample_rate(sample_rate_hz);
+    }
+    if (err == ESP_OK)
+    {
+        audio_codec_configure_i2s_settings(codec_rate);
+    }
+    return err;
 }
 
 // Callback function for bluetooth HW events - A2DP events
@@ -205,20 +242,32 @@ static void handle_a2dp_event(uint16_t event, void *p_param)
     {
         a2d = (esp_a2d_cb_param_t *)(p_param);
         esp_a2d_mcc_t *p_mcc = &a2d->audio_cfg.mcc;
+        uint32_t sample_rate_hz = 0;
         ESP_LOGI(BT_A2DP, "A2DP audio stream configuration, codec type: %d", p_mcc->type);
         s_sbc_configured = p_mcc->type == ESP_A2D_MCT_SBC &&
-                           p_mcc->cie.sbc_info.samp_freq == ESP_A2D_SBC_CIE_SF_44K &&
+                           sbc_sample_rate_hz(p_mcc->cie.sbc_info.samp_freq, &sample_rate_hz) &&
                            (p_mcc->cie.sbc_info.ch_mode == ESP_A2D_SBC_CIE_CH_MODE_DUAL_CHANNEL ||
                             p_mcc->cie.sbc_info.ch_mode == ESP_A2D_SBC_CIE_CH_MODE_STEREO ||
                             p_mcc->cie.sbc_info.ch_mode == ESP_A2D_SBC_CIE_CH_MODE_JOINT_STEREO);
+        if (s_sbc_configured)
+        {
+            esp_err_t err = configure_sbc_output(sample_rate_hz);
+            if (err != ESP_OK)
+            {
+                ESP_LOGE(BT_A2DP, "Could not configure %lu Hz output: %s",
+                         (unsigned long)sample_rate_hz, esp_err_to_name(err));
+                s_sbc_configured = false;
+            }
+        }
         sbc_sink_set_playing(s_sbc_configured && s_audio_state == ESP_A2D_AUDIO_STATE_STARTED);
         if (!s_sbc_configured)
         {
-            ESP_LOGE(BT_A2DP, "Unsupported sink configuration: expected SBC 44100 Hz stereo");
+            ESP_LOGE(BT_A2DP, "Unsupported sink configuration: expected SBC 44100/48000 Hz stereo");
         }
         else
         {
-            ESP_LOGI(BT_A2DP, "SBC decoder configured: 44100 Hz stereo -> 16-bit PCM");
+            ESP_LOGI(BT_A2DP, "SBC decoder configured: %lu Hz stereo -> 16-bit PCM",
+                     (unsigned long)sample_rate_hz);
         }
         break;
     }

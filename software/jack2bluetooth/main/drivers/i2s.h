@@ -5,6 +5,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include "esp_err.h"
 
 // | pin name       | esp32 |
 // | codec_i2s_mclk | TXD0  | (it was supposed to be IO0... PCB error...)
@@ -38,3 +39,7 @@ size_t audio_i2s_write_ringbuf(const uint8_t *data, size_t size);
 
 // Discard queued TX audio on stream changes; I2S stays installed.
 void audio_i2s_flush_tx(void);
+
+// Retune the TX clock while the PCM queue is held in prefetch mode.
+// Supported Bluetooth sink rates are 44.1 kHz and 48 kHz.
+esp_err_t audio_i2s_set_sample_rate(uint32_t sample_rate_hz);

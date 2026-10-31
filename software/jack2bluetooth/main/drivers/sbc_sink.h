@@ -5,6 +5,8 @@
 #include "esp_a2dp_api.h"
 
 esp_err_t sbc_sink_init(void);
+// Set the negotiated SBC rate while playback is stopped.
+esp_err_t sbc_sink_set_sample_rate(uint32_t sample_rate_hz);
 // Called from the application task; resets decoding and clears old PCM.
 void sbc_sink_set_playing(bool playing);
 // Takes ownership of audio_buf, including when playback is stopped or full.

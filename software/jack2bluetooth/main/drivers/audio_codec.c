@@ -98,19 +98,24 @@ void audio_codec_configure_i2s_settings(codec_fs_t fs)
     switch (fs)
     {
     case FS_44_1HZ:
-
         // Register 7 - Codec Data-Path Setup Register
-        // D7   - 1  - Set fs=44.1kHz
+        // D7   - 1  - Set fS(ref)=44.1 kHz.
         reg7_value = reg7_value | REG7_FS_MASK;
+        break;
 
-        i2c_set(CODEC_ADDR, 7, reg7_value);
-        is_expected(CODEC_TAG, 7, i2c_get(CODEC_ADDR, 7), reg7_value);
+    case FS_48HZ:
+        // Register 7 - Codec Data-Path Setup Register
+        // D7   - 0  - Set fS(ref)=48 kHz.
+        reg7_value = reg7_value & ~REG7_FS_MASK;
         break;
 
     default:
         ESP_LOGE(CODEC_TAG, "Unsupported fs");
-        break;
+        return;
     }
+
+    i2c_set(CODEC_ADDR, 7, reg7_value);
+    is_expected(CODEC_TAG, 7, i2c_get(CODEC_ADDR, 7), reg7_value);
 }
 
 void audio_codec_connect_input_to_dac()

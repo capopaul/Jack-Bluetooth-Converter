@@ -17,5 +17,5 @@ idf_component_register(SRCS "main.c"
         "./drivers/nvs.c"
         "./drivers/ssh1106.c"
         "./drivers/ui_device_picker.c"
-        PRIV_REQUIRES bt nvs_flash esp_driver_i2c esp_driver_gpio esp_driver_i2s console esp_ringbuf lvgl espressif__esp_audio_codec
+        PRIV_REQUIRES bt nvs_flash esp_driver_i2c esp_driver_gpio esp_driver_i2s console esp_ringbuf lvgl esp_psram espressif__esp_audio_codec
         INCLUDE_DIRS "." "./drivers/")

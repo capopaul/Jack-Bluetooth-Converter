@@ -5,6 +5,7 @@
 #include "audio_codec.h"
 #include "driver/i2s_std.h"
 #include "esp_log.h"
+#include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include <stdlib.h>
@@ -72,6 +73,8 @@ static StreamBufferHandle_t pcm_stream;
 // Ring buffer for tx task
 static RingbufHandle_t s_ringbuf_i2s = NULL; /* handle of ringbuffer for I2S */
 static uint16_t ringbuffer_mode = RINGBUFFER_MODE_PROCESSING;
+static uint64_t tx_enqueued_bytes;
+static uint64_t tx_consumed_bytes;
 
 static is2_mode_t mode;
 static i2s_chan_handle_t rx_chan = NULL;
@@ -184,6 +187,9 @@ static void task__i2s_tx(void *arg)
      */
     const size_t item_size_upto = I2S_PCM_CHUNK_BYTES;
     pcm_conversion_state_t pcm_state = {0};
+    int64_t last_report_us = esp_timer_get_time();
+    uint64_t last_enqueued = 0;
+    uint64_t last_consumed = 0;
 
     for (;;)
     {
@@ -191,6 +197,13 @@ static void task__i2s_tx(void *arg)
         {
             for (;;)
             {
+                UBaseType_t waiting = 0;
+                uint64_t queued_total = 0;
+                uint64_t consumed_total = 0;
+                uint64_t queued_rate = 0;
+                uint64_t consumed_rate = 0;
+                int report_rates = 0;
+
                 xSemaphoreTake(tx_mutex, portMAX_DELAY);
                 if (ringbuffer_mode == RINGBUFFER_MODE_PREFETCHING)
                 {
@@ -203,14 +216,51 @@ static void task__i2s_tx(void *arg)
                 data = (uint8_t *)xRingbufferReceiveUpTo(s_ringbuf_i2s, &item_size, 0, item_size_upto);
                 if (item_size == 0)
                 {
-                    ESP_LOGI(I2S_TAG, "ringbuffer underflowed! mode changed: RINGBUFFER_MODE_PREFETCHING");
+                    vRingbufferGetInfo(s_ringbuf_i2s, NULL, NULL, NULL, NULL, &waiting);
                     ringbuffer_mode = RINGBUFFER_MODE_PREFETCHING;
+                    queued_total = tx_enqueued_bytes;
+                    consumed_total = tx_consumed_bytes;
                     xSemaphoreGive(tx_mutex);
+                    ESP_LOGW(I2S_TAG,
+                             "ringbuffer underflow: waiting=%u, queued_total=%llu B, consumed_total=%llu B",
+                             (unsigned)waiting,
+                             (unsigned long long)queued_total,
+                             (unsigned long long)consumed_total);
                     break;
                 }
+
+                /*
+                 * Do not hold tx_mutex while the I2S driver waits for DMA space.
+                 * The decoder needs this mutex to add PCM to the ring buffer; holding
+                 * it here can prevent the producer from refilling the buffer.
+                 */
+                xSemaphoreGive(tx_mutex);
                 write_pcm16_to_i2s(data, item_size, &pcm_state);
                 vRingbufferReturnItem(s_ringbuf_i2s, (void *)data);
+
+                int64_t now_us = esp_timer_get_time();
+                xSemaphoreTake(tx_mutex, portMAX_DELAY);
+                tx_consumed_bytes += item_size;
+                if (now_us - last_report_us >= 1000000) {
+                    vRingbufferGetInfo(s_ringbuf_i2s, NULL, NULL, NULL, NULL, &waiting);
+                    queued_total = tx_enqueued_bytes;
+                    consumed_total = tx_consumed_bytes;
+                    queued_rate = queued_total - last_enqueued;
+                    consumed_rate = consumed_total - last_consumed;
+                    report_rates = 1;
+                    last_enqueued = queued_total;
+                    last_consumed = consumed_total;
+                    last_report_us = now_us;
+                }
                 xSemaphoreGive(tx_mutex);
+
+                if (report_rates) {
+                    ESP_LOGI(I2S_TAG,
+                             "audio rates: queued=%llu B/s consumed=%llu B/s ring=%u B",
+                             (unsigned long long)queued_rate,
+                             (unsigned long long)consumed_rate,
+                             (unsigned)waiting);
+                }
             }
         }
     }
@@ -477,6 +527,9 @@ static size_t write_ringbuf_locked(const uint8_t *data, size_t size)
         }
     }
 
+    if (done) {
+        tx_enqueued_bytes += size;
+    }
     return done ? size : 0;
 }
 

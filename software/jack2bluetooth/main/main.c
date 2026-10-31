@@ -38,6 +38,8 @@
 // Include decode_task
 #include "decode_task.h"
 
+#include "memory_debug.h"
+
 /*******************************
  * Main function
  ******************************/
@@ -166,5 +168,7 @@ void app_main(void)
         ESP_ERROR_CHECK(bt_app_a2dp_sink_start());
 
         io_expander_set(IO_EXPANDER_LED_DAC_MASK);
+
+        log_internal_heap("end of main");
     }
 }

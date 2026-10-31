@@ -12,6 +12,7 @@
 #include "freertos/ringbuf.h"
 #include "freertos/semphr.h"
 #include <stdatomic.h>
+#include "memory_debug.h"
 
 #define BUFF_SIZE 512
 #define I2S_PCM_CHUNK_BYTES (240 * 6)
@@ -19,10 +20,10 @@
 // At 44.1 kHz, 16-bit stereo PCM is about 176 KiB/s. A 24 KiB buffer keeps
 // roughly 140 ms of audio while leaving internal RAM for Bluedroid's HCI
 // receive buffers. The former 64 KiB buffer exhausted that heap on connect.
-#define RINGBUF_HIGHEST_WATER_LEVEL (48 * 1024)
-#define RINGBUF_PREFETCH_WATER_LEVEL (16 * 1024)
-// #define RINGBUF_HIGHEST_WATER_LEVEL (64 * 1024)
-// #define RINGBUF_PREFETCH_WATER_LEVEL (48 * 1024)
+// #define RINGBUF_HIGHEST_WATER_LEVEL (48 * 1024)
+// #define RINGBUF_PREFETCH_WATER_LEVEL (16 * 1024)
+#define RINGBUF_HIGHEST_WATER_LEVEL (64 * 1024)
+#define RINGBUF_PREFETCH_WATER_LEVEL (48 * 1024)
 typedef struct
 {
     bool have_low_byte;
@@ -241,11 +242,13 @@ static void i2s_tx_task_start_up(void)
         ESP_LOGE(I2S_TAG, "%s, Semaphore create failed", __func__);
         return;
     }
+    log_internal_heap("before I2S ring buffer");
     if ((s_ringbuf_i2s = xRingbufferCreate(RINGBUF_HIGHEST_WATER_LEVEL, RINGBUF_TYPE_BYTEBUF)) == NULL)
     {
         ESP_LOGE(I2S_TAG, "%s, ringbuffer create failed", __func__);
         return;
     }
+    log_internal_heap("after I2S ring buffer");
     tx_mutex = xSemaphoreCreateMutex();
     configASSERT(tx_mutex != NULL);
     // This task handles the new data added to the ring.
